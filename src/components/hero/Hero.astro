@@ -48,10 +48,10 @@ const titleText = t.title.join(' ');
 
     <h1 class="hero__title" id="hero-title">
       <span class="sr-only">{titleText}</span>
-      <span class="hero__layer hero__layer--honest" data-seam-clip="left" aria-hidden="true">
+      <span class="hero__layer hero__layer--gray" aria-hidden="true">
         {t.title.map((line) => <span class="line-mask"><span class="hero__line">{line}</span></span>)}
       </span>
-      <span class="hero__layer hero__layer--gray" data-seam-clip="right" aria-hidden="true">
+      <span class="hero__layer hero__layer--honest" data-seam-clip="left" aria-hidden="true">
         {t.title.map((line) => <span class="line-mask"><span class="hero__line">{line}</span></span>)}
       </span>
     </h1>
@@ -153,16 +153,25 @@ const titleText = t.title.join(' ');
     color: var(--paper-dim);
   }
   .hero__dot {
+    position: relative;
     width: 0.45rem;
     height: 0.45rem;
     border-radius: 50%;
     background: var(--red);
-    box-shadow: 0 0 0 0 rgb(227 38 31 / 0.6);
+  }
+  /* Pulse ring as transform + opacity so it runs on the compositor (an animated box-shadow
+     repaints the page layer every frame). */
+  .hero__dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgb(227 38 31 / 0.6);
     animation: pulse 2.4s var(--ease-out) infinite;
   }
   @keyframes pulse {
-    70% { box-shadow: 0 0 0 0.6rem rgb(227 38 31 / 0); }
-    100% { box-shadow: 0 0 0 0 rgb(227 38 31 / 0); }
+    from { transform: scale(1); opacity: 1; }
+    70%, to { transform: scale(3.7); opacity: 0; }
   }
   .hero__mark {
     margin-top: 0.4rem;
@@ -171,10 +180,12 @@ const titleText = t.title.join(' ');
     font-size: clamp(1.35rem, 2.1vw, 2rem);
     line-height: 1.1;
   }
+  /* Own layer: the count-up and bar updates repaint only the HUD, not the page tiles under it. */
   .hero__hud {
     display: grid;
     grid-template-columns: repeat(2, minmax(8.5rem, auto));
     gap: 0.9rem 2rem;
+    will-change: transform;
   }
   .hud__row dt {
     color: var(--paper-dim);
@@ -226,14 +237,14 @@ const titleText = t.title.join(' ');
   .hero__layer {
     grid-area: 1 / 1;
     display: block;
-    will-change: clip-path;
   }
+  /* Solid type over the (unclipped, static) outline layer, clipped to the honest side of the
+     seam. Its matching stroke covers the outline beneath. Only this plain layer repaints as
+     the seam moves; the costly halftone outline is rasterised once. */
   .hero__layer--honest {
     color: var(--paper);
+    -webkit-text-stroke: 1.5px var(--paper);
     clip-path: inset(0 50% 0 0);
-  }
-  .hero__layer--gray {
-    clip-path: inset(0 0 0 50%);
   }
   /* Halftone-filled outline type. Applied per char: background-clip:text does not follow
      transformed descendants, and the intro transforms every char. */
@@ -320,18 +331,24 @@ const titleText = t.title.join(' ');
     font-size: 0.625rem;
     text-align: center;
   }
+  /* A drop of light running down a clipped track: a transform animation, so it stays on the
+     compositor. */
   .hero__scroll-line {
+    position: relative;
     width: 1px;
     height: 3rem;
-    background: linear-gradient(var(--paper), transparent);
-    transform-origin: top;
+    overflow: hidden;
+  }
+  .hero__scroll-line::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent, var(--paper));
     animation: drip 2.2s var(--ease-in-out) infinite;
   }
   @keyframes drip {
-    0% { transform: scaleY(0); transform-origin: top; }
-    50% { transform: scaleY(1); transform-origin: top; }
-    51% { transform-origin: bottom; }
-    100% { transform: scaleY(0); transform-origin: bottom; }
+    from { transform: translateY(-100%); }
+    to { transform: translateY(100%); }
   }
   .hero__ctas {
     justify-self: end;
@@ -463,8 +480,8 @@ const titleText = t.title.join(' ');
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero__dot,
-    .hero__scroll-line {
+    .hero__dot::after,
+    .hero__scroll-line::after {
       animation: none;
     }
   }

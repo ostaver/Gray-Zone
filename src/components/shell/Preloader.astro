@@ -100,6 +100,7 @@ const barDots = 16;
     const exit = gsap.timeline({
       onComplete: () => {
         gsap.ticker.remove(tick);
+        dots?.dispose();
         window.removeEventListener('resize', layout);
         root.remove();
         lockScroll(false);
