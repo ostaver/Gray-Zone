@@ -1,16 +1,19 @@
 ---
 import Base from '../layouts/Base.astro';
+import Preloader from '../components/shell/Preloader.astro';
+import Hero from '../components/hero/Hero.astro';
+import DownloadModal from '../components/ui/DownloadModal.astro';
 import type { Locale } from '../i18n/config';
-import { ui } from '../i18n/ui';
 
 interface Props {
   locale: Locale;
 }
 
 const { locale } = Astro.props;
-const t = ui[locale];
 ---
 
 <Base locale={locale}>
-  <h1 class="sr-only">{t.meta.title}</h1>
+  <Preloader slot="chrome" locale={locale} />
+  <Hero locale={locale} />
+  <DownloadModal slot="chrome" locale={locale} />
 </Base>

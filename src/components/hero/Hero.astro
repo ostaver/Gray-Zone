@@ -1,0 +1,472 @@
+---
+import { getImage, Picture } from 'astro:assets';
+import mainMenu from '../../assets/gallery/MainMenu.png';
+import type { Locale } from '../../i18n/config';
+import { ui } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = ui[locale].hero;
+const texture = await getImage({ src: mainMenu, width: 1280, format: 'webp', quality: 72 });
+const titleText = t.title.join(' ');
+---
+
+<section class="hero" id="top" data-hero aria-labelledby="hero-title" data-cursor={t.cursor}>
+  <div class="hero__pin" data-hero-pin data-texture={texture.src}>
+    <div class="hero__gl" data-hero-gl aria-hidden="true"></div>
+
+    <div class="hero__fallback" aria-hidden="true">
+      <Picture src={mainMenu} formats={['avif']} fallbackFormat="webp" widths={[640, 1280, 1920]} sizes="100vw" alt="" loading="lazy" class="hero__art hero__art--honest" data-seam-clip="left" />
+      <Picture src={mainMenu} formats={['avif']} fallbackFormat="webp" widths={[640, 1280, 1920]} sizes="100vw" alt="" loading="lazy" class="hero__art hero__art--gray" data-seam-clip="right" />
+    </div>
+    <div class="hero__shade" aria-hidden="true"></div>
+
+    <div class="hero__top">
+      <div class="hero__intro" data-hero-fade>
+        <p class="label hero__eyebrow"><span class="hero__dot" aria-hidden="true"></span>{t.eyebrow}</p>
+        <p class="hero__mark">{t.mark}</p>
+      </div>
+      <dl class="hero__hud" data-hero-fade>
+        <div class="hud__row">
+          <dt class="label">{t.stats.integrity}</dt>
+          <dd><span data-hud="integrity">60</span><i class="hud__bar"><i data-hud-bar="integrity"></i></i></dd>
+        </div>
+        <div class="hud__row">
+          <dt class="label">{t.stats.reputation}</dt>
+          <dd><span data-hud="reputation">65</span><i class="hud__bar"><i data-hud-bar="reputation"></i></i></dd>
+        </div>
+        <div class="hud__row">
+          <dt class="label">{t.stats.time}</dt>
+          <dd><span data-hud="time">08:00</span></dd>
+        </div>
+        <div class="hud__row">
+          <dt class="label">{t.stats.money}</dt>
+          <dd><span data-hud="money">3500</span> <small>{t.currency}</small></dd>
+        </div>
+      </dl>
+    </div>
+
+    <h1 class="hero__title" id="hero-title">
+      <span class="sr-only">{titleText}</span>
+      <span class="hero__layer hero__layer--honest" data-seam-clip="left" aria-hidden="true">
+        {t.title.map((line) => <span class="line-mask"><span class="hero__line">{line}</span></span>)}
+      </span>
+      <span class="hero__layer hero__layer--gray" data-seam-clip="right" aria-hidden="true">
+        {t.title.map((line) => <span class="line-mask"><span class="hero__line">{line}</span></span>)}
+      </span>
+    </h1>
+
+    <div class="hero__sides label" aria-hidden="true">
+      <span class="hero__side hero__side--honest" data-side="honest">← {t.honest}</span>
+      <span class="hero__side hero__side--gray" data-side="gray">{t.gray} →</span>
+    </div>
+
+    <div class="hero__bottom">
+      <div class="hero__lead" data-hero-fade>
+        <p>{t.lead}</p>
+        <ul class="hero__facts label">
+          {t.facts.map((f) => <li>{f}</li>)}
+        </ul>
+      </div>
+      <p class="hero__scroll label" data-hero-fade>
+        <span class="hero__scroll-line" aria-hidden="true"></span>{t.scroll}
+      </p>
+      <div class="hero__ctas" data-hero-fade>
+        <a class="btn btn--primary" href="#download" data-download data-magnetic>
+          <span class="btn__label">{t.cta}</span>
+          <span class="btn__os" data-os-label data-for={t.ctaFor}></span>
+          <span class="btn__icon" aria-hidden="true">↓</span>
+        </a>
+        <a class="btn btn--ghost" href="#tutorial" data-scroll-link>{t.secondary}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initHero } from './hero';
+  const root = document.querySelector<HTMLElement>('[data-hero]');
+  if (root) initHero(root);
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    height: 220svh;
+  }
+  .hero__pin {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: clip;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: calc(var(--nav-h) + 0.75rem) var(--gutter) var(--gutter);
+    touch-action: pan-y;
+  }
+  .hero__gl,
+  .hero__fallback,
+  .hero__shade {
+    position: absolute;
+    inset: 0;
+  }
+  .hero__fallback {
+    display: none;
+  }
+  :global(.no-js) .hero__fallback,
+  :global(.no-webgl) .hero__fallback {
+    display: block;
+  }
+  .hero__fallback :global(.hero__art) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .hero__fallback :global(.hero__art--honest) {
+    clip-path: inset(0 50% 0 0);
+    /* Blur hides the game's own menu UI baked into the art. */
+    filter: saturate(1.35) brightness(0.62) blur(3px);
+  }
+  .hero__fallback :global(.hero__art--gray) {
+    clip-path: inset(0 0 0 50%);
+    filter: grayscale(1) brightness(0.5) blur(3px);
+  }
+  .hero__shade {
+    background:
+      radial-gradient(60% 45% at 50% 50%, rgb(10 10 10 / 0.55), transparent 70%),
+      linear-gradient(to bottom, rgb(10 10 10 / 0.88), rgb(10 10 10 / 0.35) 20%, transparent 32%, transparent 60%, rgb(10 10 10 / 0.9));
+    pointer-events: none;
+  }
+
+  /* ── Top row ───────────────────────────────────────── */
+  .hero__top {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+  .hero__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--paper-dim);
+  }
+  .hero__dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 0 0 rgb(227 38 31 / 0.6);
+    animation: pulse 2.4s var(--ease-out) infinite;
+  }
+  @keyframes pulse {
+    70% { box-shadow: 0 0 0 0.6rem rgb(227 38 31 / 0); }
+    100% { box-shadow: 0 0 0 0 rgb(227 38 31 / 0); }
+  }
+  .hero__mark {
+    margin-top: 0.4rem;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.35rem, 2.1vw, 2rem);
+    line-height: 1.1;
+  }
+  .hero__hud {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(8.5rem, auto));
+    gap: 0.9rem 2rem;
+  }
+  .hud__row dt {
+    color: var(--paper-dim);
+    font-size: 0.625rem;
+  }
+  .hud__row dd {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 0.15rem;
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud__row small {
+    font-size: 0.625rem;
+    color: var(--ash);
+  }
+  .hud__bar {
+    position: relative;
+    flex: 1;
+    min-width: 3.5rem;
+    height: 2px;
+    background: var(--hairline);
+    align-self: center;
+  }
+  .hud__bar > i {
+    position: absolute;
+    inset: 0;
+    background: var(--red);
+    transform-origin: left;
+    transform: scaleX(0.6);
+  }
+
+  /* ── Title ─────────────────────────────────────────── */
+  .hero__title {
+    position: relative;
+    display: grid;
+    place-self: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: min(21vw, 29svh);
+    line-height: 0.84;
+    letter-spacing: -0.012em;
+    text-transform: uppercase;
+    text-align: center;
+    user-select: none;
+  }
+  .hero__layer {
+    grid-area: 1 / 1;
+    display: block;
+    will-change: clip-path;
+  }
+  .hero__layer--honest {
+    color: var(--paper);
+    clip-path: inset(0 50% 0 0);
+  }
+  .hero__layer--gray {
+    clip-path: inset(0 0 0 50%);
+  }
+  /* Halftone-filled outline type. Applied per char: background-clip:text does not follow
+     transformed descendants, and the intro transforms every char. */
+  .hero__layer--gray .hero__line,
+  .hero__layer--gray .hero__line :global(*) {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgb(239 236 230 / 0.78);
+    background: radial-gradient(circle at center, rgb(138 138 134 / 0.95) 0 34%, transparent 38%) 0 0 / 7px 7px;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .hero__line {
+    display: block;
+  }
+
+  .hero__sides {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    pointer-events: none;
+  }
+  .hero__side {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 0.4rem 0.65rem;
+    white-space: nowrap;
+    font-size: 0.625rem;
+    will-change: transform;
+  }
+  .hero__side--honest {
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .hero__side--gray {
+    background: rgb(10 10 10 / 0.75);
+    color: var(--paper-dim);
+    box-shadow: inset 0 0 0 1px var(--hairline);
+  }
+
+  /* ── Bottom row ────────────────────────────────────── */
+  .hero__bottom {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: end;
+    gap: 2rem;
+  }
+  .hero__lead {
+    max-width: 34ch;
+  }
+  .hero__lead p {
+    font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+    line-height: 1.5;
+    color: var(--paper-dim);
+  }
+  .hero__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.1rem;
+    margin-top: 1rem;
+    padding: 0;
+    list-style: none;
+    color: var(--ash);
+    font-size: 0.625rem;
+  }
+  .hero__facts li::before {
+    content: '■';
+    margin-right: 0.45rem;
+    color: var(--red);
+    font-size: 0.5rem;
+    vertical-align: 0.1em;
+  }
+  .hero__scroll {
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+    color: var(--ash);
+    font-size: 0.625rem;
+    text-align: center;
+  }
+  .hero__scroll-line {
+    width: 1px;
+    height: 3rem;
+    background: linear-gradient(var(--paper), transparent);
+    transform-origin: top;
+    animation: drip 2.2s var(--ease-in-out) infinite;
+  }
+  @keyframes drip {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+  .hero__ctas {
+    justify-self: end;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+  }
+
+  /* ── Buttons ───────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .btn--primary {
+    position: relative;
+    padding: 1.15rem 1.6rem;
+    border-radius: 999px;
+    background: var(--red);
+    color: var(--paper);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .btn--primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--paper);
+    border-radius: inherit;
+    transform: translateY(101%);
+    transition: transform 0.6s var(--ease-out);
+  }
+  .btn--primary:hover::before,
+  .btn--primary:focus-visible::before {
+    transform: translateY(0);
+  }
+  .btn--primary:hover,
+  .btn--primary:focus-visible {
+    color: var(--ink);
+  }
+  .btn--primary {
+    transition: color 0.4s;
+  }
+  .btn__os:empty {
+    display: none;
+  }
+  .btn__os {
+    opacity: 0.75;
+  }
+  .btn__icon {
+    display: inline-block;
+    transition: transform 0.5s var(--ease-out);
+  }
+  .btn--primary:hover .btn__icon {
+    transform: translateY(3px);
+  }
+  .btn--ghost {
+    position: relative;
+    padding-block: 0.4rem;
+    color: var(--paper);
+  }
+  .btn--ghost::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: currentColor;
+    transform-origin: right;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .btn--ghost:hover::after {
+    transform: scaleX(0);
+  }
+
+  /* ── Small screens ─────────────────────────────────── */
+  @media (max-width: 760px) {
+    .hero__pin {
+      padding-top: calc(var(--nav-h) + 0.25rem);
+    }
+    .hero__top {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .hero__mark {
+      display: none;
+    }
+    .hero__hud {
+      width: 100%;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+    .hud__row dt {
+      font-size: 0.5rem;
+      letter-spacing: 0.12em;
+    }
+    .hud__row dd {
+      font-size: 0.85rem;
+    }
+    .hud__bar {
+      display: none;
+    }
+    .hero__title {
+      font-size: min(33vw, 25svh);
+    }
+    .hero__bottom {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+    .hero__scroll {
+      display: none;
+    }
+    .hero__ctas {
+      justify-self: stretch;
+      justify-content: space-between;
+    }
+    .hero__facts {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__dot,
+    .hero__scroll-line {
+      animation: none;
+    }
+  }
+</style>

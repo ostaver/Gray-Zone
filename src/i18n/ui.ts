@@ -31,6 +31,7 @@ const mk = {
     lead: 'Стипендија во странство. Краток рок. Секој чекор е избор — чесниот пат или кратенката низ сивата зона.',
     honest: 'Чесен пат',
     gray: 'Сива зона',
+    currency: 'ден.',
     mark: 'Секој избор остава трага.',
     facts: ['Бесплатно', 'Windows · macOS', 'Финансирано од ЕУ'],
     stats: { integrity: 'Интегритет', reputation: 'Репутација', time: 'Време', money: 'Пари' },
@@ -47,6 +48,8 @@ const mk = {
     macNote: 'На macOS можеби ќе треба првпат десен клик → Open и дозвола преку Gatekeeper.',
     version: 'Верзија',
     size: 'ZIP архива',
+    desktopOnly: 'Играта е за компјутер — отвори ја оваа страница на Windows или macOS.',
+    detected: 'Препорачано за твојот уред',
   },
 };
 
@@ -85,6 +88,7 @@ const en: UIDict = {
     gray: 'Gray zone',
     mark: 'Every choice leaves a mark.',
     facts: ['Free', 'Windows · macOS', 'Funded by the EU'],
+    currency: 'MKD',
     stats: { integrity: 'Integrity', reputation: 'Reputation', time: 'Time', money: 'Money' },
     cta: 'Download free',
     ctaFor: 'for',
@@ -99,6 +103,8 @@ const en: UIDict = {
     macNote: 'On macOS, you may need to right-click → Open the first time and allow Gatekeeper.',
     version: 'Version',
     size: 'ZIP archive',
+    desktopOnly: 'The game runs on computers — open this page on Windows or macOS.',
+    detected: 'Recommended for your device',
   },
 };
 
