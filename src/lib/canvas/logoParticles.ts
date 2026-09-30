@@ -25,6 +25,8 @@ export class LogoParticles {
   zoom = 1;
   /** Logo diameter in CSS px (for laying out UI around it). */
   size = 0;
+  /** Dot grid pitch in CSS px. */
+  cell = 0;
   private dots: Dot[] = [];
   private readonly ctx: CanvasRenderingContext2D;
   private w = 0;
@@ -54,6 +56,7 @@ export class LogoParticles {
     // ~5.5px cells keep the lettering legible on phones; cap the count on large screens.
     const grid = Math.round(Math.max(36, Math.min(60, size / 5.5)));
     const cell = size / grid;
+    this.cell = cell;
     const sample = document.createElement('canvas');
     sample.width = sample.height = grid;
     const sctx = sample.getContext('2d', { willReadFrequently: true });
@@ -88,7 +91,8 @@ export class LogoParticles {
         });
       }
     }
-    this.dots = dots;
+    // Grouped by colour so a frame is one fill per colour, not one per dot.
+    this.dots = dots.sort((p, q) => (p.color < q.color ? -1 : p.color > q.color ? 1 : 0));
   }
 
   draw(): void {
@@ -104,14 +108,23 @@ export class LogoParticles {
     ctx.setTransform(cos, sin, -sin, cos, (dpr * this.w) / 2, (dpr * this.h) / 2);
     const grow = 1 / Math.sqrt(this.zoom);
     const span = 0.6;
+    let color = '';
     for (const d of this.dots) {
       const t = Math.min(1, Math.max(0, (this.assemble - d.delay) / span));
       const e = 1 - Math.pow(1 - t, 4);
       if (e <= 0) continue;
-      ctx.fillStyle = d.color;
-      ctx.beginPath();
-      ctx.arc(d.sx + (d.tx - d.sx) * e, d.sy + (d.ty - d.sy) * e, d.r * e * grow, 0, Math.PI * 2);
-      ctx.fill();
+      if (d.color !== color) {
+        if (color) ctx.fill();
+        color = d.color;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+      }
+      const x = d.sx + (d.tx - d.sx) * e;
+      const y = d.sy + (d.ty - d.sy) * e;
+      const r = d.r * e * grow;
+      ctx.moveTo(x + r, y);
+      ctx.arc(x, y, r, 0, Math.PI * 2);
     }
+    if (color) ctx.fill();
   }
 }

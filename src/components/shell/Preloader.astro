@@ -3,12 +3,16 @@ import { getImage } from 'astro:assets';
 import logo from '../../assets/brand/logo.png';
 
 const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
+// Progress dots; the first half takes the logo's red, the second its cream.
+const barDots = 16;
 ---
 
 <div class="pre" data-preloader data-logo={logoImg.src} aria-hidden="true">
   <div class="pre__veil"></div>
   <canvas class="pre__dots"></canvas>
-  <div class="pre__bar"><i class="pre__fill"></i></div>
+  <div class="pre__bar">
+    {Array.from({ length: barDots }, (_, i) => <i class:list={{ 'is-honest': i < barDots / 2 }} style={`--i:${i}`}></i>)}
+  </div>
 </div>
 
 <script>
@@ -44,18 +48,19 @@ const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
     const veil = root.querySelector<HTMLElement>('.pre__veil')!;
     const canvas = root.querySelector<HTMLCanvasElement>('.pre__dots')!;
     const bar = root.querySelector<HTMLElement>('.pre__bar')!;
-    const fill = root.querySelector<HTMLElement>('.pre__fill')!;
+    const barDots = [...bar.children] as HTMLElement[];
 
     const img = new Image();
     img.src = root.dataset.logo ?? '';
     await img.decode().catch(() => undefined);
     const dots = img.naturalWidth ? new LogoParticles(canvas, img) : null;
 
-    // Lay out the bar under the logo.
+    // Put the bar on the logo's own dot grid, under the disc.
     const layout = () => {
       if (!dots) return;
       dots.layout();
       root.style.setProperty('--logo', `${dots.size}px`);
+      root.style.setProperty('--cell', `${dots.cell}px`);
     };
     layout();
     window.addEventListener('resize', layout);
@@ -77,18 +82,21 @@ const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
         shown = 1;
         filled.resolve();
       }
-      fill.style.transform = `scaleX(${shown})`;
+      bar.style.setProperty('--p', (shown * barDots.length).toFixed(3));
     };
     gsap.ticker.add(tick);
 
     gsap.from(bar, { opacity: 0, duration: 1.4, delay: short ? 0 : 0.5, ease: 'power2.out' });
+    gsap.from(barDots, { scale: 0, duration: 0.7, delay: short ? 0 : 0.5, ease: 'back.out(2)', stagger: { each: 0.035, from: 'center' } });
     if (dots) gsap.fromTo(dots, { assemble: short ? 1.5 : 0 }, { assemble: 1.5, duration: short ? 0.01 : 1.8, ease: 'power2.inOut' });
 
     await filled.promise;
 
-    // Exit: the bar drains into the centre, then the logo turns one full revolution while it
-    // swells past the viewer. Its dots thin out over the hero, whose field develops from the
-    // centre and whose seam picks up exactly where the logo's own tear ends upright.
+    // Exit, one overlapping gesture: the progress dots gather into the tear between their
+    // halves; the logo turns one full revolution while it swells past the viewer, its dots
+    // thinning out over the hero, whose field develops from the centre. The turn lands
+    // upright, so the logo's tear hands over to the hero's seam.
+    const pitch = barDots[1].offsetLeft - barDots[0].offsetLeft;
     const exit = gsap.timeline({
       onComplete: () => {
         gsap.ticker.remove(tick);
@@ -98,19 +106,19 @@ const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
       },
     });
     exit
-      .to(bar, { scaleX: 0, transformOrigin: '50% 50%', duration: 0.6, ease: 'expo.inOut' }, 0)
-      .to(bar, { opacity: 0, duration: 0.3, ease: 'power1.in' }, 0.3)
-      .to(dots ?? {}, { rotation: 360, duration: 1.85, ease: 'power3.inOut' }, 0.15)
-      .to(dots ?? {}, { zoom: 9, duration: 1.6, ease: 'power3.in' }, 0.5)
+      .to(barDots, { x: (i: number) => ((barDots.length - 1) / 2 - i) * pitch, opacity: 0, duration: 0.8, ease: 'power2.in', stagger: { each: 0.015, from: 'edges' } }, 0)
+      .to(dots ?? {}, { rotation: 360, duration: 2.6, ease: 'sine.inOut' }, 0.25)
+      .to(dots ?? {}, { zoom: 6.5, duration: 2.4, ease: 'power2.in' }, 0.45)
       .add(signalReady, 1.15)
-      .to(veil, { opacity: 0, duration: 1.1, ease: 'power2.inOut' }, 1.1)
-      .to(canvas, { opacity: 0, duration: 0.7, ease: 'power2.in' }, 1.5);
+      .to(veil, { opacity: 0, duration: 1.6, ease: 'sine.inOut' }, 1.05)
+      .to(canvas, { opacity: 0, duration: 1.3, ease: 'sine.inOut' }, 1.55);
   }
 </script>
 
 <style>
   .pre {
     --logo: min(60vw, 38vh, 360px);
+    --cell: calc(var(--logo) / 60);
     position: fixed;
     inset: 0;
     z-index: var(--z-preloader);
@@ -170,17 +178,32 @@ const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
     position: absolute;
     left: 50%;
     top: calc(50% + var(--logo) / 2 + clamp(1.75rem, 5vh, 3rem));
-    width: calc(var(--logo) * 0.46);
-    height: 1px;
-    translate: -50% 0;
-    background: rgb(239 236 230 / 0.12);
-    overflow: hidden;
+    display: flex;
+    gap: calc(var(--cell) * 1.3);
+    translate: -50% -50%;
   }
-  .pre__fill {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgb(239 236 230 / 0.25), var(--paper));
-    transform-origin: left;
-    transform: scaleX(0);
+  /* One dot per step, on the logo's own grid (a pitch of two cells). A dot lights as the
+     progress passes it, in its half's colour; the one being filled swells and glows, so the
+     leading edge reads as a single travelling spark. State lives on ::before; the <i> is
+     left to GSAP's intro/exit motion. */
+  .pre__bar i {
+    --c: var(--paper);
+    --lit: clamp(0, var(--p, 0) - var(--i), 1);
+    --head: calc(var(--lit) * (1 - var(--lit)) * 4);
+    width: calc(var(--cell) * 0.7);
+    aspect-ratio: 1;
+  }
+  .pre__bar i::before {
+    content: '';
+    display: block;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--c);
+    opacity: calc(0.16 + 0.84 * var(--lit));
+    scale: calc(1 + 0.6 * var(--head));
+    box-shadow: 0 0 calc(var(--cell) * 1.8) color-mix(in srgb, var(--c) calc(var(--head) * 80%), transparent);
+  }
+  .pre__bar .is-honest {
+    --c: var(--red);
   }
 </style>
