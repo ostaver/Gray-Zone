@@ -20,11 +20,6 @@ const mk = {
     contact: 'Контакт',
     download: 'Преземи',
   },
-  preloader: {
-    label: 'Сива Зона / Едукативна игра',
-    loading: 'Се вчитува',
-    meta: 'Интегритет · Избор · Последица',
-  },
   hero: {
     title: ['Сива', 'Зона'],
     eyebrow: 'Едукативна игра за средношколци',
@@ -74,11 +69,6 @@ const en: UIDict = {
     team: 'Team',
     contact: 'Contact',
     download: 'Download',
-  },
-  preloader: {
-    label: 'Gray Zone / Educational game',
-    loading: 'Loading',
-    meta: 'Integrity · Choice · Consequence',
   },
   hero: {
     title: ['Gray', 'Zone'],

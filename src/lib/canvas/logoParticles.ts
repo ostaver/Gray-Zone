@@ -21,6 +21,8 @@ const SHADE = '#3a3a3a';
 export class LogoParticles {
   assemble = 0;
   split = 0;
+  /** Logo diameter in CSS px (for laying out UI around it). */
+  size = 0;
   private dots: Dot[] = [];
   private readonly ctx: CanvasRenderingContext2D;
   private w = 0;
@@ -46,8 +48,10 @@ export class LogoParticles {
     this.canvas.height = Math.round(this.h * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const size = Math.min(this.w * 0.62, this.h * 0.5, 460);
-    const grid = Math.round(Math.max(30, Math.min(56, size / 7)));
+    const size = Math.min(this.w * 0.6, this.h * 0.38, 360);
+    this.size = size;
+    // ~5.5px cells keep the lettering legible on phones; cap the count on large screens.
+    const grid = Math.round(Math.max(36, Math.min(60, size / 5.5)));
     const cell = size / grid;
     const sample = document.createElement('canvas');
     sample.width = sample.height = grid;
