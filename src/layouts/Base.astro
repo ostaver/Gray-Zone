@@ -1,0 +1,108 @@
+---
+import '@fontsource-variable/oswald';
+import '@fontsource-variable/inter-tight';
+import '@fontsource-variable/jetbrains-mono';
+import '@fontsource/cormorant-garamond/400-italic.css';
+import '@fontsource/cormorant-garamond/500-italic.css';
+import '../styles/global.css';
+
+import { htmlLang, locales, localePath, ogLocale, type Locale } from '../i18n/config';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  /** Locale-free path of this page, e.g. '/'. */
+  path?: string;
+}
+
+const { locale, path = '/' } = Astro.props;
+const t = ui[locale];
+const canonical = new URL(localePath(locale, path), Astro.site);
+const GA_ID = 'G-ZQ981XQYYV';
+---
+
+<!doctype html>
+<html lang={htmlLang[locale]} class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{t.meta.title}</title>
+    <meta name="description" content={t.meta.description} />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href={canonical} />
+    {locales.map((l) => <link rel="alternate" hreflang={htmlLang[l]} href={new URL(localePath(l, path), Astro.site)} />)}
+    <link rel="alternate" hreflang="x-default" href={new URL(localePath('mk', path), Astro.site)} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={t.meta.siteName} />
+    <meta property="og:title" content={t.meta.title} />
+    <meta property="og:description" content={t.meta.description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={ogLocale[locale]} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script is:inline>
+      // Before first paint: JS flag, and preloader mode (full on first visit per session, short after).
+      (function () {
+        var d = document.documentElement;
+        d.classList.replace('no-js', 'js');
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var seen = false;
+        try { seen = sessionStorage.getItem('sz-seen') === '1'; sessionStorage.setItem('sz-seen', '1'); } catch (e) {}
+        d.dataset.preload = reduce ? 'none' : seen ? 'short' : 'full';
+      })();
+    </script>
+
+    <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}></script>
+    <script is:inline define:vars={{ GA_ID }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', GA_ID);
+    </script>
+  </head>
+  <body>
+    <a class="skip-link label" href="#main">{t.a11y.skip}</a>
+    <canvas id="gl-stage" aria-hidden="true"></canvas>
+    <slot name="chrome" />
+    <main id="main">
+      <slot />
+    </main>
+    <div class="grain" aria-hidden="true"></div>
+  </body>
+</html>
+
+<script>
+  import { initScroll } from '../lib/motion/scroll';
+  initScroll();
+</script>
+
+<style>
+  #gl-stage {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100lvh;
+    z-index: var(--z-gl);
+    pointer-events: none;
+  }
+  main {
+    position: relative;
+    z-index: var(--z-content);
+  }
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: calc(var(--z-preloader) + 1);
+    padding: 0.75rem 1rem;
+    background: var(--paper);
+    color: var(--ink);
+    transform: translateY(-200%);
+  }
+  .skip-link:focus-visible {
+    transform: none;
+  }
+</style>
