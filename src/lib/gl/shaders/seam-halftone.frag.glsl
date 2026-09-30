@@ -74,12 +74,18 @@ float hash11(float p) {
   return fract(p);
 }
 
+// One entry of the packed seam array. Component select via mask: dynamic vector indexing
+// is emulated (slowly) on several GPU drivers.
+float seamSample(int i) {
+  vec4 v = uSeam[i >> 2];
+  return dot(v, vec4(equal(ivec4(i & 3), ivec4(0, 1, 2, 3))));
+}
+
 // Seam x (fraction of width) at vertical position y (0 = top), linearly interpolated.
 float seamAt(float y) {
   float f = clamp(y, 0.0, 1.0) * 127.0;
   int i = int(floor(f));
-  int j = min(i + 1, 127);
-  return mix(uSeam[i >> 2][i & 3], uSeam[j >> 2][j & 3], fract(f));
+  return mix(seamSample(i), seamSample(min(i + 1, 127)), fract(f));
 }
 
 float disc(vec2 p, float r, float aa) {

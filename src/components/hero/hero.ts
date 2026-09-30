@@ -16,6 +16,8 @@ export function initHero(root: HTMLElement): void {
   const sideHonest = root.querySelector<HTMLElement>('[data-side="honest"]')!;
   const sideGray = root.querySelector<HTMLElement>('[data-side="gray"]')!;
   const still = reducedMotion.matches;
+  // Seam-driven UI (path labels) is only meaningful once this script is running.
+  root.dataset.live = '';
 
   // ── Seam + shared state ────────────────────────────────────
   const seam = new SeamModel();
