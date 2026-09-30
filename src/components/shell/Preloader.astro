@@ -3,33 +3,12 @@ import { getImage } from 'astro:assets';
 import logo from '../../assets/brand/logo.png';
 
 const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
-
-// Deterministic torn line through the logo's own tear (x ≈ 50%). Shared by the SVG stroke,
-// both panel clip-paths and the particle side test, so everything rips along one edge.
-let seed = 11;
-const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-// Many short segments with small, correlated drift read as torn paper; few large ones read
-// as lightning.
-const rows = 110;
-const tear: [number, number][] = [];
-for (let i = 0, x = 50, drift = 0; i <= rows; i++) {
-  if (rand() < 0.1) drift = (rand() - 0.5) * 0.5;
-  drift *= 0.8;
-  x = 50 + (x - 50) * 0.9 + drift + (rand() - 0.5) * 0.45;
-  tear.push([+x.toFixed(2), +((i / rows) * 100).toFixed(2)]);
-}
-// Extend the ends past the viewport so rotated panels never expose a corner.
-const tearPts = tear.map(([x, y]) => `${x}% ${y === 0 ? -10 : y === 100 ? 110 : y}%`).join(',');
-const leftClip = `polygon(-10% -10%, ${tearPts}, -10% 110%)`;
-const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
 ---
 
-<div class="pre" data-preloader data-logo={logoImg.src} data-tear={JSON.stringify(tear)} aria-hidden="true">
-  <div class="pre__panel pre__panel--l" style={`clip-path:${leftClip}`}><canvas class="pre__field"></canvas></div>
-  <div class="pre__panel pre__panel--r" style={`clip-path:${rightClip}`}><canvas class="pre__field"></canvas></div>
+<div class="pre" data-preloader data-logo={logoImg.src} aria-hidden="true">
+  <div class="pre__veil"></div>
   <canvas class="pre__dots"></canvas>
   <div class="pre__bar"><i class="pre__fill"></i></div>
-  <svg class="pre__tear"><path></path></svg>
 </div>
 
 <script>
@@ -37,11 +16,6 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
   import { lockScroll } from '../../lib/motion/scroll';
   import { assetProgress, assetsSettled, signalReady, trackAsset } from '../../lib/lifecycle';
   import { LogoParticles } from '../../lib/canvas/logoParticles';
-  import { ChromaField, type Palette } from '../../lib/gl/chromaField';
-
-  // The logo's two halves: red on the honest side; black with cream on the gray side.
-  const RED: Palette = [['#e3261f', 0], ['#3a0806', 1], ['#7a100c', 1], ['#b81a14', 1], ['#e3261f', 1]];
-  const GRAY: Palette = [['#3a3a3a', 0], ['#1e1e1e', 1], ['#3a3a3a', 1], ['#8a8a86', 1], ['#efece6', 1]];
 
   const root = document.querySelector<HTMLElement>('[data-preloader]');
   const mode = document.documentElement.dataset.preload;
@@ -67,47 +41,21 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     lockScroll(true);
     trackAsset(document.fonts.ready);
 
-    const tear: [number, number][] = JSON.parse(root.dataset.tear ?? '[]');
-    const tearAt = (y: number) => {
-      const f = Math.min(1, Math.max(0, y)) * (tear.length - 1);
-      const i = Math.floor(f);
-      const [a] = tear[i];
-      const [b] = tear[Math.min(i + 1, tear.length - 1)];
-      return (a + (b - a) * (f - i)) / 100;
-    };
-
+    const veil = root.querySelector<HTMLElement>('.pre__veil')!;
     const canvas = root.querySelector<HTMLCanvasElement>('.pre__dots')!;
     const bar = root.querySelector<HTMLElement>('.pre__bar')!;
     const fill = root.querySelector<HTMLElement>('.pre__fill')!;
-    const svg = root.querySelector<SVGSVGElement>('.pre__tear')!;
-    const path = svg.querySelector('path')!;
 
     const img = new Image();
     img.src = root.dataset.logo ?? '';
     await img.decode().catch(() => undefined);
-    const dots = img.naturalWidth ? new LogoParticles(canvas, img, tearAt) : null;
-    const [fieldL, fieldR] = root.querySelectorAll<HTMLCanvasElement>('.pre__field');
-    const tearXs = tear.map(([x]) => x / 100);
-    const field = ChromaField.create({
-      left: fieldL,
-      right: fieldR,
-      palettes: { left: RED, right: GRAY },
-      split: [Math.min(...tearXs), Math.max(...tearXs)],
-      cell: 16,
-    });
+    const dots = img.naturalWidth ? new LogoParticles(canvas, img) : null;
 
-    // Lay out the bar under the logo and the tear in real px (DrawSVG needs an unscaled path).
+    // Lay out the bar under the logo.
     const layout = () => {
-      dots?.layout();
-      field?.resize();
-      if (dots) {
-        root.style.setProperty('--logo', `${dots.size}px`);
-        if (field) field.pocket = dots.size * 0.62;
-      }
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      path.setAttribute('d', `M${tear.map(([x, y]) => `${((x / 100) * w).toFixed(1)} ${((y / 100) * h).toFixed(1)}`).join(' L')}`);
+      if (!dots) return;
+      dots.layout();
+      root.style.setProperty('--logo', `${dots.size}px`);
     };
     layout();
     window.addEventListener('resize', layout);
@@ -122,7 +70,6 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     let shown = 0;
     const tick = (time: number, deltaMs: number) => {
       dots?.draw();
-      field?.render(time);
       const paced = Math.min(1, (time - start) / minDuration);
       const target = Math.min(paced, workDone ? 1 : assetProgress() * 0.9);
       shown += (target - shown) * (1 - Math.exp((-deltaMs / 1000) * 6));
@@ -136,35 +83,28 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
 
     gsap.from(bar, { opacity: 0, duration: 1.4, delay: short ? 0 : 0.5, ease: 'power2.out' });
     if (dots) gsap.fromTo(dots, { assemble: short ? 1.5 : 0 }, { assemble: 1.5, duration: short ? 0.01 : 1.8, ease: 'power2.inOut' });
-    if (field) gsap.to(field, { intro: 1, duration: short ? 0.6 : 2.4, ease: 'power2.out' });
 
     await filled.promise;
 
-    // Exit: the bar gathers into the tear, the tear runs outward from that point, and the
-    // page rips open along it.
-    const box = bar.getBoundingClientRect();
-    const barY = (box.top + box.height / 2) / window.innerHeight;
-    const origin = tearAt(barY) * window.innerWidth - box.left;
-    const at = `${(barY * 100).toFixed(2)}%`;
-
+    // Exit: the bar drains into the centre, then the logo turns one full revolution while it
+    // swells past the viewer. Its dots thin out over the hero, whose field develops from the
+    // centre and whose seam picks up exactly where the logo's own tear ends upright.
     const exit = gsap.timeline({
       onComplete: () => {
         gsap.ticker.remove(tick);
-        field?.dispose();
         window.removeEventListener('resize', layout);
         root.remove();
         lockScroll(false);
       },
     });
     exit
-      .to(bar, { scaleX: 0, transformOrigin: `${origin}px 50%`, duration: 0.6, ease: 'expo.inOut' }, 0.2)
-      .fromTo(path, { drawSVG: `${at} ${at}` }, { drawSVG: '0% 100%', duration: 0.75, ease: 'power3.inOut' }, 0.55)
-      .add(signalReady, 1.1)
-      .set(root, { backgroundColor: 'transparent' }, 1.15)
-      .to('.pre__panel--l', { yPercent: -104, xPercent: -2, rotation: -2.5, duration: 1.25, ease: 'tear' }, 1.15)
-      .to('.pre__panel--r', { yPercent: 104, xPercent: 2, rotation: 2.5, duration: 1.25, ease: 'tear' }, 1.15)
-      .to(dots ?? {}, { split: 1, duration: 1.25, ease: 'tear' }, 1.15)
-      .to(svg, { opacity: 0, duration: 0.4, ease: 'power1.in' }, 1.3);
+      .to(bar, { scaleX: 0, transformOrigin: '50% 50%', duration: 0.6, ease: 'expo.inOut' }, 0)
+      .to(bar, { opacity: 0, duration: 0.3, ease: 'power1.in' }, 0.3)
+      .to(dots ?? {}, { rotation: 360, duration: 1.85, ease: 'power3.inOut' }, 0.15)
+      .to(dots ?? {}, { zoom: 9, duration: 1.6, ease: 'power3.in' }, 0.5)
+      .add(signalReady, 1.15)
+      .to(veil, { opacity: 0, duration: 1.1, ease: 'power2.inOut' }, 1.1)
+      .to(canvas, { opacity: 0, duration: 0.7, ease: 'power2.in' }, 1.5);
   }
 </script>
 
@@ -175,9 +115,6 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     inset: 0;
     z-index: var(--z-preloader);
     pointer-events: auto;
-    /* Backs the two clipped panels: their anti-aliased edges would otherwise let a hairline
-       of the page through along the tear. Cleared when they rip apart. */
-    background: var(--ink);
     /* Failsafe: if the preloader script never starts (blocked, failed to load), fade the
        overlay out on its own. The script sets [data-live] on start, which cancels this. */
     animation: pre-failsafe 0.6s ease 6s forwards;
@@ -197,18 +134,15 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     display: none;
   }
 
-  /* Each half carries the full-screen vignette, so the two halves read as one surface
-     until they tear apart. */
-  .pre__panel {
+  .pre__veil {
     position: absolute;
     inset: 0;
     background:
       radial-gradient(ellipse 120% 95% at 50% 50%, transparent 38%, rgb(0 0 0 / 0.72) 100%),
       radial-gradient(ellipse 70% 60% at 50% 48%, #151313 0%, var(--ink) 62%);
-    will-change: transform;
   }
   /* A faint ember behind the logo, breathing slowly. */
-  .pre__panel::before {
+  .pre__veil::before {
     content: '';
     position: absolute;
     left: 50%;
@@ -224,15 +158,8 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     from { opacity: 0.55; scale: 0.94; }
     to { opacity: 1; scale: 1.04; }
   }
-  .pre__panel--l {
-    transform-origin: 50% 100%;
-  }
-  .pre__panel--r {
-    transform-origin: 50% 0%;
-  }
 
-  .pre__dots,
-  .pre__field {
+  .pre__dots {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -255,22 +182,5 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     background: linear-gradient(90deg, rgb(239 236 230 / 0.25), var(--paper));
     transform-origin: left;
     transform: scaleX(0);
-  }
-
-  .pre__tear {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    pointer-events: none;
-  }
-  .pre__tear path {
-    fill: none;
-    stroke: var(--paper);
-    stroke-width: 1.25;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 0 6px rgb(239 236 230 / 0.45));
-    stroke-dasharray: 0 1e5;
   }
 </style>

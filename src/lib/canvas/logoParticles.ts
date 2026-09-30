@@ -1,8 +1,10 @@
 /**
- * Canvas2D halftone of the logo. Dots fly in from scatter, settle into the torn disc,
- * then ride the two halves of the tear apart. Driven externally via `assemble` / `split`.
+ * Canvas2D halftone of the logo. Dots fly in from scatter and settle into the torn disc; the
+ * disc can then turn and zoom about the viewport centre. Driven externally via `assemble`,
+ * `rotation` (degrees) and `zoom`.
  */
 
+/** Positions are relative to the viewport centre, CSS px. */
 interface Dot {
   tx: number;
   ty: number;
@@ -11,7 +13,6 @@ interface Dot {
   r: number;
   color: string;
   delay: number;
-  side: -1 | 1;
 }
 
 const PAPER = '#efece6';
@@ -20,19 +21,19 @@ const SHADE = '#3a3a3a';
 
 export class LogoParticles {
   assemble = 0;
-  split = 0;
+  rotation = 0;
+  zoom = 1;
   /** Logo diameter in CSS px (for laying out UI around it). */
   size = 0;
   private dots: Dot[] = [];
   private readonly ctx: CanvasRenderingContext2D;
   private w = 0;
   private h = 0;
+  private dpr = 1;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly logo: HTMLImageElement,
-    /** Tear x (fraction of viewport width) at vertical fraction y. */
-    private readonly tearAt: (y: number) => number,
   ) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2d context unavailable');
@@ -42,11 +43,11 @@ export class LogoParticles {
 
   layout(): void {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.dpr = dpr;
     this.w = window.innerWidth;
     this.h = window.innerHeight;
     this.canvas.width = Math.round(this.w * dpr);
     this.canvas.height = Math.round(this.h * dpr);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const size = Math.min(this.w * 0.6, this.h * 0.38, 360);
     this.size = size;
@@ -60,8 +61,7 @@ export class LogoParticles {
     sctx.drawImage(this.logo, 0, 0, grid, grid);
     const { data } = sctx.getImageData(0, 0, grid, grid);
 
-    const ox = this.w / 2 - size / 2;
-    const oy = this.h / 2 - size / 2;
+    const o = -size / 2;
     const dots: Dot[] = [];
     for (let gy = 0; gy < grid; gy++) {
       for (let gx = 0; gx < grid; gx++) {
@@ -73,19 +73,18 @@ export class LogoParticles {
         const b = data[i + 2] / 255;
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
         const color = lum > 0.62 ? PAPER : r > 0.35 && r > g * 1.8 ? RED : SHADE;
-        const tx = ox + (gx + 0.5) * cell;
-        const ty = oy + (gy + 0.5) * cell;
+        const tx = o + (gx + 0.5) * cell;
+        const ty = o + (gy + 0.5) * cell;
         const angle = Math.random() * Math.PI * 2;
         const dist = Math.max(this.w, this.h) * (0.35 + Math.random() * 0.5);
         dots.push({
           tx,
           ty,
-          sx: this.w / 2 + Math.cos(angle) * dist,
-          sy: this.h / 2 + Math.sin(angle) * dist,
+          sx: Math.cos(angle) * dist,
+          sy: Math.sin(angle) * dist,
           r: cell * (color === SHADE ? 0.34 : 0.42) * (0.75 + lum * 0.35),
           color,
-          delay: Math.hypot(tx - this.w / 2, ty - this.h / 2) / size * 0.45 + Math.random() * 0.12,
-          side: tx < this.tearAt(ty / this.h) * this.w ? -1 : 1,
+          delay: Math.hypot(tx, ty) / size * 0.45 + Math.random() * 0.12,
         });
       }
     }
@@ -93,19 +92,25 @@ export class LogoParticles {
   }
 
   draw(): void {
-    const { ctx } = this;
-    ctx.clearRect(0, 0, this.w, this.h);
+    const { ctx, dpr } = this;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // Turn + zoom about the viewport centre. Dots grow only with √zoom while the gaps grow
+    // with zoom, so a zoomed logo thins out into a loose field.
+    const a = (this.rotation * Math.PI) / 180;
+    const k = dpr * this.zoom;
+    const cos = Math.cos(a) * k;
+    const sin = Math.sin(a) * k;
+    ctx.setTransform(cos, sin, -sin, cos, (dpr * this.w) / 2, (dpr * this.h) / 2);
+    const grow = 1 / Math.sqrt(this.zoom);
     const span = 0.6;
-    const splitE = this.split;
     for (const d of this.dots) {
       const t = Math.min(1, Math.max(0, (this.assemble - d.delay) / span));
       const e = 1 - Math.pow(1 - t, 4);
       if (e <= 0) continue;
-      const x = d.sx + (d.tx - d.sx) * e + d.side * splitE * this.w * 0.04;
-      const y = d.sy + (d.ty - d.sy) * e + d.side * splitE * this.h * 1.05;
       ctx.fillStyle = d.color;
       ctx.beginPath();
-      ctx.arc(x, y, d.r * e, 0, Math.PI * 2);
+      ctx.arc(d.sx + (d.tx - d.sx) * e, d.sy + (d.ty - d.sy) * e, d.r * e * grow, 0, Math.PI * 2);
       ctx.fill();
     }
   }

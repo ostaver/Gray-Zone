@@ -1,7 +1,7 @@
 import { gsap, ScrollTrigger, SplitText, coarsePointer, reducedMotion } from '../../lib/motion/gsap';
 import { magnetic } from '../../lib/motion/magnetic';
 import { scrollToTarget } from '../../lib/motion/scroll';
-import { appReady, trackAsset } from '../../lib/lifecycle';
+import { appReady } from '../../lib/lifecycle';
 import { getStage } from '../../lib/gl/stage';
 import { createSeamHalftone, type SeamHalftoneState } from '../../lib/gl/views/seamHalftone';
 import { detectPlatform } from '../../lib/platform';
@@ -20,8 +20,8 @@ export function initHero(root: HTMLElement): void {
   root.dataset.live = '';
 
   // ── Seam + shared state ────────────────────────────────────
+  // Starts centred: the preloader's logo zooms through its own tear, which hands over here.
   const seam = new SeamModel();
-  seam.split = still ? 0.5 : 1.12; // intro: the tear sweeps in from the right
   const state: SeamHalftoneState = {
     seam: seam.xs,
     mouse: { x: -1e4, y: -1e4 },
@@ -37,16 +37,14 @@ export function initHero(root: HTMLElement): void {
   // ── WebGL field (or DOM fallback when the stage is unavailable) ──
   const stage = getStage();
   if (stage) {
-    const { view, loaded } = createSeamHalftone(stage, {
-      el: glEl,
-      imageUrl: pin.dataset.texture ?? '',
-      cell: coarsePointer.matches ? 9 : 11,
-      noiseMix: 0.38,
-      fps: coarsePointer.matches ? 30 : 60,
-      state,
-    });
-    trackAsset(loaded);
-    stage.add(view);
+    stage.add(
+      createSeamHalftone(stage, {
+        el: glEl,
+        cell: coarsePointer.matches ? 13 : 16,
+        fps: coarsePointer.matches ? 30 : 60,
+        state,
+      }),
+    );
   }
 
   // ── Geometry for DOM clip-paths ────────────────────────────
@@ -151,7 +149,7 @@ export function initHero(root: HTMLElement): void {
     const dt = prev ? time - prev : 1 / 60;
     prev = time;
     if (!inView) return;
-    // Before the intro releases it, the seam keeps its off-screen start.
+    // Before the intro releases it, the seam holds its starting line.
     if (introDone) {
       if (still) target = 0.5;
       else if (pointer) target = 0.1 + pointer.x * 0.8;

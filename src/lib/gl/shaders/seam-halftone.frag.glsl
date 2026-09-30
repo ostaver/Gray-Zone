@@ -1,16 +1,16 @@
 #version 300 es
 precision highp float;
 
+// Hero field: the Chromatic theme's "Chromatic Waves" (the luminance of a slowly drifting
+// simplex rainbow, drawn as a dot grid) in the logo's colours, split by the torn seam.
+
 // View geometry (device px, gl_FragCoord space) and CSS-px scale.
 uniform vec2 uRes;
 uniform vec2 uOffset;
 uniform float uDpr;
 
 uniform float uTime;
-uniform float uCell;        // halftone cell, CSS px
-uniform sampler2D uImage;   // game art (flipY upload: v=0 is the bottom row)
-uniform vec2 uImageScale;   // object-fit: cover scale in uv space
-uniform float uNoiseMix;    // 0 = pure art luminance, 1 = pure simplex field
+uniform float uCell;        // dot cell, CSS px
 uniform vec4 uSeam[32];     // 128 seam x positions (fraction of width), top → bottom
 uniform vec2 uMouse;        // CSS px, top-left origin
 uniform float uMouseForce;  // 0..1, pointer speed
@@ -74,6 +74,12 @@ float hash11(float p) {
   return fract(p);
 }
 
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
 // One entry of the packed seam array. Component select via mask: dynamic vector indexing
 // is emulated (slowly) on several GPU drivers.
 float seamSample(int i) {
@@ -95,64 +101,80 @@ float disc(vec2 p, float r, float aa) {
 const vec3 PAPER = vec3(0.937, 0.925, 0.902);
 const vec3 RED = vec3(0.890, 0.149, 0.122);
 
+// Chromatic theme hero settings, mapped from its UI scale to shader units.
+const float FREQUENCY = 1.19;
+const float SPEED = 0.15;
+const float GAMMA = 2.08;
+const float BIAS = -0.1;
+
+// Five-stop ramp, darkest (transparent) → brightest; branchless piecewise-linear.
+vec4 ramp(vec4 a, vec4 b, vec4 c, vec4 d, vec4 e, float g) {
+  float s = g * 4.0;
+  vec4 col = mix(a, b, clamp(s, 0.0, 1.0));
+  col = mix(col, c, clamp(s - 1.0, 0.0, 1.0));
+  col = mix(col, d, clamp(s - 2.0, 0.0, 1.0));
+  return mix(col, e, clamp(s - 3.0, 0.0, 1.0));
+}
+// The logo's halves: red on the honest side; black with cream lettering in the gray zone.
+vec4 honest(float g) {
+  return ramp(vec4(RED, 0.0), vec4(0.227, 0.031, 0.024, 1.0), vec4(0.478, 0.063, 0.047, 1.0), vec4(0.722, 0.102, 0.078, 1.0), vec4(RED, 1.0), g);
+}
+vec4 grayZone(float g) {
+  return ramp(vec4(0.227, 0.227, 0.227, 0.0), vec4(0.118, 0.118, 0.118, 1.0), vec4(0.227, 0.227, 0.227, 1.0), vec4(0.541, 0.541, 0.525, 1.0), vec4(PAPER, 1.0), g);
+}
+
 void main() {
   vec2 px = gl_FragCoord.xy - uOffset;
   vec2 size = uRes / uDpr;
   vec2 css = vec2(px.x, uRes.y - px.y) / uDpr;
+  float aspect = size.x / size.y;
 
-  // ── Halftone grid ────────────────────────────────────────────
+  // ── Dot grid (cells grow as the hero scrolls away) ─────────
   float cell = uCell * (1.0 + uProgress * 0.9);
   vec2 cellIdx = floor(css / cell);
   vec2 center = (cellIdx + 0.5) * cell;
   vec2 local = (css - center) / cell;
   vec2 uv = center / size;
 
-  // Source value at the cell centre: game art luminance blended with a drifting simplex field.
-  vec2 iuv = (uv - 0.5) / uImageScale + 0.5;
-  vec3 art = texture(uImage, vec2(iuv.x, 1.0 - iuv.y), 1.5).rgb;
-  float lum = dot(art, vec3(0.299, 0.587, 0.114));
-  float aspect = size.x / size.y;
-  float n = snoise(vec3(uv * vec2(aspect, 1.0) * 2.1, uTime * 0.11)) * 0.5 + 0.5;
-  float v = mix(lum, n, uNoiseMix);
+  // Field value at the cell centre. The rainbow's luminance swings as the hue sweeps, so
+  // |noise| turns into nested bands.
+  vec2 fuv = (uv - 0.5) * vec2(aspect, 1.0) + 0.5;
+  float hue = abs(snoise(vec3(fuv * FREQUENCY, 10.0 + uTime * SPEED)));
+  float g = dot(hsv2rgb(vec3(hue, 1.0, 1.0)), vec3(0.3, 0.59, 0.11));
+  g = pow(clamp(g, 1e-4, 1.0), GAMMA) + BIAS;
 
   // Pointer lens: dots swell where you look, harder when you move fast.
   vec2 dm = center - uMouse;
   float lens = exp(-dot(dm, dm) / (2.0 * 150.0 * 150.0));
-  v += lens * (0.16 + 0.3 * uMouseForce);
+  g += lens * (0.16 + 0.3 * uMouseForce);
 
-  // Which side of the seam is this cell on? (0 = honest/colour, 1 = gray zone)
-  float seamX = seamAt(uv.y) * size.x;
-  float d = center.x - seamX;
-  float side = smoothstep(-cell * 0.6, cell * 0.6, d);
-
-  // Intro: dots develop in a wave expanding from the centre.
+  // Vignette, and the intro: the field develops in a wave expanding from the centre.
   float rd = length((uv - 0.5) * vec2(aspect, 1.0));
   float reveal = smoothstep(rd, rd + 0.35, uReveal * 1.45);
+  float vignette = 1.0 - smoothstep(0.35, 1.0, length(uv - 0.5) * 1.41421);
+  g = clamp(g, 0.0, 1.0) * reveal * vignette;
+  float radius = g * 0.5;
 
-  float radius = pow(clamp(v, 0.0, 1.0), 1.4) * 0.6 * reveal;
-  radius = max(radius, 0.06 * reveal);
+  // Signed distance to the tear, per pixel: dots on the line are torn in two, like the logo.
+  float dp = css.x - seamAt(css.y / size.y) * size.x;
+  float side = smoothstep(-0.75, 0.75, dp);
 
   // Chromatic split: channels drift apart horizontally near the tear.
-  float band = exp(-abs(d) / (cell * 2.5));
+  float band = exp(-abs(dp) / (cell * 2.5));
   float shift = band * (0.28 + 0.2 * uMouseForce);
   float aa = 0.9 / (cell * uDpr);
   float mR = disc(local + vec2(shift, 0.0), radius, aa);
   float mG = disc(local, radius, aa);
   float mB = disc(local - vec2(shift, 0.0), radius, aa);
 
-  // Colour: saturated art on the honest side; cold, flattened luminance in the gray zone.
-  vec3 vivid = clamp(mix(vec3(lum), art, 1.45) * 1.12, 0.0, 1.0);
-  vec3 gray = vec3(lum * 0.78 + 0.1) * vec3(0.95, 0.95, 0.94);
-  vec3 col = mix(vivid, gray, side);
-
+  vec4 col = mix(honest(g), grayZone(g), side);
   // Lens tint: in the gray zone, looking closely reveals a trace of red.
-  col = mix(col, RED, lens * side * 0.35);
+  col.rgb = mix(col.rgb, RED, lens * side * 0.35);
 
-  vec3 rgb = col * vec3(mR, mG, mB);
-  float alpha = max(max(mR, mG), mB);
+  vec3 rgb = col.rgb * col.a * vec3(mR, mG, mB);
+  float alpha = max(max(mR, mG), mB) * col.a;
 
   // Gray side sits in the shadow of the torn paper.
-  float dp = css.x - seamAt(css.y / size.y) * size.x;
   float shadow = exp(-max(dp, 0.0) / 22.0) * step(0.0, dp) * 0.6;
   rgb *= 1.0 - shadow;
 
