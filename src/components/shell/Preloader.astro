@@ -25,8 +25,8 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
 ---
 
 <div class="pre" data-preloader data-logo={logoImg.src} data-tear={JSON.stringify(tear)} aria-hidden="true">
-  <div class="pre__panel pre__panel--l" style={`clip-path:${leftClip}`}></div>
-  <div class="pre__panel pre__panel--r" style={`clip-path:${rightClip}`}></div>
+  <div class="pre__panel pre__panel--l" style={`clip-path:${leftClip}`}><canvas class="pre__field"></canvas></div>
+  <div class="pre__panel pre__panel--r" style={`clip-path:${rightClip}`}><canvas class="pre__field"></canvas></div>
   <canvas class="pre__dots"></canvas>
   <div class="pre__bar"><i class="pre__fill"></i></div>
   <svg class="pre__tear"><path></path></svg>
@@ -37,6 +37,11 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
   import { lockScroll } from '../../lib/motion/scroll';
   import { assetProgress, assetsSettled, signalReady, trackAsset } from '../../lib/lifecycle';
   import { LogoParticles } from '../../lib/canvas/logoParticles';
+  import { ChromaField, type Palette } from '../../lib/gl/chromaField';
+
+  // The logo's two halves: red on the honest side; black with cream on the gray side.
+  const RED: Palette = [['#e3261f', 0], ['#3a0806', 1], ['#7a100c', 1], ['#b81a14', 1], ['#e3261f', 1]];
+  const GRAY: Palette = [['#3a3a3a', 0], ['#1e1e1e', 1], ['#3a3a3a', 1], ['#8a8a86', 1], ['#efece6', 1]];
 
   const root = document.querySelector<HTMLElement>('[data-preloader]');
   const mode = document.documentElement.dataset.preload;
@@ -81,11 +86,24 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     img.src = root.dataset.logo ?? '';
     await img.decode().catch(() => undefined);
     const dots = img.naturalWidth ? new LogoParticles(canvas, img, tearAt) : null;
+    const [fieldL, fieldR] = root.querySelectorAll<HTMLCanvasElement>('.pre__field');
+    const tearXs = tear.map(([x]) => x / 100);
+    const field = ChromaField.create({
+      left: fieldL,
+      right: fieldR,
+      palettes: { left: RED, right: GRAY },
+      split: [Math.min(...tearXs), Math.max(...tearXs)],
+      cell: 16,
+    });
 
     // Lay out the bar under the logo and the tear in real px (DrawSVG needs an unscaled path).
     const layout = () => {
       dots?.layout();
-      if (dots) root.style.setProperty('--logo', `${dots.size}px`);
+      field?.resize();
+      if (dots) {
+        root.style.setProperty('--logo', `${dots.size}px`);
+        if (field) field.pocket = dots.size * 0.62;
+      }
       const w = window.innerWidth;
       const h = window.innerHeight;
       svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -104,6 +122,7 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     let shown = 0;
     const tick = (time: number, deltaMs: number) => {
       dots?.draw();
+      field?.render(time);
       const paced = Math.min(1, (time - start) / minDuration);
       const target = Math.min(paced, workDone ? 1 : assetProgress() * 0.9);
       shown += (target - shown) * (1 - Math.exp((-deltaMs / 1000) * 6));
@@ -117,6 +136,7 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
 
     gsap.from(bar, { opacity: 0, duration: 1.4, delay: short ? 0 : 0.5, ease: 'power2.out' });
     if (dots) gsap.fromTo(dots, { assemble: short ? 1.5 : 0 }, { assemble: 1.5, duration: short ? 0.01 : 1.8, ease: 'power2.inOut' });
+    if (field) gsap.to(field, { intro: 1, duration: short ? 0.6 : 2.4, ease: 'power2.out' });
 
     await filled.promise;
 
@@ -130,6 +150,7 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     const exit = gsap.timeline({
       onComplete: () => {
         gsap.ticker.remove(tick);
+        field?.dispose();
         window.removeEventListener('resize', layout);
         root.remove();
         lockScroll(false);
@@ -139,6 +160,7 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
       .to(bar, { scaleX: 0, transformOrigin: `${origin}px 50%`, duration: 0.6, ease: 'expo.inOut' }, 0.2)
       .fromTo(path, { drawSVG: `${at} ${at}` }, { drawSVG: '0% 100%', duration: 0.75, ease: 'power3.inOut' }, 0.55)
       .add(signalReady, 1.1)
+      .set(root, { backgroundColor: 'transparent' }, 1.15)
       .to('.pre__panel--l', { yPercent: -104, xPercent: -2, rotation: -2.5, duration: 1.25, ease: 'tear' }, 1.15)
       .to('.pre__panel--r', { yPercent: 104, xPercent: 2, rotation: 2.5, duration: 1.25, ease: 'tear' }, 1.15)
       .to(dots ?? {}, { split: 1, duration: 1.25, ease: 'tear' }, 1.15)
@@ -153,6 +175,9 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     inset: 0;
     z-index: var(--z-preloader);
     pointer-events: auto;
+    /* Backs the two clipped panels: their anti-aliased edges would otherwise let a hairline
+       of the page through along the tear. Cleared when they rip apart. */
+    background: var(--ink);
     /* Failsafe: if the preloader script never starts (blocked, failed to load), fade the
        overlay out on its own. The script sets [data-live] on start, which cancels this. */
     animation: pre-failsafe 0.6s ease 6s forwards;
@@ -206,7 +231,8 @@ const rightClip = `polygon(110% -10%, ${tearPts}, 110% 110%)`;
     transform-origin: 50% 0%;
   }
 
-  .pre__dots {
+  .pre__dots,
+  .pre__field {
     position: absolute;
     inset: 0;
     width: 100%;
