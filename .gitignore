@@ -24,3 +24,6 @@ Thumbs.db
 # read-only design references (kept locally, not versioned)
 /Outdated/
 /Chromatic theme/
+
+# local AI-tool settings and reports
+.commandcode/
