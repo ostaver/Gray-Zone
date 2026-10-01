@@ -17,13 +17,13 @@ Requires **Node >= 22.12**.
 
 ## Deployment
 
-Hosted on **Cloudflare** as a static site (Cloudflare Pages / static assets). The build output is the `dist/` directory; there is no server runtime. Production domain: `sivazona.mk`.
+Static site deployed directly from the `dist/` directory; there is no server runtime or CI/CD pipeline.
 
 - Build command: `npm run build`
 - Output directory: `dist`
 - Node version: 22+
 
-The Cloudflare project settings live in the Cloudflare dashboard; there is no `wrangler` config in this repo.
+Upload or serve the contents of `dist/` to any static web host.
 
 ## Getting started
 

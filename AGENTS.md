@@ -39,7 +39,7 @@ This site has been tuned to hold 60fps on integrated GPUs. Do not regress it:
 
 ## Deployment
 
-Cloudflare (static, build output `dist/`). No server code, no `wrangler` config in the repo — do not add server-side features (API routes, SSR adapters) without asking.
+Static site (build output `dist/`). No CI/CD pipeline, no server code — do not add server-side features (API routes, SSR adapters) without asking.
 
 ## Branches
 
