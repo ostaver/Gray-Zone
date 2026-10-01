@@ -1,13 +1,10 @@
 import { gsap, ScrollTrigger, SplitText, coarsePointer, reducedMotion } from '../../lib/motion/gsap';
 import { magnetic } from '../../lib/motion/magnetic';
-import { scrollToTarget } from '../../lib/motion/scroll';
 import { appReady } from '../../lib/lifecycle';
 import { getStage } from '../../lib/gl/stage';
 import { createSeamHalftone, type SeamHalftoneState } from '../../lib/gl/views/seamHalftone';
 import { detectPlatform } from '../../lib/platform';
 import { SeamModel } from './seam';
-
-const HUD_MONEY_BASE = 2000;
 
 export function initHero(root: HTMLElement): void {
   const pin = root.querySelector<HTMLElement>('[data-hero-pin]')!;
@@ -92,55 +89,6 @@ export function initHero(root: HTMLElement): void {
     state.mouse.x = state.mouse.y = -1e4;
   });
 
-  // ── HUD ────────────────────────────────────────────────────
-  const hud = {
-    integrity: root.querySelector<HTMLElement>('[data-hud="integrity"]')!,
-    reputation: root.querySelector<HTMLElement>('[data-hud="reputation"]')!,
-    time: root.querySelector<HTMLElement>('[data-hud="time"]')!,
-    money: root.querySelector<HTMLElement>('[data-hud="money"]')!,
-    integrityBar: root.querySelector<HTMLElement>('[data-hud-bar="integrity"]')!,
-    reputationBar: root.querySelector<HTMLElement>('[data-hud-bar="reputation"]')!,
-  };
-  // Displayed values ease toward their targets, so the HUD counts up on intro and
-  // rolls smoothly as the seam moves.
-  const shown = { integrity: 0, reputation: 0, money: HUD_MONEY_BASE, minute: -1 };
-  const written = { integrity: -1, reputation: -1, money: -1 };
-  const clockStart = performance.now();
-
-  const writeHud = (honestShare: number, ease: number) => {
-    const integrity = Math.max(0, Math.min(100, 8 + honestShare * 104));
-    const reputation = Math.max(0, Math.min(100, 22 + honestShare * 86));
-    const money = HUD_MONEY_BASE + (1 - honestShare) * 3200;
-    shown.integrity += (integrity - shown.integrity) * ease;
-    shown.reputation += (reputation - shown.reputation) * ease;
-    shown.money += (money - shown.money) * ease;
-
-    const i = Math.round(shown.integrity);
-    const r = Math.round(shown.reputation);
-    const m = Math.round(shown.money / 10) * 10;
-    if (i !== written.integrity) {
-      hud.integrity.textContent = String(i);
-      hud.integrityBar.style.transform = `scaleX(${i / 100})`;
-      written.integrity = i;
-    }
-    if (r !== written.reputation) {
-      hud.reputation.textContent = String(r);
-      hud.reputationBar.style.transform = `scaleX(${r / 100})`;
-      written.reputation = r;
-    }
-    if (m !== written.money) {
-      hud.money.textContent = String(m);
-      written.money = m;
-    }
-    // Game clock: the day starts at 08:00, one in-game minute per real second.
-    const minute = still ? 0 : Math.floor((performance.now() - clockStart) / 1000);
-    if (minute !== shown.minute) {
-      const total = 8 * 60 + minute;
-      hud.time.textContent = `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-      shown.minute = minute;
-    }
-  };
-
   // ── Per-frame update (only while the hero is on screen) ────
   let inView = true;
   new IntersectionObserver(([entry]) => (inView = entry.isIntersecting)).observe(root);
@@ -172,12 +120,6 @@ export function initHero(root: HTMLElement): void {
     const sx = seam.at(labelY / heroH) * heroW;
     sideHonest.style.transform = `translate3d(${sx - honestLabelW - 18}px, ${labelY}px, 0) translateY(-50%)`;
     sideGray.style.transform = `translate3d(${sx + 18}px, ${labelY}px, 0) translateY(-50%)`;
-
-    if (introDone) {
-      let mean = 0;
-      for (const x of seam.xs) mean += x;
-      writeHud(Math.max(0, Math.min(1, mean / seam.xs.length)), still ? 1 : 0.06);
-    }
   });
 
   // ── Scroll: sweep into the gray zone ───────────────────────
@@ -196,7 +138,7 @@ export function initHero(root: HTMLElement): void {
       .timeline({ scrollTrigger: { trigger: root, start: 'top top', end: 'bottom bottom', scrub: 0.6 } })
       .to(title, { yPercent: -18, scale: 0.92, ease: 'none' }, 0)
       .to(title, { opacity: 0, ease: 'power1.in' }, 0.35)
-      .to([...root.querySelectorAll('.hero__sides, .hero__bottom, .hero__top')], { opacity: 0, y: -40, ease: 'power1.in', duration: 0.4 }, 0);
+      .to([...root.querySelectorAll('.hero__sides, .hero__bottom')], { opacity: 0, y: -40, ease: 'power1.in', duration: 0.4 }, 0);
   }
 
   // ── CTAs ───────────────────────────────────────────────────
@@ -204,14 +146,6 @@ export function initHero(root: HTMLElement): void {
   const platform = detectPlatform();
   if (osLabel && platform) osLabel.textContent = `· ${platform === 'mac' ? 'macOS' : 'Windows'}`;
   root.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => magnetic(el, 0.3));
-  root.querySelectorAll<HTMLAnchorElement>('[data-scroll-link]').forEach((a) =>
-    a.addEventListener('click', (e) => {
-      const id = a.hash;
-      if (!id || !document.querySelector(id)) return;
-      e.preventDefault();
-      scrollToTarget(id);
-    }),
-  );
 
   // ── Intro ──────────────────────────────────────────────────
   if (still) return;

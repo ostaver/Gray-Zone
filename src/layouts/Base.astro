@@ -2,12 +2,11 @@
 import '@fontsource-variable/oswald';
 import '@fontsource-variable/inter-tight';
 import '@fontsource-variable/jetbrains-mono';
-import '@fontsource/cormorant-garamond/400-italic.css';
-import '@fontsource/cormorant-garamond/500-italic.css';
 import '../styles/global.css';
 
 import { htmlLang, locales, localePath, ogLocale, type Locale } from '../i18n/config';
 import { ui } from '../i18n/ui';
+import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImagePath, ogImageVariants, type OgExt } from '../lib/og';
 
 interface Props {
   locale: Locale;
@@ -18,6 +17,7 @@ interface Props {
 const { locale, path = '/' } = Astro.props;
 const t = ui[locale];
 const canonical = new URL(localePath(locale, path), Astro.site);
+const ogImageUrl = (ext: OgExt) => new URL(ogImagePath(ext), Astro.site).href;
 const GA_ID = 'G-ZQ981XQYYV';
 ---
 
@@ -41,7 +41,18 @@ const GA_ID = 'G-ZQ981XQYYV';
     <meta property="og:description" content={t.meta.description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={ogLocale[locale]} />
+    {ogImageVariants.map(({ ext, type }) => (
+      <>
+        <meta property="og:image" content={ogImageUrl(ext)} />
+        <meta property="og:image:type" content={type} />
+        <meta property="og:image:width" content={String(OG_IMAGE_WIDTH)} />
+        <meta property="og:image:height" content={String(OG_IMAGE_HEIGHT)} />
+        <meta property="og:image:alt" content={t.meta.title} />
+      </>
+    ))}
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImageUrl('png')} />
+    <meta name="twitter:image:alt" content={t.meta.title} />
 
     <script is:inline>
       // Before first paint: JS flag, and preloader mode (full on first visit per session, short after).
