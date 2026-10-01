@@ -1,0 +1,192 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = (
+  | ({ as?: 'a'; href?: string } & HTMLAttributes<'a'>)
+  | ({ as: 'button'; href?: never } & HTMLAttributes<'button'>)
+) & {
+  class?: string;
+};
+
+const { as = 'a', class: className, ...rest } = Astro.props;
+const Tag = as as any;
+---
+
+<Tag class:list={['cool-btn', className]} {...rest}>
+  <span class="cool-btn__border" aria-hidden="true">
+    <span class="cool-btn__spin"></span>
+  </span>
+  <span class="cool-btn__glow" aria-hidden="true">
+    <span class="cool-btn__spin-slow"></span>
+  </span>
+  <span class="cool-btn__content">
+    <slot />
+  </span>
+</Tag>
+
+<style>
+  .cool-btn {
+    position: relative;
+    display: inline-flex;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    padding: 3px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    outline: none;
+    isolation: isolate;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cool-btn:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 3px;
+  }
+
+  /* Animated orbit border - expands on hover */
+  .cool-btn__border {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 15px;
+    transition: inset 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cool-btn:hover .cool-btn__border,
+  .cool-btn:focus-visible .cool-btn__border {
+    inset: -3px;
+  }
+
+  .cool-btn__spin {
+    position: absolute;
+    inset: -200%;
+    animation: cool-spin 3s linear infinite;
+    background: conic-gradient(
+      from 0deg,
+      var(--red),
+      var(--ember),
+      var(--red),
+      var(--red-deep),
+      var(--oxblood),
+      var(--red-deep),
+      var(--red)
+    );
+    opacity: 0.95;
+    filter: blur(2px);
+    will-change: transform;
+  }
+
+  /* Secondary noise / glow overlay on the border - expands on hover */
+  .cool-btn__glow {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 15px;
+    opacity: 0.6;
+    mix-blend-mode: overlay;
+    transition: inset 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .cool-btn:hover .cool-btn__glow,
+  .cool-btn:focus-visible .cool-btn__glow {
+    inset: -3px;
+  }
+
+  .cool-btn__spin-slow {
+    position: absolute;
+    inset: -200%;
+    animation: cool-spin-slow 5s linear infinite;
+    background: conic-gradient(
+      from 180deg,
+      var(--ember) 0%,
+      transparent 30%,
+      var(--red) 50%,
+      transparent 70%,
+      var(--red-deep) 100%
+    );
+    filter: blur(2px);
+    will-change: transform;
+  }
+
+  /* Theme-aware inner background and content */
+  .cool-btn__content {
+    position: relative;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    background: var(--ink);
+    color: var(--paper, #efece6);
+    padding: 0.85rem 1.6rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 1px 1px rgba(0, 0, 0, 0.45),
+      0 10px 28px rgba(0, 0, 0, 0.35);
+    transition:
+      box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.15s ease-out,
+      color 0.3s;
+  }
+
+  .cool-btn:hover .cool-btn__content,
+  .cool-btn:focus-visible .cool-btn__content {
+    color: #ffffff;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+      0 2px 6px rgba(0, 0, 0, 0.55),
+      0 14px 34px rgba(0, 0, 0, 0.42);
+  }
+
+  .cool-btn:active .cool-btn__content {
+    transform: scale(0.98);
+  }
+
+  .cool-btn:hover :global(.btn__icon) {
+    transform: translateY(3px);
+  }
+
+  @keyframes cool-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes cool-spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cool-btn__spin,
+    .cool-btn__spin-slow {
+      animation: none;
+    }
+  }
+</style>
