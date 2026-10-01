@@ -32,8 +32,9 @@
   --z-gl: 0;
   --z-content: 10;
   --z-nav: 80;
-  --z-grain: 90;
   --z-cursor: 100;
   --z-modal: 110;
   --z-preloader: 120;
+  /* Film grain sits over everything, preloader included, so the whole page shares one texture. */
+  --z-grain: 130;
 }

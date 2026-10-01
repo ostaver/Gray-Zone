@@ -1,0 +1,210 @@
+---
+import { getImage } from 'astro:assets';
+import logo from '../../assets/brand/logo.png';
+
+const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
+// Progress dots; the first half takes the logo's red, the second its cream.
+const barDots = 16;
+---
+
+<div class="pre" data-preloader data-logo={logoImg.src} aria-hidden="true">
+  <div class="pre__veil"></div>
+  <canvas class="pre__dots"></canvas>
+  <div class="pre__bar">
+    {Array.from({ length: barDots }, (_, i) => <i class:list={{ 'is-honest': i < barDots / 2 }} style={`--i:${i}`}></i>)}
+  </div>
+</div>
+
+<script>
+  import { gsap } from '../../lib/motion/gsap';
+  import { lockScroll } from '../../lib/motion/scroll';
+  import { assetProgress, assetsSettled, signalReady, trackAsset } from '../../lib/lifecycle';
+  import { LogoParticles } from '../../lib/canvas/logoParticles';
+
+  const root = document.querySelector<HTMLElement>('[data-preloader]');
+  const mode = document.documentElement.dataset.preload;
+
+  if (!root) {
+    signalReady();
+  } else if (mode === 'none') {
+    root.remove();
+    signalReady();
+  } else {
+    // The script is alive: switch off the CSS failsafe that would otherwise hide the overlay.
+    root.dataset.live = '';
+    run(root, mode === 'short').catch((error: unknown) => {
+      // Never trap the visitor behind the overlay: drop it and let the page intro run.
+      console.error('[preloader]', error);
+      root.remove();
+      lockScroll(false);
+      signalReady();
+    });
+  }
+
+  async function run(root: HTMLElement, short: boolean) {
+    lockScroll(true);
+    trackAsset(document.fonts.ready);
+
+    const veil = root.querySelector<HTMLElement>('.pre__veil')!;
+    const canvas = root.querySelector<HTMLCanvasElement>('.pre__dots')!;
+    const bar = root.querySelector<HTMLElement>('.pre__bar')!;
+    const barDots = [...bar.children] as HTMLElement[];
+
+    const img = new Image();
+    img.src = root.dataset.logo ?? '';
+    await img.decode().catch(() => undefined);
+    const dots = img.naturalWidth ? new LogoParticles(canvas, img) : null;
+
+    // Put the bar on the logo's own dot grid, under the disc.
+    const layout = () => {
+      if (!dots) return;
+      dots.layout();
+      root.style.setProperty('--logo', `${dots.size}px`);
+      root.style.setProperty('--cell', `${dots.cell}px`);
+    };
+    layout();
+    window.addEventListener('resize', layout);
+
+    // Progress = real work (tracked assets + fonts), paced by a minimum duration so the bar
+    // glides instead of snapping, and never claims 100% before the work is done.
+    let workDone = false;
+    void assetsSettled().then(() => (workDone = true));
+    const minDuration = short ? 0.7 : 2;
+    const start = gsap.ticker.time;
+    const filled = Promise.withResolvers<void>();
+    let shown = 0;
+    const tick = (time: number, deltaMs: number) => {
+      dots?.draw();
+      const paced = Math.min(1, (time - start) / minDuration);
+      const target = Math.min(paced, workDone ? 1 : assetProgress() * 0.9);
+      shown += (target - shown) * (1 - Math.exp((-deltaMs / 1000) * 6));
+      if (target === 1 && shown > 0.997) {
+        shown = 1;
+        filled.resolve();
+      }
+      bar.style.setProperty('--p', (shown * barDots.length).toFixed(3));
+    };
+    gsap.ticker.add(tick);
+
+    gsap.from(bar, { opacity: 0, duration: 1.4, delay: short ? 0 : 0.5, ease: 'power2.out' });
+    gsap.from(barDots, { scale: 0, duration: 0.7, delay: short ? 0 : 0.5, ease: 'back.out(2)', stagger: { each: 0.035, from: 'center' } });
+    if (dots) gsap.fromTo(dots, { assemble: short ? 1.5 : 0 }, { assemble: 1.5, duration: short ? 0.01 : 1.8, ease: 'power2.inOut' });
+
+    await filled.promise;
+
+    // Exit, one overlapping gesture: the progress dots gather into the tear between their
+    // halves; the logo turns one full revolution while it swells past the viewer, its dots
+    // thinning out over the hero, whose field develops from the centre. The turn lands
+    // upright, so the logo's tear hands over to the hero's seam.
+    const pitch = barDots[1].offsetLeft - barDots[0].offsetLeft;
+    const exit = gsap.timeline({
+      onComplete: () => {
+        gsap.ticker.remove(tick);
+        dots?.dispose();
+        window.removeEventListener('resize', layout);
+        root.remove();
+        lockScroll(false);
+      },
+    });
+    exit
+      .to(barDots, { x: (i: number) => ((barDots.length - 1) / 2 - i) * pitch, opacity: 0, duration: 0.8, ease: 'power2.in', stagger: { each: 0.015, from: 'edges' } }, 0)
+      .to(dots ?? {}, { rotation: 360, duration: 2.6, ease: 'sine.inOut' }, 0.25)
+      .to(dots ?? {}, { zoom: 6.5, duration: 2.4, ease: 'power2.in' }, 0.45)
+      .add(signalReady, 1.15)
+      .to(veil, { opacity: 0, duration: 1.6, ease: 'sine.inOut' }, 1.05)
+      .to(canvas, { opacity: 0, duration: 1.3, ease: 'sine.inOut' }, 1.55);
+  }
+</script>
+
+<style>
+  .pre {
+    --logo: min(60vw, 38vh, 360px);
+    --cell: calc(var(--logo) / 60);
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-preloader);
+    pointer-events: auto;
+    /* Failsafe: if the preloader script never starts (blocked, failed to load), fade the
+       overlay out on its own. The script sets [data-live] on start, which cancels this. */
+    animation: pre-failsafe 0.6s ease 6s forwards;
+  }
+  .pre[data-live] {
+    animation: none;
+  }
+  @keyframes pre-failsafe {
+    to {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+  :global(.no-js) .pre,
+  :global([data-preload='none']) .pre {
+    display: none;
+  }
+
+  .pre__veil {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 120% 95% at 50% 50%, transparent 38%, rgb(0 0 0 / 0.72) 100%),
+      radial-gradient(ellipse 70% 60% at 50% 48%, #151313 0%, var(--ink) 62%);
+  }
+  /* A faint ember behind the logo, breathing slowly. */
+  .pre__veil::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--logo) * 2.4);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(227 38 31 / 0.13), rgb(227 38 31 / 0.04) 40%, transparent 68%);
+    animation: pre-breathe 3.2s ease-in-out infinite alternate;
+  }
+  @keyframes pre-breathe {
+    from { opacity: 0.55; scale: 0.94; }
+    to { opacity: 1; scale: 1.04; }
+  }
+
+  .pre__dots {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .pre__bar {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + var(--logo) / 2 + clamp(1.75rem, 5vh, 3rem));
+    display: flex;
+    gap: calc(var(--cell) * 1.3);
+    translate: -50% -50%;
+  }
+  /* One dot per step, on the logo's own grid (a pitch of two cells). A dot lights as the
+     progress passes it, in its half's colour; the one being filled swells and glows, so the
+     leading edge reads as a single travelling spark. State lives on ::before; the <i> is
+     left to GSAP's intro/exit motion. */
+  .pre__bar i {
+    --c: var(--paper);
+    --lit: clamp(0, var(--p, 0) - var(--i), 1);
+    --head: calc(var(--lit) * (1 - var(--lit)) * 4);
+    width: calc(var(--cell) * 0.7);
+    aspect-ratio: 1;
+  }
+  .pre__bar i::before {
+    content: '';
+    display: block;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--c);
+    opacity: calc(0.16 + 0.84 * var(--lit));
+    scale: calc(1 + 0.6 * var(--head));
+    box-shadow: 0 0 calc(var(--cell) * 1.8) color-mix(in srgb, var(--c) calc(var(--head) * 80%), transparent);
+  }
+  .pre__bar .is-honest {
+    --c: var(--red);
+  }
+</style>
