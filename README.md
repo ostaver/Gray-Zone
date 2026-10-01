@@ -1,6 +1,8 @@
 # Sivazona MK (Gray Zone)
 
-Marketing site for Sivazona, served at <https://sivazona.mk>. Bilingual (Macedonian default, English under `/en`), single-page, with a WebGL hero and a preloader that transitions into it.
+![Sivazona MK](public/og-image.png)
+
+Marketing site for **Сива Зона** aka **Gray Zone**, served at <https://sivazona.mk>. Bilingual (Macedonian default, English under `/en`), single-page, with a WebGL hero and a preloader that transitions into it.
 
 ## Stack
 
