@@ -57,6 +57,8 @@ const Tag = as as any;
     transition: inset 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
     z-index: 1;
+    /* Always-red base: the sweep only adds a highlight, so no edge can go empty. */
+    background: var(--red);
   }
 
   .cool-btn:hover .cool-btn__border,
@@ -64,22 +66,34 @@ const Tag = as as any;
     inset: -3px;
   }
 
+  /* Square, centred sweep: on a wide button a percentage inset gives a stretched
+     gradient whose angular range at the left/right edges barely changes. */
   .cool-btn__spin {
     position: absolute;
-    inset: -200%;
-    animation: cool-spin 3s linear infinite;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 600px;
+    animation: cool-spin 2.4s linear infinite;
     background: conic-gradient(
       from 0deg,
-      var(--red),
-      var(--ember),
-      var(--red),
-      var(--red-deep),
-      var(--oxblood),
-      var(--red-deep),
-      var(--red)
+      var(--red-deep) 0%,
+      var(--red) 8%,
+      var(--ember) 14%,
+      #ffd2b0 17%,
+      var(--ember) 20%,
+      var(--red) 28%,
+      var(--oxblood) 38%,
+      var(--red-deep) 46%,
+      var(--red) 55%,
+      var(--ember) 63%,
+      var(--red) 71%,
+      var(--red-deep) 80%,
+      var(--oxblood) 88%,
+      var(--red-deep) 95%,
+      var(--red-deep) 100%
     );
-    opacity: 0.95;
-    filter: blur(2px);
+    filter: blur(1px);
     will-change: transform;
   }
 
@@ -89,7 +103,7 @@ const Tag = as as any;
     inset: 0;
     overflow: hidden;
     border-radius: 15px;
-    opacity: 0.6;
+    opacity: 0.85;
     mix-blend-mode: overlay;
     transition: inset 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
@@ -103,17 +117,22 @@ const Tag = as as any;
 
   .cool-btn__spin-slow {
     position: absolute;
-    inset: -200%;
-    animation: cool-spin-slow 5s linear infinite;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 600px;
+    animation: cool-spin-slow 3.6s linear infinite;
     background: conic-gradient(
       from 180deg,
-      var(--ember) 0%,
-      transparent 30%,
-      var(--red) 50%,
-      transparent 70%,
+      var(--red-deep) 0%,
+      var(--ember) 12%,
+      var(--red) 25%,
+      var(--oxblood) 45%,
+      var(--red) 60%,
+      var(--ember) 80%,
       var(--red-deep) 100%
     );
-    filter: blur(2px);
+    filter: blur(1px);
     will-change: transform;
   }
 
@@ -167,19 +186,19 @@ const Tag = as as any;
 
   @keyframes cool-spin {
     from {
-      transform: rotate(0deg);
+      transform: translate(-50%, -50%) rotate(0deg);
     }
     to {
-      transform: rotate(360deg);
+      transform: translate(-50%, -50%) rotate(360deg);
     }
   }
 
   @keyframes cool-spin-slow {
     from {
-      transform: rotate(0deg);
+      transform: translate(-50%, -50%) rotate(0deg);
     }
     to {
-      transform: rotate(-360deg);
+      transform: translate(-50%, -50%) rotate(-360deg);
     }
   }
 

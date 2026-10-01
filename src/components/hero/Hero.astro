@@ -149,6 +149,10 @@ const titleText = t.title.join(' ');
   .hero__line {
     display: block;
   }
+  /* Set once the intro has finished: the scroll scatter flies the letters out of their lines. */
+  .hero__title.is-free .line-mask {
+    overflow: visible;
+  }
 
   .hero__sides {
     position: absolute;
