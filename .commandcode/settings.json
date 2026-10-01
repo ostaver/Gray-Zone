@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "powershell",
+      "bash"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

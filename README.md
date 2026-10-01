@@ -8,7 +8,7 @@ Marketing site for Sivazona, served at <https://sivazona.mk>. Bilingual (Macedon
 - **TypeScript** (strict, via `astro check`)
 - **GSAP** (+ ScrollTrigger, SplitText, etc.) and **Lenis** for motion and smooth scroll
 - **OGL** + custom GLSL for the hero field and preloader/seam effects
-- Fonts via `@fontsource` (Inter Tight, JetBrains Mono, Oswald, Cormorant Garamond)
+- Fonts via `@fontsource` (Inter Tight, JetBrains Mono, Oswald)
 - Astro i18n routing: `mk` (default, no prefix) and `en` (`/en`)
 
 Requires **Node >= 22.12**.
@@ -49,10 +49,14 @@ src/
   components/   hero/, shell/ (preloader), ui/
   data/         Content: team, gallery, funders, links, tutorial, about, contact
   i18n/         Locale config and UI strings
-  lib/          gl/ (WebGL stage, shaders), canvas/, motion/ (gsap, lenis), lifecycle
+  lib/          gl/ (WebGL stage, shaders), canvas/, motion/ (gsap, lenis), lifecycle, og.ts (share-image variants)
   styles/       tokens.css, global.css
   assets/       Optimised images (brand, gallery, team, tutorial per locale)
-public/         Static files copied as-is (favicons)
+public/         Static files copied as-is (favicons, og-image.png)
 ```
+
+## Share image
+
+`public/og-image.png` (1200×630) is the master and the default `og:image` / `twitter:image`. `src/pages/og-image.[ext].ts` encodes `/og-image.jpg` and `/og-image.webp` from it at build time (sharp), and `Base.astro` lists all three as `og:image` entries, PNG first. Replace only the PNG; the other formats follow on the next build.
 
 See [AGENTS.md](AGENTS.md) for conventions for AI coding agents.
