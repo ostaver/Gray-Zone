@@ -83,6 +83,8 @@ const a11y = ui[locale].a11y;
     };
 
     document.addEventListener('click', (e) => {
+      // Modified clicks keep their native meaning (new tab/window, save link).
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const trigger = (e.target as Element).closest('[data-download]');
       if (!trigger) return;
       e.preventDefault();

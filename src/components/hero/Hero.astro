@@ -50,7 +50,7 @@ const titleText = t.title.join(' ');
       <div class="hero__ctas" data-hero-fade>
         <a class="btn btn--primary" href={latestRelease} data-download data-magnetic>
           <span class="btn__label">{t.cta}</span>
-          <span class="btn__os" data-os-label data-for={t.ctaFor}></span>
+          <span class="btn__os" data-os-label></span>
           <span class="btn__icon" aria-hidden="true">↓</span>
         </a>
       </div>
@@ -268,6 +268,7 @@ const titleText = t.title.join(' ');
     color: var(--paper);
     overflow: hidden;
     isolation: isolate;
+    transition: color 0.4s;
   }
   .btn--primary::before {
     content: '';
@@ -286,9 +287,6 @@ const titleText = t.title.join(' ');
   .btn--primary:hover,
   .btn--primary:focus-visible {
     color: var(--ink);
-  }
-  .btn--primary {
-    transition: color 0.4s;
   }
   .btn__os:empty {
     display: none;

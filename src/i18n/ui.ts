@@ -27,7 +27,6 @@ const mk = {
     gray: 'Сива зона',
     facts: ['Бесплатно', 'Windows · macOS', 'Финансирано од ЕУ'],
     cta: 'Преземи бесплатно',
-    ctaFor: 'за',
     scroll: 'Скролај — влези во сивата зона',
   },
   download: {
@@ -71,7 +70,6 @@ const en: UIDict = {
     gray: 'Gray zone',
     facts: ['Free', 'Windows · macOS', 'Funded by the EU'],
     cta: 'Download free',
-    ctaFor: 'for',
     scroll: 'Scroll — enter the gray zone',
   },
   download: {

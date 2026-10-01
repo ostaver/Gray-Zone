@@ -26,23 +26,40 @@ const barDots = 16;
 
   if (!root) {
     signalReady();
-  } else if (mode === 'none') {
+  } else if (mode === 'none' || failsafeStarted(root)) {
+    // A script that arrives after the CSS failsafe began hiding the overlay must not bring it
+    // back: the visitor is already looking at the page.
     root.remove();
     signalReady();
   } else {
     // The script is alive: switch off the CSS failsafe that would otherwise hide the overlay.
     root.dataset.live = '';
-    run(root, mode === 'short').catch((error: unknown) => {
+    // While the overlay is up the page underneath is unreachable, keyboard included.
+    const main = document.getElementById('main');
+    main?.setAttribute('inert', '');
+    lockScroll(true);
+    let held = true;
+    const release = () => {
+      if (!held) return;
+      held = false;
+      main?.removeAttribute('inert');
+      lockScroll(false);
+    };
+    run(root, mode === 'short', release).catch((error: unknown) => {
       // Never trap the visitor behind the overlay: drop it and let the page intro run.
       console.error('[preloader]', error);
       root.remove();
-      lockScroll(false);
+      release();
       signalReady();
     });
   }
 
-  async function run(root: HTMLElement, short: boolean) {
-    lockScroll(true);
+  /** Whether the CSS failsafe fade (`pre-failsafe`) has passed its delay. */
+  function failsafeStarted(root: HTMLElement): boolean {
+    return root.getAnimations().some((a) => a.effect?.getComputedTiming().progress != null);
+  }
+
+  async function run(root: HTMLElement, short: boolean, release: () => void) {
     trackAsset(document.fonts.ready);
 
     const veil = root.querySelector<HTMLElement>('.pre__veil')!;
@@ -71,7 +88,8 @@ const barDots = 16;
     void assetsSettled().then(() => (workDone = true));
     const minDuration = short ? 0.7 : 1.3;
     const start = gsap.ticker.time;
-    const filled = Promise.withResolvers<void>();
+    let resolveFilled!: () => void;
+    const filled = new Promise<void>((resolve) => (resolveFilled = resolve));
     let shown = 0;
     const tick = (time: number, deltaMs: number) => {
       dots?.draw();
@@ -80,7 +98,7 @@ const barDots = 16;
       shown += (target - shown) * (1 - Math.exp((-deltaMs / 1000) * 6));
       if (target === 1 && shown > 0.997) {
         shown = 1;
-        filled.resolve();
+        resolveFilled();
       }
       bar.style.setProperty('--p', (shown * barDots.length).toFixed(3));
     };
@@ -90,7 +108,7 @@ const barDots = 16;
     gsap.from(barDots, { scale: 0, duration: 0.7, delay: short ? 0 : 0.5, ease: 'back.out(2)', stagger: { each: 0.035, from: 'center' } });
     if (dots) gsap.fromTo(dots, { assemble: short ? 1.5 : 0 }, { assemble: 1.5, duration: short ? 0.01 : 1.8, ease: 'power2.inOut' });
 
-    await filled.promise;
+    await filled;
 
     // Exit, one overlapping gesture: the progress dots gather into the tear between their
     // halves; the logo turns one full revolution while it swells past the viewer, its dots
@@ -103,7 +121,7 @@ const barDots = 16;
         dots?.dispose();
         window.removeEventListener('resize', layout);
         root.remove();
-        lockScroll(false);
+        release();
       },
     });
     exit.to(barDots, { x: (i: number) => ((barDots.length - 1) / 2 - i) * pitch, opacity: 0, duration: 0.8, ease: 'power2.in', stagger: { each: 0.015, from: 'edges' } }, 0);

@@ -51,16 +51,20 @@ export function initHero(root: HTMLElement): void {
   let heroW = 1;
   let heroH = 1;
   let titleTop = 0;
-  const boxes = clipped.map(() => ({ left: 0, top: 0, width: 1, height: 1, sx: 1, sy: 1 }));
+  const boxes = clipped.map(() => ({ shown: false, left: 0, top: 0, width: 1, height: 1, sx: 1, sy: 1 }));
   const measure = () => {
     const pr = pin.getBoundingClientRect();
     heroW = pr.width;
     heroH = pr.height;
     titleTop = title.getBoundingClientRect().top - pr.top;
     clipped.forEach((el, i) => {
-      const r = el.getBoundingClientRect();
       const b = boxes[i];
-      b.width = el.offsetWidth || 1;
+      // The static fallback halves are display:none while WebGL draws the field; a box that
+      // isn't rendered is neither measured nor re-clipped.
+      b.shown = el.offsetWidth > 0;
+      if (!b.shown) return;
+      const r = el.getBoundingClientRect();
+      b.width = el.offsetWidth;
       b.height = el.offsetHeight || 1;
       b.left = r.left - pr.left;
       b.top = r.top - pr.top;
@@ -111,6 +115,7 @@ export function initHero(root: HTMLElement): void {
     measure();
     const honestLabelW = sideHonest.offsetWidth;
     for (let i = 0; i < clipped.length; i++) {
+      if (!boxes[i].shown) continue;
       const side = clipped[i].dataset.seamClip === 'left' ? 'left' : 'right';
       clipped[i].style.clipPath = seam.clipPolygon(side, boxes[i], heroW, heroH);
     }

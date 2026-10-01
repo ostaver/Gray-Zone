@@ -20,14 +20,15 @@ export function assetProgress(): number {
 
 export async function assetsSettled(timeoutMs = 4000): Promise<void> {
   // Let sibling module scripts register first.
-  const frame = Promise.withResolvers<void>();
-  requestAnimationFrame(() => frame.resolve());
-  await frame.promise;
-  const timeout = Promise.withResolvers<void>();
-  setTimeout(timeout.resolve, timeoutMs);
-  await Promise.race([Promise.allSettled(pending), timeout.promise]);
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+  await Promise.race([Promise.allSettled(pending), timeout]);
 }
 
-const ready = Promise.withResolvers<void>();
-export const appReady = ready.promise;
-export const signalReady = (): void => ready.resolve();
+// Plain executors, not Promise.withResolvers: this module loads on every page and must
+// evaluate on Safari < 17.4.
+let resolveReady!: () => void;
+export const appReady = new Promise<void>((resolve) => {
+  resolveReady = resolve;
+});
+export const signalReady = (): void => resolveReady();
