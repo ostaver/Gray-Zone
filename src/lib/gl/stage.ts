@@ -16,9 +16,12 @@ export interface Frame {
   delta: number;
   /** View rect in CSS px, relative to the viewport. */
   rect: DOMRectReadOnly;
-  /** View size in device px. */
+  /** View origin + size in device px, in gl_FragCoord space (origin bottom-left of canvas). */
+  x: number;
+  y: number;
   width: number;
   height: number;
+  /** Device px per CSS px. */
   dpr: number;
   /** Re-bind the screen framebuffer + this view's viewport/scissor (after an offscreen pass). */
   bindScreen(): void;
@@ -59,7 +62,8 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
     return null;
   }
   const { gl } = renderer;
-  if (!gl) return null;
+  // Views ship GLSL ES 3.00 shaders; WebGL1-only devices get the DOM fallbacks.
+  if (!gl || !renderer.isWebgl2) return null;
   gl.clearColor(0, 0, 0, 0);
 
   const views = new Set<GLView>();
@@ -70,7 +74,12 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
   let prevTime = 0;
 
   const resize = () => {
+    // OGL's setSize writes inline px sizes (300×150 at construction); CSS owns the box.
+    canvas.style.removeProperty('width');
+    canvas.style.removeProperty('height');
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    canvas.style.removeProperty('width');
+    canvas.style.removeProperty('height');
     // Force every view to redraw at the new size.
     for (const v of views) lastRects.delete(v);
   };
@@ -134,7 +143,7 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
         gl.scissor(x, y, w, h);
       };
       bindScreen();
-      view.render({ gl, renderer, time, delta, rect, width: w, height: h, dpr: s, bindScreen });
+      view.render({ gl, renderer, time, delta, rect, x, y, width: w, height: h, dpr: s, bindScreen });
       lastDraw.set(view, time);
     }
     gl.disable(gl.SCISSOR_TEST);
