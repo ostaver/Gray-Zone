@@ -63,6 +63,8 @@ The hero's **White zone** and **Black zone** labels are keyboard-accessible them
 
 Black zone is the default on every page load. CSS palettes live in `src/styles/tokens.css`; `hero.ts` passes the selection to the shader through `SeamHalftoneState.whiteZone`.
 
+Theme changes bloom outward from the selected button over 1.3 seconds, with a soft halftone fringe and a subtle settling zoom. Native View Transitions reveal the new page palette without cloning its DOM or WebGL context; the shared stage redraws synchronously for capture. Browsers without the required snapshot/mask support get an expanding paper/ink veil with a red dot rim, then a fade to the live page. Reduced motion skips the effect. Theme controls retain keyboard focus and temporarily expose `aria-disabled` while switching; repeated selections do not restart the animation.
+
 
 ## Share image
 

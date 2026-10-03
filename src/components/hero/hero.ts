@@ -1,5 +1,6 @@
 import { gsap, ScrollTrigger, SplitText, coarsePointer, reducedMotion } from '../../lib/motion/gsap';
 import { magnetic } from '../../lib/motion/magnetic';
+import { transitionZone } from '../../lib/motion/zoneTransition';
 import { appReady } from '../../lib/lifecycle';
 import { getStage } from '../../lib/gl/stage';
 import { createSeamHalftone, type SeamHalftoneState } from '../../lib/gl/views/seamHalftone';
@@ -49,16 +50,31 @@ export function initHero(root: HTMLElement): void {
     still,
   };
   const zoneButtons = [sideHonest, sideGray];
+  let changingZone = false;
   zoneButtons.forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const white = button.dataset.zone === 'white';
-      document.documentElement.dataset.zone = white ? 'white' : 'black';
-      state.whiteZone = white ? 1 : 0;
-      zoneButtons.forEach((zoneButton) => zoneButton.setAttribute('aria-pressed', String(zoneButton === button)));
-      document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
-        'content',
-        getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
-      );
+      if (changingZone || state.whiteZone === Number(white)) return;
+      changingZone = true;
+      root.setAttribute('aria-busy', 'true');
+      zoneButtons.forEach((zoneButton) => zoneButton.setAttribute('aria-disabled', 'true'));
+      try {
+        await transitionZone(button, white, () => {
+          document.documentElement.dataset.zone = white ? 'white' : 'black';
+          state.whiteZone = white ? 1 : 0;
+          zoneButtons.forEach((zoneButton) => zoneButton.setAttribute('aria-pressed', String(zoneButton === button)));
+          document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
+            'content',
+            getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
+          );
+          // View Transitions pause rAF during capture; flush the shader synchronously.
+          stage?.draw();
+        });
+      } finally {
+        zoneButtons.forEach((zoneButton) => zoneButton.removeAttribute('aria-disabled'));
+        root.removeAttribute('aria-busy');
+        changingZone = false;
+      }
     });
   });
   let target = seam.split;
