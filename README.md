@@ -17,13 +17,13 @@ Requires **Node >= 22.12**.
 
 ## Deployment
 
-Hosted on **Cloudflare** as a static site (Cloudflare Pages / static assets). The build output is the `dist/` directory; there is no server runtime. Production domain: `sivazona.mk`.
+Static site deployed directly from the `dist/` directory; there is no server runtime or CI/CD pipeline.
 
 - Build command: `npm run build`
 - Output directory: `dist`
 - Node version: 22+
 
-The Cloudflare project settings live in the Cloudflare dashboard; there is no `wrangler` config in this repo.
+Upload or serve the contents of `dist/` to any static web host.
 
 ## Getting started
 
@@ -56,6 +56,15 @@ src/
   assets/       Optimised images (brand, gallery, team, tutorial per locale)
 public/         Static files copied as-is (favicons, og-image.png)
 ```
+
+## Zone appearance
+
+The hero's **White zone** and **Black zone** labels are keyboard-accessible theme buttons in both locales. White zone switches the page and download dialog to light surfaces with dark text, retaining the red CTA accents and red half of the WebGL dot field. The neutral half uses darker dots for contrast on white. Black zone restores the original dark/red palette. Both modes retain the cursor lens, moving seam, and chromatic split; only hovering the theme buttons pauses the seam's pointer target so they remain easy to click. The selected button exposes `aria-pressed`. The DOM shader fallback follows the same selection.
+
+Black zone is the default on every page load. CSS palettes live in `src/styles/tokens.css`; `hero.ts` passes the selection to the shader through `SeamHalftoneState.whiteZone`.
+
+Theme changes bloom outward from the selected button over 1.3 seconds, with a soft halftone fringe and a subtle settling zoom. Native View Transitions reveal the new page palette without cloning its DOM or WebGL context; the shared stage redraws synchronously for capture. Browsers without the required snapshot/mask support get an expanding paper/ink veil with a red dot rim, then a fade to the live page. Reduced motion skips the effect. Theme controls retain keyboard focus and temporarily expose `aria-disabled` while switching; repeated selections do not restart the animation.
+
 
 ## Share image
 

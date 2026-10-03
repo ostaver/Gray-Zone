@@ -2,6 +2,8 @@ import Lenis from 'lenis';
 import { gsap, ScrollTrigger, reducedMotion } from './gsap';
 
 let lenis: Lenis | null = null;
+/** Active scroll locks (preloader, modal); scroll is frozen while any is held. */
+let locks = 0;
 
 /** Lenis driven by gsap.ticker so ScrollTrigger, WebGL and smooth scroll share one clock. */
 export function initScroll(): Lenis | null {
@@ -12,19 +14,26 @@ export function initScroll(): Lenis | null {
     smoothWheel: true,
     touchMultiplier: 1.4,
   });
+  // A lock taken before Lenis existed (the preloader runs first) must hold it too.
+  if (locks > 0) lenis.stop();
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((time) => lenis?.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
   return lenis;
 }
 
-/** Freeze page scroll (preloader, modals). Works with or without Lenis. */
+/**
+ * Take (`true`) or release (`false`) a scroll lock; every take needs exactly one release.
+ * Page scroll stays frozen while any lock is held. Works with or without Lenis.
+ */
 export function lockScroll(locked: boolean): void {
+  locks = Math.max(0, locks + (locked ? 1 : -1));
+  const frozen = locks > 0;
   if (lenis) {
-    if (locked) lenis.stop();
+    if (frozen) lenis.stop();
     else lenis.start();
   }
-  document.documentElement.style.overflow = locked ? 'hidden' : '';
+  document.documentElement.style.overflow = frozen ? 'hidden' : '';
 }
 
 export function scrollToTarget(target: string | HTMLElement): void {

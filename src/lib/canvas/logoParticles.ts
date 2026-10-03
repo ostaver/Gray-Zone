@@ -36,6 +36,8 @@ export class LogoParticles {
   assemble = 0;
   rotation = 0;
   zoom = 1;
+  /** 0..1: dots burst outward from the centre and leave the screen. */
+  scatter = 0;
   /** Logo diameter in CSS px (for laying out UI around it). */
   size = 0;
   /** Dot grid pitch in CSS px. */
@@ -44,8 +46,10 @@ export class LogoParticles {
   private w = 0;
   private h = 0;
   private dpr = 1;
+  /** Per-load seed for the scatter: random each visit, stable across re-layouts. */
+  private readonly seed = (Math.random() * 0x100000000) >>> 0;
   /** Inputs of the last drawn frame; an unchanged frame is not redrawn. */
-  private readonly drawn = { assemble: NaN, rotation: NaN, zoom: NaN };
+  private readonly drawn = { assemble: NaN, rotation: NaN, zoom: NaN, scatter: NaN };
   private readonly gl: { renderer: Renderer; program: Program; mesh: Mesh | null } | null;
   private readonly ctx: CanvasRenderingContext2D | null;
 
@@ -100,8 +104,9 @@ export class LogoParticles {
         const color = lum > 0.62 ? PAPER : r > 0.35 && r > g * 1.8 ? RED : SHADE;
         const tx = o + (gx + 0.5) * cell;
         const ty = o + (gy + 0.5) * cell;
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.max(this.w, this.h) * (0.35 + Math.random() * 0.5);
+        // Hashed per grid cell, not Math.random(): a resize mid-flight keeps every dot's path.
+        const angle = cellRandom(this.seed, gx, gy, 0) * Math.PI * 2;
+        const dist = Math.max(this.w, this.h) * (0.35 + cellRandom(this.seed, gx, gy, 1) * 0.5);
         dots.push({
           tx,
           ty,
@@ -109,7 +114,7 @@ export class LogoParticles {
           sy: Math.sin(angle) * dist,
           r: cell * (color === SHADE ? 0.34 : 0.42) * (0.75 + lum * 0.35),
           color,
-          delay: Math.hypot(tx, ty) / size * 0.45 + Math.random() * 0.12,
+          delay: Math.hypot(tx, ty) / size * 0.45 + cellRandom(this.seed, gx, gy, 2) * 0.12,
         });
       }
     }
@@ -119,10 +124,11 @@ export class LogoParticles {
 
   draw(): void {
     const { drawn } = this;
-    if (drawn.assemble === this.assemble && drawn.rotation === this.rotation && drawn.zoom === this.zoom) return;
+    if (drawn.assemble === this.assemble && drawn.rotation === this.rotation && drawn.zoom === this.zoom && drawn.scatter === this.scatter) return;
     drawn.assemble = this.assemble;
     drawn.rotation = this.rotation;
     drawn.zoom = this.zoom;
+    drawn.scatter = this.scatter;
     const a = (this.rotation * Math.PI) / 180;
 
     if (this.gl) {
@@ -133,6 +139,7 @@ export class LogoParticles {
       u.uAssemble.value = this.assemble;
       u.uSpin.value = [Math.cos(a), Math.sin(a)];
       u.uZoom.value = this.zoom;
+      u.uScatter.value = this.scatter;
       if (mesh) renderer.render({ scene: mesh, clear: true });
       return;
     }
@@ -143,13 +150,26 @@ export class LogoParticles {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.setTransform(Math.cos(a) * k, Math.sin(a) * k, -Math.sin(a) * k, Math.cos(a) * k, (this.dpr * this.w) / 2, (this.dpr * this.h) / 2);
     const grow = 1 / Math.sqrt(this.zoom);
+    const halfDiag = Math.hypot(this.w, this.h) * 0.5;
     for (const d of this.dots) {
       const t = Math.min(1, Math.max(0, (this.assemble - d.delay) / 0.6));
       const e = 1 - Math.pow(1 - t, 4);
       if (e <= 0) continue;
+      let x = d.sx + (d.tx - d.sx) * e;
+      let y = d.sy + (d.ty - d.sy) * e;
+      // Same burst as logo-dots.vert.glsl (which documents it).
+      const s = Math.min(1, Math.max(0, this.scatter * 1.35 - d.delay * 0.6));
+      if (s > 0) {
+        const reach = halfDiag * (1 + 0.5 * ((d.delay * 37) % 1));
+        const len = Math.hypot(x, y);
+        const [dx, dy] = len > 0.5 ? [x / len, y / len] : [d.sx / Math.hypot(d.sx, d.sy), d.sy / Math.hypot(d.sx, d.sy)];
+        const off = (s * s * reach) / this.zoom;
+        x += dx * off;
+        y += dy * off;
+      }
       ctx.fillStyle = d.color;
       ctx.beginPath();
-      ctx.arc(d.sx + (d.tx - d.sx) * e, d.sy + (d.ty - d.sy) * e, d.r * e * grow, 0, Math.PI * 2);
+      ctx.arc(x, y, d.r * e * grow, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -205,8 +225,17 @@ function createGL(canvas: HTMLCanvasElement): LogoParticles['gl'] {
       uAssemble: { value: 0 },
       uSpin: { value: [1, 0] },
       uZoom: { value: 1 },
+      uScatter: { value: 0 },
     },
   });
   renderer.gl.clearColor(0, 0, 0, 0);
   return { renderer, program, mesh: null };
+}
+
+/** Deterministic 0..1 value for one grid cell (integer hash). */
+function cellRandom(seed: number, x: number, y: number, salt: number): number {
+  let h = seed ^ Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1) ^ Math.imul(salt, 0x9e3779b9);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return ((h ^ (h >>> 16)) >>> 0) / 0x100000000;
 }

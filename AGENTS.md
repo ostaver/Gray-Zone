@@ -5,7 +5,7 @@ Guidance for AI coding agents working in this repo. See [README.md](README.md) f
 ## Commands
 
 - `npm install` — install deps (Node >= 22.12)
-- `npm run dev` — dev server on http://localhost:4321
+- `npm run dev` — dev server on localhost:4321
 - `npm run check` — type check; run before finishing any change
 - `npm run build` — production build; must pass before finishing
 
@@ -21,7 +21,7 @@ There is no test suite. Verify changes with `npm run check`, `npm run build`, an
 - WebGL (OGL) lives in `src/lib/gl/` (shared stage, GLSL in `shaders/`, per-effect code in `views/`). Preloader logo dots use `src/lib/canvas/logoParticles.ts`.
 - New third-party client deps used in the browser must be added to `vite.optimizeDeps.include` in `astro.config.mjs`.
 
-## Performance rules (important)
+## Performance rules - Ignore for now
 
 This site has been tuned to hold 60fps on integrated GPUs. Do not regress it:
 
@@ -39,7 +39,7 @@ This site has been tuned to hold 60fps on integrated GPUs. Do not regress it:
 
 ## Deployment
 
-Cloudflare (static, build output `dist/`). No server code, no `wrangler` config in the repo — do not add server-side features (API routes, SSR adapters) without asking.
+Static site (build output `dist/`). No CI/CD pipeline, no server code — do not add server-side features (API routes, SSR adapters) without asking.
 
 ## Branches
 

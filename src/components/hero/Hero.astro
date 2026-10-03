@@ -2,7 +2,7 @@
 import type { Locale } from '../../i18n/config';
 import { ui } from '../../i18n/ui';
 import { latestRelease } from '../../data/links';
-
+import CoolButton from '../ui/CoolButton.astro';
 interface Props {
   locale: Locale;
 }
@@ -32,9 +32,9 @@ const titleText = t.title.join(' ');
       </span>
     </h1>
 
-    <div class="hero__sides label" aria-hidden="true">
-      <span class="hero__side hero__side--honest" data-side="honest">← {t.honest}</span>
-      <span class="hero__side hero__side--gray" data-side="gray">{t.gray} →</span>
+    <div class="hero__sides label">
+      <button type="button" class="hero__side hero__side--honest" data-side="honest" data-zone="white" aria-pressed="false"><span aria-hidden="true">← </span>{t.honest}</button>
+      <button type="button" class="hero__side hero__side--gray" data-side="gray" data-zone="black" aria-pressed="true">{t.gray}<span aria-hidden="true"> →</span></button>
     </div>
 
     <div class="hero__bottom">
@@ -44,15 +44,15 @@ const titleText = t.title.join(' ');
           {t.facts.map((f) => <li>{f}</li>)}
         </ul>
       </div>
-      <p class="hero__scroll label" data-hero-fade>
-        <span class="hero__scroll-line" aria-hidden="true"></span>{t.scroll}
-      </p>
+      <div class="hero__scroll" data-hero-fade aria-hidden="true">
+        <span class="hero__scroll-line"></span>
+      </div>
       <div class="hero__ctas" data-hero-fade>
-        <a class="btn btn--primary" href={latestRelease} data-download data-magnetic>
+        <CoolButton href={latestRelease} data-download data-magnetic>
           <span class="btn__label">{t.cta}</span>
-          <span class="btn__os" data-os-label data-for={t.ctaFor}></span>
+          <span class="btn__os" data-os-label></span>
           <span class="btn__icon" aria-hidden="true">↓</span>
-        </a>
+        </CoolButton>
       </div>
     </div>
   </div>
@@ -100,16 +100,16 @@ const titleText = t.title.join(' ');
   }
   .hero__half--honest {
     clip-path: inset(0 50% 0 0);
-    background: radial-gradient(circle, rgb(227 38 31 / 0.55) 0 26%, transparent 32%) 0 0 / 16px 16px;
+    background: radial-gradient(circle, var(--field-honest) 0 26%, transparent 32%) 0 0 / 16px 16px;
   }
   .hero__half--gray {
     clip-path: inset(0 0 0 50%);
-    background: radial-gradient(circle, rgb(138 138 134 / 0.45) 0 22%, transparent 28%) 0 0 / 16px 16px;
+    background: radial-gradient(circle, var(--field-gray) 0 22%, transparent 28%) 0 0 / 16px 16px;
   }
   .hero__shade {
     background:
-      radial-gradient(60% 45% at 50% 50%, rgb(10 10 10 / 0.55), transparent 70%),
-      linear-gradient(to bottom, rgb(10 10 10 / 0.88), rgb(10 10 10 / 0.35) 20%, transparent 32%, transparent 60%, rgb(10 10 10 / 0.9));
+      radial-gradient(60% 45% at 50% 50%, rgb(var(--surface-rgb) / 0.55), transparent 70%),
+      linear-gradient(to bottom, rgb(var(--surface-rgb) / 0.88), rgb(var(--surface-rgb) / 0.35) 20%, transparent 32%, transparent 60%, rgb(var(--surface-rgb) / 0.9));
     pointer-events: none;
   }
 
@@ -123,6 +123,8 @@ const titleText = t.title.join(' ');
     font-size: min(21vw, 29svh);
     line-height: 0.84;
     letter-spacing: -0.012em;
+    /* Shared by both layers: the honest stroke must fully cover the outline beneath it. */
+    --title-stroke: max(1.5px, 0.012em);
     text-transform: uppercase;
     text-align: center;
     user-select: none;
@@ -133,24 +135,23 @@ const titleText = t.title.join(' ');
   }
   /* Solid type over the (unclipped, static) outline layer, clipped to the honest side of the
      seam. Its matching stroke covers the outline beneath. Only this plain layer repaints as
-     the seam moves; the costly halftone outline is rasterised once. */
+     the seam moves. */
   .hero__layer--honest {
     color: var(--paper);
-    -webkit-text-stroke: 1.5px var(--paper);
+    -webkit-text-stroke: var(--title-stroke) var(--paper);
     clip-path: inset(0 50% 0 0);
   }
-  /* Halftone-filled outline type. Applied per char: background-clip:text does not follow
-     transformed descendants, and the intro transforms every char. */
-  .hero__layer--gray .hero__line,
-  .hero__layer--gray .hero__line :global(*) {
+  /* Hollow outline type: the gray zone's letters are empty. */
+  .hero__layer--gray {
     color: transparent;
-    -webkit-text-stroke: 1.5px rgb(239 236 230 / 0.78);
-    background: radial-gradient(circle at center, rgb(138 138 134 / 0.95) 0 34%, transparent 38%) 0 0 / 7px 7px;
-    -webkit-background-clip: text;
-    background-clip: text;
+    -webkit-text-stroke: var(--title-stroke) var(--paper);
   }
   .hero__line {
     display: block;
+  }
+  /* Set once the intro has finished: the scroll scatter flies the letters out of their lines. */
+  .hero__title.is-free .line-mask {
+    overflow: visible;
   }
 
   .hero__sides {
@@ -171,15 +172,25 @@ const titleText = t.title.join(' ');
     padding: 0.4rem 0.65rem;
     white-space: nowrap;
     will-change: transform;
+    pointer-events: auto;
+  }
+  .hero__side[aria-pressed='true']::after {
+    content: '';
+    position: absolute;
+    left: 0.65rem;
+    right: 0.65rem;
+    bottom: 0.2rem;
+    height: 1px;
+    background: currentColor;
   }
   .hero__side--honest {
-    background: var(--paper);
-    color: var(--ink);
+    background: var(--zone-white);
+    color: var(--zone-black);
   }
   .hero__side--gray {
-    background: rgb(10 10 10 / 0.75);
-    color: var(--paper-dim);
-    box-shadow: inset 0 0 0 1px var(--hairline);
+    background: color-mix(in srgb, var(--zone-black) 75%, transparent);
+    color: var(--zone-black-dim);
+    box-shadow: inset 0 0 0 1px var(--zone-black-border);
   }
 
   /* ── Bottom row ────────────────────────────────────── */
@@ -250,46 +261,6 @@ const titleText = t.title.join(' ');
   }
 
   /* ── Buttons ───────────────────────────────────────── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .btn--primary {
-    position: relative;
-    padding: 1.15rem 1.6rem;
-    border-radius: 999px;
-    background: var(--red);
-    color: var(--paper);
-    overflow: hidden;
-    isolation: isolate;
-  }
-  .btn--primary::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: var(--paper);
-    border-radius: inherit;
-    transform: translateY(101%);
-    transition: transform 0.6s var(--ease-out);
-  }
-  .btn--primary:hover::before,
-  .btn--primary:focus-visible::before {
-    transform: translateY(0);
-  }
-  .btn--primary:hover,
-  .btn--primary:focus-visible {
-    color: var(--ink);
-  }
-  .btn--primary {
-    transition: color 0.4s;
-  }
   .btn__os:empty {
     display: none;
   }
@@ -300,10 +271,6 @@ const titleText = t.title.join(' ');
     display: inline-block;
     transition: transform 0.5s var(--ease-out);
   }
-  .btn--primary:hover .btn__icon {
-    transform: translateY(3px);
-  }
-
   /* ── Small screens ─────────────────────────────────── */
   @media (max-width: 760px) {
     .hero__pin {
@@ -322,11 +289,9 @@ const titleText = t.title.join(' ');
     .hero__ctas {
       justify-self: stretch;
     }
-    .hero__ctas .btn--primary {
+    .hero__ctas :global(.cool-btn) {
       flex: 1;
-      justify-content: center;
-      padding-inline: 1rem;
-      letter-spacing: 0.1em;
+      width: 100%;
     }
     .hero__facts {
       display: none;
@@ -354,12 +319,10 @@ const titleText = t.title.join(' ');
     .hero__ctas {
       justify-self: end;
     }
-    .hero__ctas .btn--primary {
+    .hero__ctas :global(.cool-btn) {
       flex: none;
-      padding-block: 0.85rem;
     }
   }
-
   @media (prefers-reduced-motion: reduce) {
     .hero__scroll-line::after {
       animation: none;

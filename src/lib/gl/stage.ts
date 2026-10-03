@@ -40,6 +40,8 @@ export interface Stage {
   gl: OGLRenderingContext;
   dpr: number;
   add(view: GLView): () => void;
+  /** Synchronously repaint visible views for a view-transition snapshot. */
+  draw(): void;
 }
 
 let stage: Stage | null | undefined;
@@ -98,14 +100,14 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
     Object.assign(renderer.state.viewport, { x, y, width: w, height: h });
   };
 
-  const tick = (time: number) => {
+  const tick = (time: number, force = false) => {
     if (lost || views.size === 0) return;
     const vw = canvas.clientWidth;
     const vh = canvas.clientHeight;
 
     // Views share one canvas: when any visible view moved or is due, repaint all visible views.
     const visible: { view: GLView; rect: DOMRect }[] = [];
-    let needsDraw = false;
+    let needsDraw = force;
     for (const view of views) {
       const rect = view.el.getBoundingClientRect();
       if (rect.bottom <= 0 || rect.top >= vh || rect.right <= 0 || rect.left >= vw || rect.width === 0) continue;
@@ -155,12 +157,15 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
     gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
-  gsap.ticker.add(tick);
+  gsap.ticker.add((time) => tick(time));
 
   return {
     renderer,
     gl,
     dpr,
+    draw() {
+      tick(gsap.ticker.time, true);
+    },
     add(view) {
       views.add(view);
       return () => {

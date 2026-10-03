@@ -103,15 +103,22 @@ export class SeamModel {
     const rows = 32;
     const pad = 40;
     const pts: string[] = [];
-    const edge = side === 'left' ? -pad : box.width + pad;
-    pts.push(`${edge}px ${-pad}px`);
+    // The polygon reaches far past the box: content that leaves it (the title's letters
+    // scattering on scroll) still has to be split along the seam, not cut off at the box.
+    const far = 1e4;
+    const edge = side === 'left' ? -far : far;
+    const xs: string[] = [];
+    const ys: number[] = [];
     for (let r = 0; r <= rows; r++) {
       const ly = (r / rows) * (box.height + pad * 2) - pad;
       const heroX = this.at((box.top + ly * box.sy) / heroH) * heroW;
-      const x = (heroX - box.left) / box.sx;
-      pts.push(`${x.toFixed(1)}px ${ly.toFixed(1)}px`);
+      xs.push(((heroX - box.left) / box.sx).toFixed(1));
+      ys.push(ly);
     }
-    pts.push(`${edge}px ${box.height + pad}px`);
+    // The seam is constant above and below the hero, so the first and last x continue outward.
+    pts.push(`${edge}px ${-far}px`, `${xs[0]}px ${-far}px`);
+    xs.forEach((x, r) => pts.push(`${x}px ${ys[r].toFixed(1)}px`));
+    pts.push(`${xs[rows]}px ${far}px`, `${edge}px ${far}px`);
     return `polygon(${pts.join(',')})`;
   }
 }

@@ -7,6 +7,13 @@
   --paper: #efece6;
   --paper-dim: rgb(239 236 230 / 0.62);
   --hairline: rgb(239 236 230 / 0.14);
+  --surface-rgb: 10 10 10;
+  --zone-white: #efece6;
+  --zone-black: #0a0a0a;
+  --zone-black-dim: rgb(239 236 230 / 0.62);
+  --zone-black-border: rgb(239 236 230 / 0.14);
+  --field-honest: rgb(227 38 31 / 0.55);
+  --field-gray: rgb(138 138 134 / 0.45);
 
   /* Integrity red — from the logo disc */
   --red: #e3261f;
@@ -14,6 +21,8 @@
   --oxblood: #5a0b0b;
   --ember: #ff6a3d;
   --blush: #ffd9c7;
+  --ring-highlight: #ffd2b0;
+  --button-hover-text: #fff;
 
   /* Status (the game's own language: green = done, red = failed) */
   --ok: #5ee08a;
@@ -35,4 +44,19 @@
   --z-preloader: 120;
   /* Film grain sits over everything, preloader included, so the whole page shares one texture. */
   --z-grain: 130;
+}
+
+:root[data-zone='white'] {
+  color-scheme: light;
+  --ink: #fafafa;
+  --ink-2: #f0f0f0;
+  --concrete: #dedede;
+  --ash: #666;
+  --paper: #0a0a0a;
+  --paper-dim: rgb(10 10 10 / 0.72);
+  --hairline: rgb(10 10 10 / 0.18);
+  --surface-rgb: 250 250 250;
+  --field-gray: rgb(43 43 43 / 0.45);
+
+  --button-hover-text: #0a0a0a;
 }

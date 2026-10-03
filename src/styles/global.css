@@ -76,6 +76,70 @@ a {
   border-radius: 2px;
 }
 
+/* ── Zone bloom ───────────────────────────────────────────── */
+
+@property --zone-radius {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+html[data-zone-transition]::view-transition {
+  pointer-events: none;
+}
+html[data-zone-transition]::view-transition-group(root),
+html[data-zone-transition]::view-transition-old(root) {
+  animation: none;
+}
+html[data-zone-transition]::view-transition-old(root) {
+  z-index: 0;
+  mix-blend-mode: normal;
+}
+html[data-zone-transition]::view-transition-new(root) {
+  z-index: 1;
+  mix-blend-mode: normal;
+  transform-origin: var(--zone-origin-x) var(--zone-origin-y);
+  /* Solid centre, soft falloff, and a dot fringe that breaks up the advancing edge. */
+  mask-image:
+    radial-gradient(circle at var(--zone-origin-x) var(--zone-origin-y), #000 max(0px, calc(var(--zone-radius) - 90px)), transparent var(--zone-radius)),
+    radial-gradient(circle at var(--zone-origin-x) var(--zone-origin-y), #000 var(--zone-radius), transparent calc(var(--zone-radius) + 1px)),
+    radial-gradient(circle, #000 2px, transparent 2.5px);
+  mask-size: 100% 100%, 100% 100%, 12px 12px;
+  mask-repeat: no-repeat, no-repeat, repeat;
+  mask-composite: add, intersect;
+  animation: zone-bloom 1.3s var(--ease-in-out) both;
+}
+
+@keyframes zone-bloom {
+  from {
+    --zone-radius: 0px;
+    transform: scale(1.035);
+  }
+  to {
+    --zone-radius: var(--zone-radius-end);
+    transform: scale(1);
+  }
+}
+
+.zone-transition-veil {
+  position: fixed;
+  z-index: calc(var(--z-grain) + 1);
+  border-radius: 50%;
+  background: var(--zone-black);
+  pointer-events: none;
+}
+.zone-transition-veil[data-target='white'] {
+  background: var(--zone-white);
+}
+.zone-transition-veil::before {
+  content: '';
+  position: absolute;
+  inset: -3rem;
+  border-radius: inherit;
+  background: radial-gradient(circle, var(--red) 2px, transparent 2.5px) 0 0 / 12px 12px;
+  mask-image: radial-gradient(closest-side, transparent calc(100% - 3rem), #000 calc(100% - 1.5rem), transparent);
+}
+
 /* ── Utilities ─────────────────────────────────────────────── */
 
 .sr-only {

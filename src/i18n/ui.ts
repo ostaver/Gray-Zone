@@ -2,7 +2,7 @@ import type { Localized } from './config';
 
 const mk = {
   meta: {
-    title: 'Сива Зона — Едукативна игра за средношколци',
+    title: 'Сива Зона',
     description:
       'Бесплатна едукативна игра за Windows и macOS за интегритет и антикорупција. Секој избор остава трага — чесниот пат или кратенката низ сивата зона.',
     siteName: 'Сива Зона',
@@ -22,13 +22,11 @@ const mk = {
   },
   hero: {
     title: ['Сива', 'Зона'],
-    lead: 'Стипендија во странство. Краток рок. Секој чекор е избор — чесниот пат или кратенката низ сивата зона.',
-    honest: 'Чесен пат',
-    gray: 'Сива зона',
-    facts: ['Бесплатно', 'Windows · macOS', 'Финансирано од ЕУ'],
+    lead: 'Стипендија во странство. Краток рок. Секој чекор е избор, дали ќе го задржиш интегритетот?',
+    honest: 'Бела зона',
+    gray: 'Црна зона',
+    facts: ['Репутација', 'Интелигенција', 'Интегритет'],
     cta: 'Преземи бесплатно',
-    ctaFor: 'за',
-    scroll: 'Скролај — влези во сивата зона',
   },
   download: {
     title: 'Избери платформа',
@@ -46,7 +44,7 @@ export type UIDict = typeof mk;
 
 const en: UIDict = {
   meta: {
-    title: 'Gray Zone — An educational game for high-schoolers',
+    title: 'Gray Zone',
     description:
       'A free educational game for Windows and macOS about integrity and anti-corruption. Every choice leaves a mark — the honest path, or a shortcut through the gray zone.',
     siteName: 'Gray Zone',
@@ -66,13 +64,11 @@ const en: UIDict = {
   },
   hero: {
     title: ['Gray', 'Zone'],
-    lead: 'A scholarship abroad. A tight deadline. Every step is a choice — the honest path, or a shortcut through the gray zone.',
-    honest: 'Honest path',
-    gray: 'Gray zone',
-    facts: ['Free', 'Windows · macOS', 'Funded by the EU'],
+    lead: 'A scholarship abroad. A tight deadline. Every step is a choice, will you save your integrity?',
+    honest: 'White zone',
+    gray: 'Black zone',
+    facts: ['Reputation', 'Intelligence', 'Integrity'],
     cta: 'Download free',
-    ctaFor: 'for',
-    scroll: 'Scroll — enter the gray zone',
   },
   download: {
     title: 'Choose your platform',
