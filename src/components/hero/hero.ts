@@ -45,8 +45,22 @@ export function initHero(root: HTMLElement): void {
     mouseForce: 0,
     reveal: still ? 1 : 0,
     progress: 0,
+    whiteZone: 0,
     still,
   };
+  const zoneButtons = [sideHonest, sideGray];
+  zoneButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const white = button.dataset.zone === 'white';
+      document.documentElement.dataset.zone = white ? 'white' : 'black';
+      state.whiteZone = white ? 1 : 0;
+      zoneButtons.forEach((zoneButton) => zoneButton.setAttribute('aria-pressed', String(zoneButton === button)));
+      document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
+        'content',
+        getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
+      );
+    });
+  });
   let target = seam.split;
   let pointer: { x: number; y: number } | null = null;
   let introDone = still;
@@ -97,6 +111,8 @@ export function initHero(root: HTMLElement): void {
   let lastMove = { x: 0, y: 0, t: 0 };
   let speed = 0;
   pin.addEventListener('pointermove', (e) => {
+    // The labels ride the seam; don't move their target while a user is aiming at them.
+    if (e.target instanceof Element && e.target.closest('button[data-zone]')) return;
     const r = pin.getBoundingClientRect();
     const x = e.clientX - r.left;
     const y = e.clientY - r.top;

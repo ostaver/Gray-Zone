@@ -57,6 +57,13 @@ src/
 public/         Static files copied as-is (favicons, og-image.png)
 ```
 
+## Zone appearance
+
+The hero's **White zone** and **Black zone** labels are keyboard-accessible theme buttons in both locales. White zone switches the page and download dialog to light surfaces with dark text, retaining the red CTA accents and red half of the WebGL dot field. The neutral half uses darker dots for contrast on white. Black zone restores the original dark/red palette. Both modes retain the cursor lens, moving seam, and chromatic split; only hovering the theme buttons pauses the seam's pointer target so they remain easy to click. The selected button exposes `aria-pressed`. The DOM shader fallback follows the same selection.
+
+Black zone is the default on every page load. CSS palettes live in `src/styles/tokens.css`; `hero.ts` passes the selection to the shader through `SeamHalftoneState.whiteZone`.
+
+
 ## Share image
 
 `public/og-image.png` (1200×630) is the master and the default `og:image` / `twitter:image`. `src/pages/og-image.[ext].ts` encodes `/og-image.jpg` and `/og-image.webp` from it at build time (sharp), and `Base.astro` lists all three as `og:image` entries, PNG first. Replace only the PNG; the other formats follow on the next build.

@@ -17,6 +17,7 @@ uniform vec2 uMouse;        // CSS px, top-left origin
 uniform float uMouseForce;  // 0..1, pointer speed
 uniform float uReveal;      // 0..1 intro wave
 uniform float uProgress;    // 0..1 scroll through hero
+uniform float uWhiteZone;   // 0 = black zone, 1 = white zone
 
 out vec4 fragColor;
 
@@ -74,7 +75,14 @@ vec4 honest(float g) {
   return ramp(vec4(RED, 0.0), vec4(0.227, 0.031, 0.024, 1.0), vec4(0.478, 0.063, 0.047, 1.0), vec4(0.722, 0.102, 0.078, 1.0), vec4(RED, 1.0), g);
 }
 vec4 grayZone(float g) {
-  return ramp(vec4(0.227, 0.227, 0.227, 0.0), vec4(0.118, 0.118, 0.118, 1.0), vec4(0.227, 0.227, 0.227, 1.0), vec4(0.541, 0.541, 0.525, 1.0), vec4(PAPER, 1.0), g);
+  return ramp(
+    vec4(0.227, 0.227, 0.227, 0.0),
+    vec4(mix(vec3(0.118), vec3(0.78, 0.78, 0.76), uWhiteZone), 1.0),
+    vec4(mix(vec3(0.227), vec3(0.541, 0.541, 0.525), uWhiteZone), 1.0),
+    vec4(mix(vec3(0.541, 0.541, 0.525), vec3(0.227), uWhiteZone), 1.0),
+    vec4(mix(PAPER, vec3(0.039), uWhiteZone), 1.0),
+    g
+  );
 }
 
 void main() {
@@ -136,7 +144,7 @@ void main() {
   float hair = step(0.965, hash11(floor(css.y * 0.8) + 11.0)) * (1.0 - smoothstep(0.0, 7.0 + 8.0 * jitter, -dp)) * step(dp, 0.0);
   edge = max(edge, hair * 0.7) * (1.0 - uProgress * 0.6);
 
-  rgb = mix(rgb, PAPER, edge);
+  rgb = mix(rgb, mix(PAPER, vec3(0.38), uWhiteZone), edge);
   alpha = mix(alpha, 1.0, edge);
 
   // Fade toward the section bottom so the field dissolves into the page.

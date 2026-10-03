@@ -11,6 +11,8 @@ export interface SeamHalftoneState {
   mouseForce: number;
   reveal: number;
   progress: number;
+  /** 0 = dark surface palette, 1 = light surface palette; both retain red accents. */
+  whiteZone: number;
   /** Frozen time for reduced motion. */
   still: boolean;
 }
@@ -63,6 +65,7 @@ export function createSeamHalftone(stage: Stage, opts: SeamHalftoneOptions): GLV
       uMouseForce: { value: 0 },
       uReveal: { value: 0 },
       uProgress: { value: 0 },
+      uWhiteZone: { value: opts.state.whiteZone },
     },
   });
   const mesh = new Mesh(gl, { geometry: triangle, program });
@@ -104,6 +107,7 @@ export function createSeamHalftone(stage: Stage, opts: SeamHalftoneOptions): GLV
       u.uMouseForce.value = state.mouseForce;
       u.uReveal.value = state.reveal;
       u.uProgress.value = state.progress;
+      u.uWhiteZone.value = state.whiteZone;
       mesh.draw();
     },
     dispose() {
