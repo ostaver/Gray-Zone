@@ -15,30 +15,14 @@ window.addEventListener('load', () => {
     }, 1000); // Minimum 1 second loading time
 });
 
-// Store original text content
-let originalHeroText = '';
-let originalSubtitleText = '';
-
-// Show loading screen immediately if page is still loading
-document.addEventListener('DOMContentLoaded', () => {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (document.readyState === 'loading') {
-        loadingScreen.style.display = 'flex';
-    }
-
-    // Store and clear hero text during loading
-    const heroTitle = document.querySelector('.hero-title');
-    const heroSubtitle = document.querySelector('.hero-subtitle');
-
-    if (heroTitle) {
-        originalHeroText = heroTitle.innerHTML;
-        heroTitle.innerHTML = '';
-    }
-    if (heroSubtitle) {
-        originalSubtitleText = heroSubtitle.textContent;
-        heroSubtitle.textContent = '';
-    }
-});
+// Hero copy is typed in once the loading screen is gone. Until then it stays empty;
+// a language switch mid-typing cancels the animation and shows the full text.
+const heroTitle = document.querySelector('.hero-title');
+const heroSubtitle = document.querySelector('.hero-subtitle');
+let heroState = 'pending'; // 'pending' | 'typing' | 'done'
+const typingTimers = new Set();
+heroTitle.textContent = '';
+heroSubtitle.textContent = '';
 
 // Localization
 const translations = {
@@ -54,9 +38,9 @@ const translations = {
         'learn-more': 'Learn More',
         'get-in-touch': 'Get in Touch',
         'download': 'DOWNLOAD',
-        'about': 'About the educational video game ,,Gray Zone“',
-        'game-description': 'The player takes on the role of a high school senior on the path to education, where he will continue his studies and higher education. He receives a wonderful opportunity for a scholarship to a great university abroad, but the time to apply for the scholarship is short. To succeed, the player must go through a series of series and situations that look atreality - preparing documents, administrative, interviews with institutions and test questions. <br><br>At each step, the player is faced with a choice: to follow the honest path and put in the effort, or to choose which groups of positive practices at first glanceseem like a solution. The decisions they make lead the player through a ‘gray zone’ - a space in which the borderbetween ethically correct actions and illegal actions is unclear and difficult to demarcate.<br><br>Each choice has consequences based on the story and the final outcome: obtaining the scholarship in an honest way, dismiss opportunity, or achieve success through a group of practicesthat leave behind negative integrity scars.<br><br>The game offers multiple scenarios and endings that make it playful and interactive, and theresponse to critical thinking for young people about the importance of integrity, ethicalchoices and the consequences of corruption. The goals of the game that we strive to achieve are the following: <br><br>Young people are faced with real corrupt situations. Of course, critical thinking, moral assessment and active reflection on the decisions madeby each player. (In the process of playing, each player\'s integrity, reputation, time andmoney are measured). <br>Values ​​such as integrity, honesty and resistance to corruption are promoted.<br>A long-lasting resource which will be used in teaching and non-formal educational environments.',
-        'team-title': 'Meet The Team of ,,Gray Zone“',
+        'about': 'About the educational video game „Gray Zone“',
+        'game-description': '<p>The player takes on the role of a high school senior on the path to education, where he will continue his studies and higher education. He receives a wonderful opportunity for a scholarship to a great university abroad, but the time to apply for the scholarship is short. To succeed, the player must go through a series of series and situations that look at reality - preparing documents, administrative, interviews with institutions and test questions.</p><p>At each step, the player is faced with a choice: to follow the honest path and put in the effort, or to choose which groups of positive practices at first glance seem like a solution. The decisions they make lead the player through a „gray zone“ - a space in which the border between ethically correct actions and illegal actions is unclear and difficult to demarcate.</p><p>Each choice has consequences based on the story and the final outcome: obtaining the scholarship in an honest way, dismiss opportunity, or achieve success through a group of practices that leave behind negative integrity scars.</p><p>The game offers multiple scenarios and endings that make it playful and interactive, and the response to critical thinking for young people about the importance of integrity, ethical choices and the consequences of corruption.</p><p><strong>The goals of the game that we strive to achieve are the following:</strong></p><ul><li>Young people are faced with real corrupt situations. Of course, critical thinking, moral assessment and active reflection on the decisions made by each player. (In the process of playing, each player’s integrity, reputation, time and money are measured).</li><li>Values such as integrity, honesty and resistance to corruption are promoted.</li><li>A long-lasting resource which will be used in teaching and non-formal educational environments.</li></ul>',
+        'team-title': 'Meet The Team of „Gray Zone“',
         'fitz-title': 'Game Developer',
         'aco-title': 'Game Developer',
         'hristina-title': 'Project Coordinator',
@@ -82,10 +66,8 @@ const translations = {
         'ognen-bio': 'Ognen is responsible for the communication and promotion of the initiative. He ensures project visibility through media coverage, collaboration with public figures and institutions, and active community engagement. He plans and coordinates all activities related to the communication strategy, making sure every message is precise, relevant, and aligned with the project’s values. With a systematic and professional approach, Ognen monitors campaign results and adapts strategies to increase impact and community engagement. Combining creativity with analytical thinking, he produces content that is striking, persuasive, and accessible to diverse audiences.',
         'filip-bio': 'Filip is a background designer focused on creating immersive environments and scenes that enrich the player experience. His work emphasizes spatial compositions and atmospheric design, carefully balancing aesthetics and functionality. From color choices and lighting effects to detailed elements, he ensures each background is vivid and engaging. A multimedia student passionate about game design, Filip combines creativity with strong technical and practical skills, delivering visual elements that are both harmonious and functional. His designs not only create a distinctive visual identity but also allow players to fully immerse themselves in the game world.',
         'mina-bio': 'Mina is a strategically oriented creative focused on developing and implementing content that is both engaging and directly applicable to the target audience. She carefully analyzes user needs and creates solutions that drive engagement and long-term value. She is dedicated to ensuring that every piece of content is interactive and easily accessible. Combining creativity, analytical thinking, and awareness of current trends, Mina ensures that projects are not only innovative but also effective in practice. Her dedication guarantees that every step of the process is well-planned and executed with structure.',
-        'btn-dwn': 'Download',
         'game-tester-title': 'Game Testers',
         'game-tester-desc': 'Our dedicated game testing team ensures the highest quality gaming experience through rigorous testing, bug finding and overall feedback.<br><br> Special thanks to <b>Kristijan Srbinoski, Nikola Shikole, Zafir Bogdanovikj, Andrej Zlatanov and Hristijan Petkovski</b>.',
-        'game-tester-subtitle': 'Testing',
         'fitz-ime': 'Filip Mladenovic',
         'aco-ime': 'Aleksandar Talevski',
         'hristina-ime': 'Hristina Jovcevska',
@@ -93,10 +75,17 @@ const translations = {
         'ognen-ime': 'Ognen Kiprijanoski',
         'filip-ime': 'Filip Simonovski',
         'mina-ime': 'Mina Zdravevska',
-        'enter-mail': 'Enter your Email to Download',
         'testing': 'Testing',
 
-        // NEW: Platform modal keys
+        'page-title': 'GrayZone',
+        'gallery-main-menu': 'Main Menu',
+        'gallery-settings': 'Settings',
+        'gallery-nickname': 'Nickname',
+        'gallery-day1': 'Day 1 — School',
+        'gallery-tasks': 'Tasks',
+        'gallery-secretary': 'Secretary',
+
+        // Platform modal keys
         'choose-platform': 'Choose your platform',
         'mac-warning': 'On macOS, you may need to right-click → Open the first time and allow Gatekeeper.',
         'download-windows': 'Download for Windows',
@@ -117,9 +106,9 @@ const translations = {
         'learn-more': 'Дознај повеќе',
         'get-in-touch': 'Контактирај нѐ',
         'download': 'ПРЕЗЕМИ',
-        'about': ',,За едукативната електронска игра ,,Сива Зона“',
-        'game-description': '<strong>За „Сива Зона“</strong><br>„Сива Зона“ е интерактивна едукативна игра која ја носи приказната на средношколец во последната година од своето образование. Играчот се најдува пред важен животен избор — каде и како ќе го продолжи своето образование. По добивање можност за стипендија на престижен универзитет во странство, времето за апликација е кратко и патот исполнет со предизвици.<br><br> Во играта, секој чекор носи избор: чесен пат, исполнет со труд и подготовка, или полесен пат преку коруптивни практики. Овие избори го водат играчот низ „сива зона“ — просторкаде границите меѓу етичкото и нелегалното се заматени. Секоја одлука има последици — од успех без компромис до губење на можноста, или постигнување на целта со негативни последици по интегритетот. Играта нуди повеќе сценарија и завршетоци, поттикнувајќи критичко размислување и развој на вредности како интегритет, чесност и отпор кон корупција. <br><br><strong>Цели на „Сива Зона“:</strong><br><li>Приказ на реални коруптивни ситуации и предизвици.</li><li>Поттикнување критичко размислување, морална проценка и рефлексија.</li><li>Поттикнување критичко размислување, морална проценка и рефлексија.</li><li>Создавање долготраен едукативен ресурс за формално и неформално учење.</li>',
-        'team-title': "Запознај го тимот на ,,Сива Зона“",
+        'about': 'За едукативната електронска игра „Сива Зона“',
+        'game-description': '<p>„Сива Зона“ е интерактивна едукативна игра која ја носи приказната на средношколец во последната година од своето образование. Играчот се најдува пред важен животен избор — каде и како ќе го продолжи своето образование. По добивање можност за стипендија на престижен универзитет во странство, времето за апликација е кратко и патот исполнет со предизвици.</p><p>Во играта, секој чекор носи избор: чесен пат, исполнет со труд и подготовка, или полесен пат преку коруптивни практики. Овие избори го водат играчот низ „сива зона“ — простор каде границите меѓу етичкото и нелегалното се заматени. Секоја одлука има последици — од успех без компромис до губење на можноста, или постигнување на целта со негативни последици по интегритетот. Играта нуди повеќе сценарија и завршетоци, поттикнувајќи критичко размислување и развој на вредности како интегритет, чесност и отпор кон корупција.</p><p><strong>Цели на „Сива Зона“:</strong></p><ul><li>Приказ на реални коруптивни ситуации и предизвици.</li><li>Поттикнување критичко размислување, морална проценка и рефлексија.</li><li>Создавање долготраен едукативен ресурс за формално и неформално учење.</li></ul>',
+        'team-title': 'Запознај го тимот на „Сива Зона“',
         'fitz-title': 'Креатор',
         'aco-title': 'Креатор',
         'hristina-title': 'Координатор на проект',
@@ -137,7 +126,7 @@ const translations = {
         'tutorial-step-6': 'Упатство чекор 6',
         'tutorial-step-7': 'Упатство чекор 7',
         'contactus': 'Контактирај Нѐ!',
-        'contact-text': 'Имаш прашање, предлог или идеја за подобрување на „Сива Зона“? Нашиот тим секогаш е отворен за соработка и нови иницијативи. Пиши ни – твоето мислење ни значи.“',
+        'contact-text': 'Имаш прашање, предлог или идеја за подобрување на „Сива Зона“? Нашиот тим секогаш е отворен за соработка и нови иницијативи. Пиши ни – твоето мислење ни значи.',
         'fitz-bio': 'Страствен софтверски инженер / развивач на видео игри со искуство во компонирање електронска музика и дизајн на звук. Моментално е во потрага по диплома, а воедно работи на креативни проекти кои прикажуваат уметност, технологија, простор и креативност. Искуството и во техничките и во уметничките области му овозможува да пристапува кон проблемите од уникатни перспективи и да нуди елегантни решенија. Дополнително, поседува вештини како што се 3Д моделирање, 3Д рендеринг, видео едитирање и дизајн на сајтови.',
         'aco-bio': 'Тој е програмер со силен интерес за игри и интерактивни искуства. Уште од рана возраст, видео игрите ја инспирирале неговата љубопитност, не само како играч, туку и како креатор. Ужива во анализа на она што ги прави игрите привлечни и во преведување на тие идеи во свои концепти. Освен пишување код, тој има и искуство во сајбер безбедноста, што му дава нови перцепции во контекст на креирање видео игри. Без разлика дали развива видео игри или слични проекти, тој секогаш апсорбира идеи од различни проекти.',
         'hristina-bio': 'Христина е координатор на проекти со докажано искуство во развивање и водење на младински иницијативи насочени кон општествени промени. Во рамките на проектот, таа обезбедува целокупна стратешка координација - од планирање и организирање активности до градење партнерства и обезбедување видливост. Нејзиниот фокус е на тоа резултатите од проектот да бидат практични, релевантни и препознаени од целната група. Со способноста да ги забележува трендовите и да ги преточи во ангажирачка, едукативна содржина, таа помага да се осигури дека иницијативата е иновативна и одржлива.',
@@ -145,10 +134,8 @@ const translations = {
         'ognen-bio': 'Огнен е одговорен за комуникацијата и промоцијата на иницијативата. Тој обезбедува видливост на проектот преку медиумско покривање, соработка со јавни личности и институции и активно вклучување на заедницата. Тој ги планира и координира сите активности поврзани со комуникациската стратегија, осигурувајќи се дека секоја порака е прецизна, релевантна и усогласена со вредностите на проектот. Со систематски и професионален пристап, Огнен ги следи резултатите од кампањата и ги прилагодува стратегиите за да го зголеми влијанието и ангажирањето на заедницата. Комбинирајќи ја креативноста со аналитичкото размислување, тој создава содржина што е впечатлива, убедлива и достапна за разновидна публика.',
         'filip-bio': 'Филип е дизајнер на позадини фокусиран на создавање импресивни средини и сцени што го збогатуваат искуството на играчот. Неговата работа нагласува просторни композиции и атмосферски дизајн, внимателно балансирајќи ја естетиката и функционалноста. Од изборот на бои и светлосни ефекти до деталните елементи, тој се грижи секоја позадина да биде живописна и привлечна. Како мултимедијален студент страствен за дизајн на игри, Филип ја комбинира креативноста со силни технички и практични вештини, испорачувајќи визуелни елементи кои се хармонични и функционални. Неговите дизајни не само што создаваат препознатлив визуелен идентитет, туку им овозможуваат и на играчите целосно да се потопат во светот на играта.',
         'mina-bio': 'Мина е стратешки ориентирана креативка фокусирана на развој и имплементација на содржина што е ангажирачка и директно применлива за целната публика. Таа внимателно ги анализира потребите на корисниците и создава решенија што го поттикнуваат ангажманот и долгорочната вредност. Таа е посветена на тоа да се осигура дека секоја содржина е интерактивна и лесно достапна. Комбинирајќи креативност, аналитичко размислување и свест за актуелните трендови, Мина гарантира дека проектите се не само иновативни, туку и ефикасни во пракса. Нејзината посветеност гарантира дека секој чекор од процесот е добро испланиран и структурирано извршен.',
-        'btn-dwn': 'Преземи',
         'game-tester-title': 'Тестери на играта',
         'game-tester-desc': 'Нашиот посветен тим за тестирање на игри обезбеди искуство со играње со највисок квалитет преку ригорозно тестирање, откривање грешки и целокупни повратни информации.<br><br> Посебна благодарност до <b>Кристијан Србиноски, Никола Шиколе, Зафир Богдановиќ, Андреј Златанов и Христијан Петковски</b>.',
-        'game-tester-subtitle:': 'Тестирање',
         'fitz-ime': 'Филип Младенович',
         'aco-ime': 'Александар Талевски',
         'hristina-ime': 'Христина Јовчевска',
@@ -156,10 +143,17 @@ const translations = {
         'ognen-ime': 'Огнен Кипријаноски',
         'filip-ime': 'Филип Симоновски',
         'mina-ime': 'Мина Здравевска',
-        'enter-mail': 'Внеси ја твојата мејл адреса за да ја симнеш играта',
         'testing': 'Тестирање',
 
-        // NEW: Platform modal keys
+        'page-title': 'СиваЗона',
+        'gallery-main-menu': 'Главно мени',
+        'gallery-settings': 'Подесувања',
+        'gallery-nickname': 'Прекар',
+        'gallery-day1': 'Ден 1 — Училиште',
+        'gallery-tasks': 'Задачи',
+        'gallery-secretary': 'Секретарка',
+
+        // Platform modal keys
         'choose-platform': 'Изберете платформа',
         'mac-warning': 'На macOS можеби ќе треба првпат десен клик → Open и дозвола преку Gatekeeper.',
         'download-windows': 'Преземи за Windows',
@@ -172,83 +166,71 @@ const translations = {
 
 let currentLanguage = 'en';
 
+const HTML_KEYS = new Set(['game-description', 'game-tester-desc']);
+const HERO_KEYS = new Set(['hero-title', 'hero-subtitle']);
+
 function updateLanguage(lang) {
     currentLanguage = lang;
+    const t = translations[lang];
 
-    // Update navigation links and any [data-key]
+    if (heroState === 'typing') {
+        stopTyping();
+        heroState = 'done';
+    }
+
+    document.documentElement.lang = lang;
+    document.title = t['page-title'];
+
     document.querySelectorAll('[data-key]').forEach(element => {
         const key = element.getAttribute('data-key');
-        if (translations[lang][key]) {
-            // Use innerHTML for keys that contain HTML tags
-            if (key === 'game-description' || key === 'game-tester-desc') {
-                element.innerHTML = translations[lang][key];
-            } else {
-                element.textContent = translations[lang][key];
-            }
+        if (!t[key]) return;
+        // The hero stays empty until the typing animation writes it.
+        if (heroState === 'pending' && HERO_KEYS.has(key)) return;
+        if (HTML_KEYS.has(key)) {
+            element.innerHTML = t[key];
+        } else {
+            element.textContent = t[key];
         }
     });
 
-    // Update hero section
-    const heroTitle = document.querySelector('.hero-title');
-    const heroSubtitle = document.querySelector('.hero-subtitle');
-    const learnMoreBtn = document.querySelector('.hero .btn-primary');
-    const getInTouchBtn = document.querySelector('.hero .btn-secondary');
-    const downloadBtn = document.querySelector('.btn-download');
+    document.querySelectorAll('[data-alt-key]').forEach(img => {
+        const alt = t[img.getAttribute('data-alt-key')];
+        if (alt) img.alt = alt;
+    });
 
-    if (heroTitle) heroTitle.innerHTML = translations[lang]['hero-title'];
-    if (heroSubtitle) heroSubtitle.textContent = translations[lang]['hero-subtitle'];
-    if (learnMoreBtn) learnMoreBtn.textContent = translations[lang]['learn-more'];
-    if (getInTouchBtn) getInTouchBtn.textContent = translations[lang]['get-in-touch'];
-    if (downloadBtn) downloadBtn.textContent = translations[lang]['download'];
-
-    // Update active language button
     document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-lang') === lang) {
-            btn.classList.add('active');
-        }
+        const active = btn.getAttribute('data-lang') === lang;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
     });
 
-    // Update tutorial images based on language
     document.querySelectorAll('.tutorial-image').forEach(img => {
-        const enSrc = img.getAttribute('data-en');
-        const mkSrc = img.getAttribute('data-mk');
-
-        if (lang === 'en' && enSrc) {
-            img.src = enSrc;
-        } else if (lang === 'mk' && mkSrc) {
-            img.src = mkSrc;
-        }
+        const src = img.getAttribute(lang === 'mk' ? 'data-mk' : 'data-en');
+        if (src) img.src = src;
     });
 }
 
-// Language switcher event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Default to English (no saved preferences)
-    updateLanguage('en');
+// Default to English (no saved preferences)
+updateLanguage('en');
 
-    // Add click listeners to language buttons
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lang = btn.getAttribute('data-lang');
-            updateLanguage(lang);
-        });
-    });
+document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => updateLanguage(btn.getAttribute('data-lang')));
 });
+
 // Mobile navigation toggle
 const hamburger = document.querySelector('.hamburger');
 const navMenu = document.querySelector('.nav-menu');
 
-hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navMenu.classList.toggle('active');
-});
+function setMenuOpen(open) {
+    hamburger.classList.toggle('active', open);
+    navMenu.classList.toggle('active', open);
+    hamburger.setAttribute('aria-expanded', String(open));
+}
+
+hamburger.addEventListener('click', () => setMenuOpen(!navMenu.classList.contains('active')));
 
 // Close mobile menu when clicking on a link
-document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => {
-    hamburger.classList.remove('active');
-    navMenu.classList.remove('active');
-}));
+document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => setMenuOpen(false)));
 
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -285,13 +267,15 @@ let currentImageIndex = 0;
 // Create lightbox modal
 const lightbox = document.createElement('div');
 lightbox.className = 'lightbox';
+lightbox.setAttribute('role', 'dialog');
+lightbox.setAttribute('aria-modal', 'true');
 lightbox.innerHTML = `
     <div class="lightbox-content">
-        <span class="lightbox-close">&times;</span>
-        <img class="lightbox-image" src="" alt="">
+        <button type="button" class="lightbox-close" aria-label="Close">&times;</button>
+        <img class="lightbox-image" alt="">
         <div class="lightbox-nav">
-            <button class="lightbox-prev">&#10094;</button>
-            <button class="lightbox-next">&#10095;</button>
+            <button type="button" class="lightbox-prev" aria-label="Previous image">&#10094;</button>
+            <button type="button" class="lightbox-next" aria-label="Next image">&#10095;</button>
         </div>
     </div>
 `;
@@ -338,6 +322,10 @@ const lightboxStyles = `
         font-weight: bold;
         cursor: pointer;
         z-index: 2001;
+        background: none;
+        border: none;
+        line-height: 1;
+        padding: 0;
     }
     
     .lightbox-close:hover {
@@ -394,9 +382,18 @@ document.head.appendChild(styleSheet);
 
 // Gallery click handlers
 galleryItems.forEach((item, index) => {
-    item.addEventListener('click', () => {
+    item.tabIndex = 0;
+    item.setAttribute('role', 'button');
+    const open = () => {
         currentImageIndex = index;
         openLightbox();
+    };
+    item.addEventListener('click', open);
+    item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            open();
+        }
     });
 });
 
@@ -406,47 +403,42 @@ const lightboxClose = lightbox.querySelector('.lightbox-close');
 const lightboxPrev = lightbox.querySelector('.lightbox-prev');
 const lightboxNext = lightbox.querySelector('.lightbox-next');
 
-function openLightbox() {
-    // Get the actual image source from the clicked gallery item
+function showImage(index) {
+    currentImageIndex = (index + galleryItems.length) % galleryItems.length;
     const galleryImg = galleryItems[currentImageIndex].querySelector('img');
-    const imageSrc = galleryImg ? galleryImg.src : '';
-    lightboxImage.src = imageSrc;
+    lightboxImage.src = galleryImg.currentSrc || galleryImg.src;
+    lightboxImage.alt = galleryImg.alt;
+}
+
+function openLightbox() {
+    showImage(currentImageIndex);
     lightbox.style.display = 'block';
     document.body.style.overflow = 'hidden';
+    lightboxClose.focus();
 }
 
 function closeLightbox() {
     lightbox.style.display = 'none';
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = '';
+    galleryItems[currentImageIndex].focus({ preventScroll: true });
 }
 
-function showPrevImage() {
-    currentImageIndex = currentImageIndex > 0 ? currentImageIndex - 1 : galleryItems.length - 1;
-    const galleryImg = galleryItems[currentImageIndex].querySelector('img');
-    const imageSrc = galleryImg ? galleryImg.src : '';
-    lightboxImage.src = imageSrc;
-}
-
-function showNextImage() {
-    currentImageIndex = currentImageIndex < galleryItems.length - 1 ? currentImageIndex + 1 : 0;
-    const galleryImg = galleryItems[currentImageIndex].querySelector('img');
-    const imageSrc = galleryImg ? galleryImg.src : '';
-    lightboxImage.src = imageSrc;
-}
+const showPrevImage = () => showImage(currentImageIndex - 1);
+const showNextImage = () => showImage(currentImageIndex + 1);
 
 // Event listeners
 lightboxClose.addEventListener('click', closeLightbox);
 lightboxPrev.addEventListener('click', showPrevImage);
 lightboxNext.addEventListener('click', showNextImage);
 
-// Close lightbox when clicking outside the image
+// Close lightbox when clicking anywhere except the image and its controls
 lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) {
+    if (e.target === lightbox || e.target.classList.contains('lightbox-content')) {
         closeLightbox();
     }
 });
 
-// Keyboard navigation
+// Keyboard: Escape closes whichever overlay is open; arrows page the lightbox.
 document.addEventListener('keydown', (e) => {
     if (lightbox.style.display === 'block') {
         switch (e.key) {
@@ -460,6 +452,8 @@ document.addEventListener('keydown', (e) => {
                 showNextImage();
                 break;
         }
+    } else if (e.key === 'Escape' && platformOverlay.classList.contains('active')) {
+        setPlatformOpen(false);
     }
 });
 
@@ -479,7 +473,7 @@ const observer = new IntersectionObserver((entries) => {
 }, observerOptions);
 
 // Add animation styles and observe elements
-const animatedElements = document.querySelectorAll('.project-card, .gallery-item, .tutorial-item, .about-content');
+const animatedElements = document.querySelectorAll('.gallery-item, .tutorial-item, .about-content');
 animatedElements.forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(30px)';
@@ -487,79 +481,48 @@ animatedElements.forEach(el => {
     observer.observe(el);
 });
 
-// Add typing effect to hero title with HTML support
-function typeWriter(element, htmlText, speed = 100) {
-    // Parse HTML to separate text from tags
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlText;
+function schedule(fn, ms) {
+    const id = setTimeout(() => {
+        typingTimers.delete(id);
+        fn();
+    }, ms);
+    typingTimers.add(id);
+}
 
-    // Extract just the text content for typing
-    const textContent = tempDiv.textContent || tempDiv.innerText;
+function stopTyping() {
+    typingTimers.forEach(clearTimeout);
+    typingTimers.clear();
+}
 
-    // Find where the accent span should start and end
-    const accentMatch = htmlText.match(/<span class="accent">(.*?)<\/span>/);
-    let accentStart = -1;
-    let accentEnd = -1;
-
-    if (accentMatch) {
-        const beforeAccent = htmlText.substring(0, htmlText.indexOf('<span class="accent">'));
-        const tempBefore = document.createElement('div');
-        tempBefore.innerHTML = beforeAccent;
-        accentStart = (tempBefore.textContent || tempBefore.innerText).length;
-        accentEnd = accentStart + accentMatch[1].length;
-    }
-
+// Typing effect for the hero copy
+function typeWriter(element, text, speed, onDone) {
     let i = 0;
-    element.innerHTML = '';
-
-    function type() {
-        if (i < textContent.length) {
-            const currentChar = textContent.charAt(i);
-
-            // Build the current text
-            let currentText = textContent.substring(0, i + 1);
-
-            // Apply accent span if we're in the accent range
-            if (accentStart >= 0 && accentEnd >= 0) {
-                if (i + 1 > accentStart) {
-                    const beforeAccent = currentText.substring(0, accentStart);
-                    const accentPart = currentText.substring(accentStart, Math.min(i + 1, accentEnd));
-                    const afterAccent = currentText.substring(accentEnd);
-
-                    if (i + 1 <= accentEnd) {
-                        currentText = beforeAccent + '<span class="accent">' + accentPart + '</span>' + afterAccent;
-                    } else {
-                        const fullAccentText = textContent.substring(accentStart, accentEnd);
-                        currentText = beforeAccent + '<span class="accent">' + fullAccentText + '</span>' + afterAccent;
-                    }
-                }
-            }
-
-            element.innerHTML = currentText;
-            i++;
-            setTimeout(type, speed);
+    const type = () => {
+        if (i < text.length) {
+            element.textContent = text.slice(0, ++i);
+            schedule(type, speed);
+        } else if (onDone) {
+            onDone();
         }
-    }
-
+    };
+    element.textContent = '';
     type();
 }
 
-// Function to start text animations after loading screen
+// Start text animations after the loading screen, in whichever language is active by then
 function startTextAnimations() {
-    const heroTitle = document.querySelector('.hero-title');
-    const underTitle = document.querySelector('.hero-subtitle');
+    if (heroState !== 'pending') return;
+    heroState = 'typing';
+    const t = translations[currentLanguage];
 
-    // Use stored original text or fallback to default
-    const originalText = originalHeroText || 'Hello, We are the <span class="accent">GrayZone Team</span>';
-    const underText = originalSubtitleText || 'Team full of creative people.';
-
-    // Start typing the main title
-    typeWriter(heroTitle, originalText, 50);
-    underTitle.textContent = '...';
+    typeWriter(heroTitle, t['hero-title'], 50);
+    heroSubtitle.textContent = '...';
 
     // Start typing the subtitle after main title
-    setTimeout(() => {
-        typeWriter(underTitle, underText, 20);
+    schedule(() => {
+        typeWriter(heroSubtitle, t['hero-subtitle'], 20, () => {
+            heroState = 'done';
+        });
     }, 2000);
 }
 
@@ -614,84 +577,32 @@ createParticles();
 
 
 // =====================================================================
-// DOWNLOAD: Platform chooser modal (auto-insert + wiring)
+// DOWNLOAD: the hero button opens the platform chooser; its links point
+// straight at the release assets, so they also work without JavaScript.
 // =====================================================================
-document.addEventListener('DOMContentLoaded', function () {
-    const heroDownloadBtn = document.querySelector('.btn-download');
+const platformOverlay = document.getElementById('platform-overlay');
+const heroDownloadBtn = document.querySelector('.btn-download');
 
-    // Direct release asset links (from you)
-    const RELEASE_LINKS = {
-        windows: 'https://github.com/alrk855/GrayZone/releases/download/v.1.0.1/GrayZoneWin.zip',
-        mac:     'https://github.com/alrk855/GrayZone/releases/download/v.1.0.1/GrayZoneMac.zip'
-    };
-
-    // 1) Ensure a platform modal exists; if not, create one that reuses your classes
-    let platformOverlay = document.getElementById('platform-overlay');
-    if (!platformOverlay) {
-        platformOverlay = document.createElement('div');
-        platformOverlay.id = 'platform-overlay';
-        platformOverlay.className = 'popup-overlay';
-        platformOverlay.innerHTML = `
-          <div class="popup small">
-            <button class="close-btn platform-close" aria-label="Close">&times;</button>
-            <h2 data-key="choose-platform">Choose your platform</h2>
-            <p class="warn" data-key="mac-warning">
-              On macOS, you may need to right-click → Open the first time and allow Gatekeeper.
-            </p>
-            <div class="btn-row">
-              <a href="#" id="dl-windows" class="btn btn-primary" data-key="download-windows">Download for Windows</a>
-              <a href="#" id="dl-mac" class="btn btn-secondary" data-key="download-mac">Download for macOS</a>
-            </div>
-          </div>
-        `;
-        // Insert next to your existing popup to inherit stacking order
-        const main = document.querySelector('main') || document.body;
-        main.appendChild(platformOverlay);
-        // Localize freshly inserted nodes
-        updateLanguage(currentLanguage);
+function setPlatformOpen(open) {
+    platformOverlay.classList.toggle('active', open);
+    if (open) {
+        platformOverlay.querySelector('#dl-windows').focus();
+    } else {
+        heroDownloadBtn.focus({ preventScroll: true });
     }
+}
 
-    const platformClose = platformOverlay.querySelector('.platform-close');
-    const dlWinBtn = platformOverlay.querySelector('#dl-windows');
-    const dlMacBtn = platformOverlay.querySelector('#dl-mac');
+heroDownloadBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    setPlatformOpen(true);
+});
 
-    // Optional small CSS helpers (only once)
-    const addOnce = (id, css) => {
-        if (!document.getElementById(id)) {
-            const s = document.createElement('style');
-            s.id = id;
-            s.textContent = css;
-            document.head.appendChild(s);
-        }
-    };
-    addOnce('platform-modal-css', `
-        .popup.small { max-width: 480px; }
-        .popup .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
-        .popup .warn { margin-top: 8px; opacity: 0.9; font-size: 0.95em; }
-    `);
+platformOverlay.querySelector('.platform-close').addEventListener('click', () => setPlatformOpen(false));
+platformOverlay.addEventListener('click', (e) => {
+    if (e.target === platformOverlay) setPlatformOpen(false);
+});
 
-    // 2) Open platform chooser instead of any previous email gate
-    heroDownloadBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        platformOverlay.classList.add('active'); // your email popup uses 'active', so we do the same
-    });
-
-    // 3) Close behavior
-    platformClose?.addEventListener('click', () => platformOverlay.classList.remove('active'));
-    platformOverlay.addEventListener('click', (e) => {
-        if (e.target === platformOverlay) platformOverlay.classList.remove('active');
-    });
-
-    // 4) Direct download actions (same tab to avoid popup blockers)
-    dlWinBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        platformOverlay.classList.remove('active');
-        window.location.href = RELEASE_LINKS.windows;
-    });
-
-    dlMacBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        platformOverlay.classList.remove('active');
-        window.location.href = RELEASE_LINKS.mac;
-    });
+// Let the download navigation proceed; just dismiss the chooser.
+platformOverlay.querySelectorAll('.btn-row a').forEach(link => {
+    link.addEventListener('click', () => platformOverlay.classList.remove('active'));
 });

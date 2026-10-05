@@ -5,12 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GrayZone</title>
+  <meta name="description" content="Gray Zone — a free educational game for Windows and macOS about integrity and anti-corruption."/>
 
-  <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Rubik+Glitch&family=Russo+One&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400..700&family=Russo+One&display=swap" rel="stylesheet"/>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZQ981XQYYV"></script>
@@ -37,7 +37,7 @@
   <nav class="navbar">
     <div class="nav-container">
       <div class="nav-logo" data-key="Graytitle">[GrayZone]</div>
-      <ul class="nav-menu">
+      <ul class="nav-menu" id="nav-menu">
         <li><a href="#about" class="nav-link" data-key="nav-about">About</a></li>
         <li><a href="#team" class="nav-link" data-key="nav-team">Team</a></li>
         <li><a href="#gallery" class="nav-link" data-key="nav-gallery">Gallery</a></li>
@@ -46,94 +46,72 @@
       </ul>
       <div class="nav-right">
         <div class="language-switcher">
-          <button class="lang-btn active" data-lang="en">EN</button>
-          <button class="lang-btn" data-lang="mk">МК</button>
+          <button type="button" class="lang-btn active" data-lang="en">EN</button>
+          <button type="button" class="lang-btn" data-lang="mk">МК</button>
         </div>
-        <div class="hamburger">
+        <button class="hamburger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu">
           <span></span><span></span><span></span>
-        </div>
+        </button>
       </div>
     </div>
   </nav>
 
   <main>
-    <!-- Existing email popup (kept; unused now, safe to remove later if you want) -->
-    <div class="popup-overlay">
-      <div class="popup">
-        <button class="close-btn" aria-label="Close">&times;</button>
-        <h2 data-key="enter-mail">Enter Your Email</h2>
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" placeholder="your.email@example.com"/>
-        </div>
-        <button data-key="btn-dwn" class="download-btn" disabled>Download File</button>
-        <div class="message" id="message"></div>
-      </div>
-    </div>
-
-    <!-- NEW: Platform chooser modal (small window) -->
-    <div id="platform-overlay" class="popup-overlay">
+    <!-- Platform chooser modal -->
+    <div id="platform-overlay" class="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="platform-title">
       <div class="popup small">
-        <button class="close-btn platform-close" aria-label="Close">&times;</button>
-        <h2 data-key="choose-platform">Choose your platform</h2>
+        <button type="button" class="close-btn platform-close" aria-label="Close">&times;</button>
+        <h2 id="platform-title" data-key="choose-platform">Choose your platform</h2>
         <p class="warn" data-key="mac-warning">
           On macOS, you may need to right-click → Open the first time and allow Gatekeeper.
         </p>
         <div class="btn-row">
-          <a href="#" id="dl-windows" class="btn btn-primary" data-key="download-windows">Download for Windows</a>
-          <a href="#" id="dl-mac" class="btn btn-secondary" data-key="download-mac">Download for macOS</a>
+          <a href="https://github.com/alrk855/GrayZone/releases/download/v.1.0.1/GrayZoneWin.zip" id="dl-windows" class="btn btn-primary" data-key="download-windows">Download for Windows</a>
+          <a href="https://github.com/alrk855/GrayZone/releases/download/v.1.0.1/GrayZoneMac.zip" id="dl-mac" class="btn btn-secondary" data-key="download-mac">Download for macOS</a>
         </div>
       </div>
     </div>
 
     <section id="hero" class="hero">
       <div class="hero-content">
-        <h1 class="hero-title">Gray Zone</h1>
-        <p class="hero-subtitle">Educational game for high schoolers.</p>
+        <h1 class="hero-title" data-key="hero-title">Gray Zone</h1>
+        <p class="hero-subtitle" data-key="hero-subtitle">Educational game for high schoolers.</p>
         <div class="hero-buttons">
           <a href="#about" class="btn btn-primary" data-key="learn-more">Learn More</a>
           <a href="#contact" class="btn btn-secondary" data-key="get-in-touch">Get in Touch</a>
         </div>
         <div class="hero-buttons">
-          <a href="#" class="btn btn-download" data-key="download">DOWNLOAD</a>
+          <a href="https://github.com/alrk855/GrayZone/releases/latest" class="btn btn-download" data-key="download">DOWNLOAD</a>
         </div>
       </div>
     </section>
 
     <section id="about" class="about">
       <div class="container">
-        <h2 class="section-title" data-key="about">About GrayZone</h2>
+        <h2 class="section-title" data-key="about">About the educational video game „Gray Zone“</h2>
         <div class="about-content">
           <div class="about-text">
-            <p data-key="game-description">
-              The player takes on the role of a high school senior on the path
-              to education, where he will continue his studies and higher education. He receives a wonderful
-              opportunity for a scholarship to a great university abroad, but the time to apply for the scholarship is short.
-              To succeed, the player must go through a series of series and situations that look at reality - preparing
-              documents, administrative, interviews with institutions and test questions. <br /><br />At each step, the
-              player is faced with a choice: to follow the honest path and put in the effort, or to choose which groups of
-              positive practices at first glance seem like a solution. The decisions they make lead the player through a
-              ‘gray zone’ - a space in which the border between ethically correct actions and illegal actions is unclear and
-              difficult to demarcate. <br /><br />Each choice has consequences based on the story and the final outcome:
-              obtaining the scholarship in an honest way, dismiss opportunity, or achieve success through a group of
-              practices that leave behind negative integrity scars.<br /><br />
-              The game offers multiple scenarios and endings that make it playful and interactive, and the response to
-              critical thinking for young people about the importance of integrity, ethical choices and the consequences of
-              corruption. The goals of the game that we strive to achieve are the following: <br /><br />Young people are
-              faced with real corrupt situations. Of course, critical thinking, moral assessment and active reflection on
-              the decisions made by each player. (In the process of playing, each player's integrity, reputation, time and
-              money are measured). <br />Values ​​such as integrity, honesty and resistance to corruption are promoted.
-              <br />A long-lasting resource which will be used in teaching and non-formal educational environments.
-            </p>
+            <div class="about-description" data-key="game-description">
+              <p>The player takes on the role of a high school senior on the path to education, where he will continue his studies and higher education. He receives a wonderful opportunity for a scholarship to a great university abroad, but the time to apply for the scholarship is short. To succeed, the player must go through a series of series and situations that look at reality - preparing documents, administrative, interviews with institutions and test questions.</p>
+              <p>At each step, the player is faced with a choice: to follow the honest path and put in the effort, or to choose which groups of positive practices at first glance seem like a solution. The decisions they make lead the player through a „gray zone“ - a space in which the border between ethically correct actions and illegal actions is unclear and difficult to demarcate.</p>
+              <p>Each choice has consequences based on the story and the final outcome: obtaining the scholarship in an honest way, dismiss opportunity, or achieve success through a group of practices that leave behind negative integrity scars.</p>
+              <p>The game offers multiple scenarios and endings that make it playful and interactive, and the response to critical thinking for young people about the importance of integrity, ethical choices and the consequences of corruption.</p>
+              <p><strong>The goals of the game that we strive to achieve are the following:</strong></p>
+              <ul>
+                <li>Young people are faced with real corrupt situations. Of course, critical thinking, moral assessment and active reflection on the decisions made by each player. (In the process of playing, each player’s integrity, reputation, time and money are measured).</li>
+                <li>Values such as integrity, honesty and resistance to corruption are promoted.</li>
+                <li>A long-lasting resource which will be used in teaching and non-formal educational environments.</li>
+              </ul>
+            </div>
           </div>
           <div class="about-image">
             <div class="image-placeholder">
-              <img src="Images/GG.png" alt="Image" class="profile-image" />
+              <img src="Images/GG.png" alt="Gray Zone logo" class="profile-image" loading="lazy" decoding="async" />
             </div>
           </div>
         </div>
         <div class="disclaimer-container">
-          <img src="Images/Disclaimer.png" alt="Disclaimer" class="disclaimer-image" />
+          <img src="Images/Disclaimer.png" alt="Funding disclaimer" class="disclaimer-image" loading="lazy" decoding="async" />
         </div>
       </div>
     </section>
@@ -141,14 +119,13 @@
     <section id="team" class="team">
       <div class="team-background-image"></div>
       <div class="container">
-        <h2 class="section-title" data-key="team-title">Meet The Team of GrayZone</h2>
+        <h2 class="section-title" data-key="team-title">Meet The Team of „Gray Zone“</h2>
         <div class="team-photo-container">
-          <img src="Images/IMG_0647.JPG" alt="GrayZone Team Photo" class="team-photo" />
+          <img src="Images/IMG_0647.JPG" alt="GrayZone Team Photo" class="team-photo" loading="lazy" decoding="async" />
         </div>
 
-        <!-- Team cards (unchanged content you provided) -->
         <!-- Fitz -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="fitz-ime">Filip Mladenovic</span>
             <span class="title-title" data-key="fitz-title">Game Developer</span>
@@ -168,7 +145,7 @@
               <a href="https://www.linkedin.com/in/filip-karamazov-a724b7386/" class="social-icon linkedin" title="LinkedIn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a href="mailto:filipmladenovik@sivazona.mk" class="social-icon gmail" title="Gmail" target="_blank">
+              <a href="mailto:filipmladenovik@sivazona.mk" class="social-icon gmail" title="Gmail">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
               </a>
             </div>
@@ -184,10 +161,10 @@
               <span class="tag">#Concept Creator</span>
             </div>
           </div>
-        </span>
+        </article>
 
         <!-- Aleksandar -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="aco-ime">Aleksandar Talevski</span>
             <span class="title-title" data-key="aco-title">Game Developer</span>
@@ -201,7 +178,7 @@
               <a href="https://www.linkedin.com/in/aleksandar-talevski-185091386/" class="social-icon linkedin" title="LinkedIn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a href="mailto:aleksandartalevski@sivazona.mk" class="social-icon gmail" title="Gmail" target="_blank">
+              <a href="mailto:aleksandartalevski@sivazona.mk" class="social-icon gmail" title="Gmail">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
               </a>
             </div>
@@ -214,10 +191,10 @@
               <span class="tag">#Programmer</span>
             </div>
           </div>
-        </span>
+        </article>
 
         <!-- Hristina -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="hristina-ime">Hristina Jovcevska</span>
             <span class="title-title" data-key="hristina-title">Project Coordinator</span>
@@ -228,7 +205,7 @@
               <a href="https://www.linkedin.com/in/hristina-jovcevska-3a0428263/" class="social-icon linkedin" title="LinkedIn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a href="mailto:hristinajovcevska@sivazona.mk" class="social-icon gmail" title="Gmail" target="_blank">
+              <a href="mailto:hristinajovcevska@sivazona.mk" class="social-icon gmail" title="Gmail">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
               </a>
             </div>
@@ -240,13 +217,13 @@
               <span class="tag">#Event Manager</span>
             </div>
           </div>
-        </span>
+        </article>
 
         <!-- Martin -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="martin-ime">Martin Nasteski</span>
-            <span class="title-title" data-key="martin-title">Project Coordinator</span>
+            <span class="title-title" data-key="martin-title">Character Designer</span>
             <div class="social-icons">
               <a href="https://www.instagram.com/nasteskimartin/" class="social-icon instagram" title="Instagram" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -254,7 +231,7 @@
               <a href="https://www.linkedin.com/in/filip-mladenovic/" class="social-icon linkedin" title="LinkedIn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a href="mailto:martinnasteski@sivazona.mk" class="social-icon gmail" title="Gmail" target="_blank">
+              <a href="mailto:martinnasteski@sivazona.mk" class="social-icon gmail" title="Gmail">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
               </a>
             </div>
@@ -265,13 +242,13 @@
               <span class="tag">#Artist</span><span class="tag">#Character Artist</span>
             </div>
           </div>
-        </span>
+        </article>
 
         <!-- Ognen -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="ognen-ime">Ognen Kiprijanoski</span>
-            <span class="title-title" data-key="ognen-title">Project Coordinator</span>
+            <span class="title-title" data-key="ognen-title">Public Relations Coordinator</span>
             <div class="social-icons">
               <a href="https://www.instagram.com/ognenkiprijanovski/" class="social-icon instagram" title="Instagram" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.59-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -279,7 +256,7 @@
               <a href="https://www.linkedin.com/in/ognen-kiprijanovski-12b975385/" class="social-icon linkedin" title="LinkedIn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a href="mailto:ognenkiprijanovski@sivazona.mk" class="social-icon gmail" title="Gmail" target="_blank">
+              <a href="mailto:ognenkiprijanovski@sivazona.mk" class="social-icon gmail" title="Gmail">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
               </a>
             </div>
@@ -288,13 +265,13 @@
             <div class="team-desc-text" data-key="ognen-bio">Ognen is responsible for the communication...</div>
             <div class="tags"><span class="tag">#Socials Coordinator</span></div>
           </div>
-        </span>
+        </article>
 
         <!-- Filip S. -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
-            <span class="name-title" data-key="filip-ime">Filip Simonosski</span>
-            <span class="title-title" data-key="filip-title">Environment Arist</span>
+            <span class="name-title" data-key="filip-ime">Filip Simonovski</span>
+            <span class="title-title" data-key="filip-title">Environment Designer</span>
             <div class="social-icons">
               <a href="https://www.instagram.com/black_birdfs/" class="social-icon instagram" title="Instagram" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.59 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -302,7 +279,7 @@
               <a href="https://www.linkedin.com/in/filip-karamazov-a724b7386/" class="social-icon linkedin" title="LinkedIn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a href="mailto:filipsimonovski@sivazona.mk" class="social-icon gmail" title="Gmail" target="_blank">
+              <a href="mailto:filipsimonovski@sivazona.mk" class="social-icon gmail" title="Gmail">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
               </a>
             </div>
@@ -313,10 +290,10 @@
               <span class="tag">#Artist</span><span class="tag">#Background Designer</span>
             </div>
           </div>
-        </span>
+        </article>
 
         <!-- Mina -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="mina-ime">Mina Zdravevska</span>
             <span class="title-title" data-key="mina-title">Educational Coordinator</span>
@@ -327,7 +304,7 @@
               <a href="https://www.linkedin.com/in/mina-zdravevska-4a2470386/" class="social-icon linkedin" title="LinkedIn" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
               </a>
-              <a href="mailto:minazdravevska@sivazona.mk" class="social-icon gmail" title="Gmail" target="_blank">
+              <a href="mailto:minazdravevska@sivazona.mk" class="social-icon gmail" title="Gmail">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
               </a>
             </div>
@@ -338,10 +315,10 @@
               <span class="tag">#Graphic Designer</span><span class="tag">#Content Manager</span>
             </div>
           </div>
-        </span>
+        </article>
 
         <!-- Testers -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="game-tester-title">Game Testers</span>
             <span class="title-title" data-key="testing">Testing</span>
@@ -354,16 +331,16 @@
           <div class="team-desc">
             <div class="team-desc-text" data-key="game-tester-desc">
               Our dedicated game testing team ensures the highest quality gaming experience through rigorous testing, bug finding and overall feedback.
-              <br /><br />Special thanks to <b>Kristijan Srbinoski, Nikola Shikole, Vule, Teski, Zafir Bogdanovikj, Andrej Zlatanov and Hristijan Petkovski</b>.
+              <br /><br />Special thanks to <b>Kristijan Srbinoski, Nikola Shikole, Zafir Bogdanovikj, Andrej Zlatanov and Hristijan Petkovski</b>.
             </div>
             <div class="tags">
               <span class="tag">#Game Testing</span><span class="tag">#UX</span><span class="tag">#Feedback</span>
             </div>
           </div>
-        </span>
+        </article>
 
         <!-- Zafir -->
-        <span class="team-card">
+        <article class="team-card">
           <div class="team-title">
             <span class="name-title" data-key="zafir-ime">Zafir Bogdanovikj</span>
             <span class="title-title" data-key="zafir-title">Lead Game Tester</span>
@@ -379,7 +356,7 @@
               <span class="tag">#Feedback</span>
             </div>
           </div>
-        </span>
+        </article>
       </div>
     </section>
 
@@ -387,12 +364,12 @@
       <div class="container">
         <h2 class="section-title" data-key="gallery">Gallery</h2>
         <div class="gallery-grid">
-          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/MainMenu.png" alt="Main Menu">Main Menu</img></div>
-          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/Settings.png" alt="Settings">Settings</img></div>
-          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/GameNickname.png" alt="Nickname">Nickname</img></div>
-          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/GameDay1.png" alt="Day1 School">Day1 School</img></div>
-          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/Tasks.png" alt="Tasks">Tasks</img></div>
-          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/GameSecretary.png" alt="Secretary">Secretary</img></div>
+          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/MainMenu.png" alt="Main Menu" data-alt-key="gallery-main-menu" loading="lazy" decoding="async" /></div>
+          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/Settings.png" alt="Settings" data-alt-key="gallery-settings" loading="lazy" decoding="async" /></div>
+          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/GameNickname.png" alt="Nickname" data-alt-key="gallery-nickname" loading="lazy" decoding="async" /></div>
+          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/GameDay1.png" alt="Day 1 — School" data-alt-key="gallery-day1" loading="lazy" decoding="async" /></div>
+          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/Tasks.png" alt="Tasks" data-alt-key="gallery-tasks" loading="lazy" decoding="async" /></div>
+          <div class="gallery-item"><img class="image-placeholder" src="Images/Gallery/GameSecretary.png" alt="Secretary" data-alt-key="gallery-secretary" loading="lazy" decoding="async" /></div>
         </div>
       </div>
     </section>
@@ -402,31 +379,31 @@
         <h2 class="section-title" data-key="tutorial">Game Tutorial</h2>
         <div class="tutorial-grid">
           <div class="tutorial-item">
-            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut1.png" alt="Tutorial Step 1" data-en="Images/Tutorial_en/tut1.png" data-mk="Images/Tutorial_mk/tutorial1.png"/>
+            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut1.png" alt="Tutorial Step 1" data-alt-key="tutorial-step-1" data-en="Images/Tutorial_en/tut1.png" data-mk="Images/Tutorial_mk/tutorial1.png" loading="lazy" decoding="async" />
             <span data-key="tutorial-step-1">Tutorial Step 1</span>
           </div>
           <div class="tutorial-item">
-            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut2.png" alt="Tutorial Step 2" data-en="Images/Tutorial_en/tut2.png" data-mk="Images/Tutorial_mk/tutorial2.png"/>
+            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut2.png" alt="Tutorial Step 2" data-alt-key="tutorial-step-2" data-en="Images/Tutorial_en/tut2.png" data-mk="Images/Tutorial_mk/tutorial2.png" loading="lazy" decoding="async" />
             <span data-key="tutorial-step-2">Tutorial Step 2</span>
           </div>
           <div class="tutorial-item">
-            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut3.png" alt="Tutorial Step 3" data-en="Images/Tutorial_en/tut3.png" data-mk="Images/Tutorial_mk/tutorial3.png"/>
+            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut3.png" alt="Tutorial Step 3" data-alt-key="tutorial-step-3" data-en="Images/Tutorial_en/tut3.png" data-mk="Images/Tutorial_mk/tutorial3.png" loading="lazy" decoding="async" />
             <span data-key="tutorial-step-3">Tutorial Step 3</span>
           </div>
           <div class="tutorial-item">
-            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut4.png" alt="Tutorial Step 4" data-en="Images/Tutorial_en/tut4.png" data-mk="Images/Tutorial_mk/tutorial4.png"/>
+            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut4.png" alt="Tutorial Step 4" data-alt-key="tutorial-step-4" data-en="Images/Tutorial_en/tut4.png" data-mk="Images/Tutorial_mk/tutorial4.png" loading="lazy" decoding="async" />
             <span data-key="tutorial-step-4">Tutorial Step 4</span>
           </div>
           <div class="tutorial-item">
-            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut5.png" alt="Tutorial Step 5" data-en="Images/Tutorial_en/tut5.png" data-mk="Images/Tutorial_mk/tutorial5.png"/>
+            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut5.png" alt="Tutorial Step 5" data-alt-key="tutorial-step-5" data-en="Images/Tutorial_en/tut5.png" data-mk="Images/Tutorial_mk/tutorial5.png" loading="lazy" decoding="async" />
             <span data-key="tutorial-step-5">Tutorial Step 5</span>
           </div>
           <div class="tutorial-item">
-            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut6.png" alt="Tutorial Step 6" data-en="Images/Tutorial_en/tut6.png" data-mk="Images/Tutorial_mk/tutorial6.png"/>
+            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut6.png" alt="Tutorial Step 6" data-alt-key="tutorial-step-6" data-en="Images/Tutorial_en/tut6.png" data-mk="Images/Tutorial_mk/tutorial6.png" loading="lazy" decoding="async" />
             <span data-key="tutorial-step-6">Tutorial Step 6</span>
           </div>
           <div class="tutorial-item">
-            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut7.png" alt="Tutorial Step 7" data-en="Images/Tutorial_en/tut7.png" data-mk="Images/Tutorial_mk/tutorial7.png"/>
+            <img class="image-placeholder tutorial-image" src="Images/Tutorial_en/tut7.png" alt="Tutorial Step 7" data-alt-key="tutorial-step-7" data-en="Images/Tutorial_en/tut7.png" data-mk="Images/Tutorial_mk/tutorial7.png" loading="lazy" decoding="async" />
             <span data-key="tutorial-step-7">Tutorial Step 7</span>
           </div>
         </div>
@@ -450,11 +427,11 @@
               </div>
               <div class="contact-method">
                 <span class="contact-label">Instagram:</span>
-                <a href="https://www.instagram.com/sivazona.igra?igsh=ZTFnem5kOHlpaG5r" class="contact-link" target="_blank">sivazona.igra</a>
+                <a href="https://www.instagram.com/sivazona.igra" class="contact-link" target="_blank" rel="noopener">sivazona.igra</a>
               </div>
               <div class="contact-method">
                 <span class="contact-label">GitHub:</span>
-                <a href="#" class="contact-link">GrayZone Source</a>
+                <a href="https://github.com/alrk855/GrayZone" class="contact-link" target="_blank" rel="noopener">GrayZone Source</a>
               </div>
             </div>
           </div>
