@@ -35,7 +35,7 @@ This site has been tuned to hold 60fps on integrated GPUs. Do not regress it:
 - TypeScript, strict. No `any` without a reason.
 - Match surrounding code style and comment density; comments explain why, not what.
 - Commits use conventional-style prefixes seen in history: `feat(scope):`, `perf(scope):`, `fix(scope):`.
-- Do not commit `dist/`, `.astro/`, `node_modules/`, or `.env*`. `/Outdated/` and `/Chromatic theme/` are local design references and are git-ignored; do not add them.
+- Do not commit `dist/`, `.astro/`, `node_modules/`, or `.env*`. `/Chromatic theme/` is a local design reference and is git-ignored; do not add it.
 
 ## Deployment
 
@@ -43,4 +43,6 @@ Static site (build output `dist/`). No CI/CD pipeline, no server code — do not
 
 ## Branches
 
-Work is organised in phase branches (`phase-00-foundation`, `phase-01-hero`, ...) merged into the foundation branch; `main` is the PR target.
+Work is organised in phase branches (`phase-01-hero`, `phase-02-nav`, ...) cut from `main` and merged back into `main` via PR.
+
+`LEGACY/GrayZone` is an unrelated (orphan) branch holding only the pre-Astro legacy site at its root. Never merge it into or from the other branches.
