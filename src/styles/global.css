@@ -75,6 +75,10 @@ a {
   outline-offset: 3px;
   border-radius: 2px;
 }
+/* Sections focused by in-page navigation are landing points, not controls: no ring. */
+[tabindex='-1']:focus {
+  outline: none;
+}
 
 /* ── Zone bloom ───────────────────────────────────────────── */
 

@@ -18,3 +18,9 @@ export function localePath(locale: Locale, path = '/'): string {
 /** BCP-47 tag for <html lang> and Intl APIs. */
 export const htmlLang: Localized<string> = { mk: 'mk', en: 'en' };
 export const ogLocale: Localized<string> = { mk: 'mk_MK', en: 'en_US' };
+
+/** Short switcher label, and the language's own name for assistive tech. */
+export const localeLabel: Localized<{ short: string; name: string }> = {
+  mk: { short: 'МК', name: 'Македонски' },
+  en: { short: 'EN', name: 'English' },
+};

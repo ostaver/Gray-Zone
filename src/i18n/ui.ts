@@ -19,6 +19,9 @@ const mk = {
     team: 'Тим',
     contact: 'Контакт',
     download: 'Преземи',
+    label: 'Главна навигација',
+    menu: 'Мени',
+    platforms: 'Windows · macOS',
   },
   hero: {
     title: ['Сива', 'Зона'],
@@ -61,6 +64,9 @@ const en: UIDict = {
     team: 'Team',
     contact: 'Contact',
     download: 'Download',
+    label: 'Main navigation',
+    menu: 'Menu',
+    platforms: 'Windows · macOS',
   },
   hero: {
     title: ['Gray', 'Zone'],
