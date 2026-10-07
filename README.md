@@ -48,7 +48,7 @@ src/
   pages/        Routes (index.astro = mk, en/index.astro = en)
   views/        Page-level compositions (HomePage.astro)
   layouts/      Base HTML shell
-  components/   hero/, about/, shell/ (preloader, nav), ui/
+  components/   hero/, about/, story/, shell/ (preloader, nav), ui/
   data/         Content: team, gallery, funders, links, tutorial, about, contact; sections (page order)
   i18n/         Locale config and UI strings
   lib/          gl/ (WebGL stage, shaders), canvas/, motion/ (gsap, lenis), zone.ts (shared zone switch), lifecycle, og.ts (share-image variants)
@@ -85,6 +85,14 @@ In-page links scroll with Lenis and move focus to the target section. Sections a
 - **The trade (stats).** A pinned scene, two screens of scroll, drawn as one batch of dots (`src/lib/gl/views/dotBatch.ts`). Scrolling is a run of shortcuts: the gray zone's torn front eats the dot-matrix word INTEGRITY from the right, its dots tremble, break off and arc down into a growing heap of coins (money). Eyes open one by one and follow the front, or your pointer (reputation). A flip-dot clock runs throughout and races when you scroll fast (time). Every chip's path is a pure function of scroll progress, so scrolling back reverses it. DOM text carries each stat's name and caption; without WebGL the word and clock are set as type.
 
 Reduced motion shows the statement fully torn, the copy in place, and one still frame of the trade, unpinned.
+
+## Story
+
+`src/components/story/Story.astro` (+ `story.ts`) follows About, with no nav entry of its own (the seam index counts it as About). Copy and steps live in `src/data/story.ts`.
+
+A pad of four forms, pinned for one screen each: birth certificate, the secretary's confirmation, the English test, the interview. Each form has an honest box and a shortcut box either side of a torn line (real radio inputs). Ticking one draws the tick and signs the form; a shortcut also blooms a gray halftone stain into the paper. Scrolling (or a pointer tick, which scrolls for you) tugs the top sheet and throws it off-screen, alternating sides. Under the pad lies the scholarship decision: a summary of your four choices and a rubber stamp that slams down when it's uncovered. No shortcuts → approved, earned honestly; one or two → approved, with marks; three or more → rejected (`verdictFor`). Changing a tick on the way back up re-decides.
+
+Reduced motion lays the forms out in a column with the decision last, stamped and live. Without JS the forms still tick and stain (`:has()`), and the decision lists all three outcomes.
 
 ## Share image
 
