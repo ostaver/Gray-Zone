@@ -1,7 +1,7 @@
 #version 300 es
 precision highp float;
 
-// Field pass for the hero halftone: one texel per dot cell (texel (i, j) = cell column i,
+// Field pass for the hero halftone (and the About orb): one texel per dot cell (texel (i, j) = cell column i,
 // row j from the top). Every pixel of a cell shares the value at the cell centre, so the
 // noise is evaluated once per cell here instead of once per pixel in seam-halftone.frag.
 

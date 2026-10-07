@@ -1,6 +1,6 @@
 import { gsap, ScrollTrigger, SplitText, coarsePointer, reducedMotion } from '../../lib/motion/gsap';
 import { magnetic } from '../../lib/motion/magnetic';
-import { transitionZone } from '../../lib/motion/zoneTransition';
+import { onZoneBusy, onZoneChange, setZone } from '../../lib/zone';
 import { appReady } from '../../lib/lifecycle';
 import { getStage } from '../../lib/gl/stage';
 import { createSeamHalftone, type SeamHalftoneState } from '../../lib/gl/views/seamHalftone';
@@ -50,32 +50,20 @@ export function initHero(root: HTMLElement): void {
     still,
   };
   const zoneButtons = [sideHonest, sideGray];
-  let changingZone = false;
   zoneButtons.forEach((button) => {
-    button.addEventListener('click', async () => {
-      const white = button.dataset.zone === 'white';
-      if (changingZone || state.whiteZone === Number(white)) return;
-      changingZone = true;
-      root.setAttribute('aria-busy', 'true');
-      zoneButtons.forEach((zoneButton) => zoneButton.setAttribute('aria-disabled', 'true'));
-      try {
-        await transitionZone(button, white, () => {
-          document.documentElement.dataset.zone = white ? 'white' : 'black';
-          state.whiteZone = white ? 1 : 0;
-          zoneButtons.forEach((zoneButton) => zoneButton.setAttribute('aria-pressed', String(zoneButton === button)));
-          document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
-            'content',
-            getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
-          );
-          // View Transitions pause rAF during capture; flush the shader synchronously.
-          stage?.draw();
-        });
-      } finally {
-        zoneButtons.forEach((zoneButton) => zoneButton.removeAttribute('aria-disabled'));
-        root.removeAttribute('aria-busy');
-        changingZone = false;
-      }
-    });
+    button.addEventListener('click', () => void setZone(button.dataset.zone === 'white' ? 'white' : 'black', button));
+  });
+  // The nav has a zone control too; both follow the shared state rather than their own clicks.
+  onZoneChange((zone) => {
+    state.whiteZone = zone === 'white' ? 1 : 0;
+    zoneButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.zone === zone)));
+    // View Transitions pause rAF during capture; flush the shader synchronously.
+    stage?.draw();
+  });
+  onZoneBusy((busy) => {
+    if (busy) root.setAttribute('aria-busy', 'true');
+    else root.removeAttribute('aria-busy');
+    zoneButtons.forEach((button) => (busy ? button.setAttribute('aria-disabled', 'true') : button.removeAttribute('aria-disabled')));
   });
   let target = seam.split;
   let pointer: { x: number; y: number } | null = null;
