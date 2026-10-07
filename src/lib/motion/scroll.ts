@@ -36,7 +36,9 @@ export function lockScroll(locked: boolean): void {
   document.documentElement.style.overflow = frozen ? 'hidden' : '';
 }
 
-export function scrollToTarget(target: string | HTMLElement): void {
-  if (lenis) lenis.scrollTo(target, { duration: 1.6 });
+/** Smooth-scroll to an element, a selector, or a page offset in px. */
+export function scrollToTarget(target: string | HTMLElement | number, duration = 1.6): void {
+  if (lenis) lenis.scrollTo(target, { duration });
+  else if (typeof target === 'number') window.scrollTo({ top: target });
   else (typeof target === 'string' ? document.querySelector(target) : target)?.scrollIntoView();
 }
