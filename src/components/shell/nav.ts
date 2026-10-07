@@ -21,7 +21,6 @@ export function initNav(nav: HTMLElement): void {
   const panel = menu.querySelector<HTMLElement>('[data-nav-panel]')!;
   const tear = menu.querySelector<SVGElement>('[data-menu-tear]')!;
   const words = [...menu.querySelectorAll<HTMLElement>('[data-menu-word]')];
-  const marks = [...menu.querySelectorAll<HTMLElement>('[data-menu-idx]')];
   const foot = [...menu.querySelectorAll<HTMLElement>('[data-menu-foot] > *')];
   let menuOpen = false;
   let menuTl: gsap.core.Timeline | null = null;
@@ -43,7 +42,6 @@ export function initNav(nav: HTMLElement): void {
       .to(panel, { yPercent: 0, duration: 1.05, ease: 'tear' }, 0)
       .fromTo(tear, { scaleY: 0 }, { scaleY: 1, duration: 1.4, ease: 'expo.inOut' }, 0.1)
       .fromTo(words, { yPercent: 110 }, { yPercent: 0, duration: 1.1, stagger: 0.065 }, 0.3)
-      .fromTo(marks, { opacity: 0 }, { opacity: 1, duration: 0.8, stagger: 0.065, ease: 'power2.out' }, 0.45)
       .fromTo(foot, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1, stagger: 0.08 }, 0.5);
     if (still) menuTl.progress(1);
   };
@@ -61,7 +59,7 @@ export function initNav(nav: HTMLElement): void {
     menuTl = gsap
       .timeline({ onComplete: () => void gsap.set(menu, { visibility: 'hidden' }) })
       .to(words, { yPercent: -110, duration: 0.5, stagger: 0.035, ease: 'power3.in' }, 0)
-      .to([...marks, ...foot], { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0)
+      .to(foot, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0)
       .to(panel, { yPercent: -100, duration: 0.8, ease: 'expo.inOut' }, 0.15);
     if (still) menuTl.progress(1);
   };
@@ -160,7 +158,7 @@ export function initNav(nav: HTMLElement): void {
 
   // ── The seam index ─────────────────────────────────────────
   // A miniature of the hero's tear runs through the row of links. Left of it the row is
-  // honest (solid, red numbers); right of it, still gray. It travels with the reader:
+  // honest (solid type); right of it, still gray. It travels with the reader:
   // through a section's own link while reading it, across the gap at the next section, and
   // past the last link at the bottom of the page. A mouse over the row pulls it along, as the
   // cursor pulls the hero's seam.

@@ -1,8 +1,9 @@
 ---
 import { latestRelease, releaseVersion, socials } from '../../data/links';
-import { sectionIndex, sections } from '../../data/sections';
+import { sections } from '../../data/sections';
 import { htmlLang, localeLabel, localePath, locales, type Locale } from '../../i18n/config';
 import { ui } from '../../i18n/ui';
+import { tornPath } from '../../lib/torn';
 import CoolButton from '../ui/CoolButton.astro';
 
 interface Props {
@@ -11,20 +12,8 @@ interface Props {
 
 const { locale } = Astro.props;
 const t = ui[locale];
-const items = sections.map((id, i) => ({ id, index: sectionIndex(i), label: t.nav[id] }));
+const items = sections.map((id) => ({ id, label: t.nav[id] }));
 const languages = locales.map((code) => ({ code, lang: htmlLang[code], href: localePath(code), current: code === locale, ...localeLabel[code] }));
-
-/**
- * A vertical torn line in a `w`×`h` viewBox: `steps` segments, each nudged sideways by
- * deterministic jitter, so the tear is identical on every build.
- */
-function tornPath(w: number, h: number, steps: number, seed: number): string {
-  return Array.from({ length: steps + 1 }, (_, i) => {
-    const s = Math.sin(i * 127.1 + seed * 311.7) * 43758.5453;
-    const x = w / 2 + (s - Math.floor(s) - 0.5) * w;
-    return `${i ? 'L' : 'M'}${x.toFixed(2)} ${((i / steps) * h).toFixed(2)}`;
-  }).join(' ');
-}
 ---
 
 <header class="nav" data-nav>
@@ -46,14 +35,11 @@ function tornPath(w: number, h: number, steps: number, seed: number): string {
 
       <nav class="nav__index" aria-label={t.nav.label}>
         <ol class="nav__row" data-seam-list>
-          {items.map(({ id, index, label }, i) => (
+          {items.map(({ id, label }, i) => (
             <li>
               <a class="nav__link" href={`#${id}`} data-nav-link={id}>
                 <span class="nav__mask">
-                  <span class="nav__rise" data-i={i}>
-                    <span class="nav__idx" aria-hidden="true">{index}</span>
-                    <span>{label}</span>
-                  </span>
+                  <span class="nav__rise" data-i={i}>{label}</span>
                 </span>
               </a>
             </li>
@@ -62,13 +48,10 @@ function tornPath(w: number, h: number, steps: number, seed: number): string {
         <!-- The honest copy: solid type, revealed left of the seam. -->
         <div class="nav__honest" aria-hidden="true" data-seam-clip>
           <div class="nav__row" data-seam-row>
-            {items.map(({ index, label }, i) => (
+            {items.map(({ label }, i) => (
               <span class="nav__link">
                 <span class="nav__mask">
-                  <span class="nav__rise" data-i={i}>
-                    <span class="nav__idx">{index}</span>
-                    <span>{label}</span>
-                  </span>
+                  <span class="nav__rise" data-i={i}>{label}</span>
                 </span>
               </span>
             ))}
@@ -147,10 +130,9 @@ function tornPath(w: number, h: number, steps: number, seed: number): string {
       <div class="nav__sheet" data-lenis-prevent>
         <nav class="nav__menu-nav" aria-label={t.nav.label}>
           <ol class="nav__list">
-            {items.map(({ id, index, label }) => (
+            {items.map(({ id, label }) => (
               <li>
                 <a class="nav__item" href={`#${id}`} data-nav-link={id}>
-                  <span class="nav__item-idx label" aria-hidden="true" data-menu-idx>{index}</span>
                   <span class="nav__item-mask">
                     <span class="nav__item-word" data-menu-word>
                       <span class="nav__item-hollow">{label}</span>
@@ -224,8 +206,6 @@ function tornPath(w: number, h: number, steps: number, seed: number): string {
     --torn-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 12' preserveAspectRatio='none'%3E%3Cpath d='M0 0H288V5.5L285.6 3.7L281.9 6.5L279 3.9L272.6 6.8L267 10.4L261.1 3.9L255.4 9.3L251.6 7.2L244.6 7.6L239.3 7L235.3 7L228.5 3.4L221.8 2.4L219.8 4.9L215.4 8.9L212.6 4.8L205.9 7.1L203.6 3.7L199.5 4.4L196.5 3.7L194.5 3.2L192.3 7.3L190.1 8.1L184 4.1L180.9 6.2L177.4 6.4L172.8 9.8L168.6 3.7L163.8 3.9L157.2 8.1L153.7 4L148 3.9L144 3.7L140.7 7.6L134.4 3.1L131.8 4.8L126.2 6.1L123.1 4.1L116.3 5.9L111.1 0.9L104.6 3.6L99.2 6.4L97.2 5.1L91.4 8L84.8 8.5L79.6 8L75.6 6L69.6 4.5L66.4 3.1L61.8 7.1L57.5 3.6L53.9 4.6L51 7.2L47.2 6.1L42.7 4.9L37 6.5L33.5 3.9L29.7 7.3L24.2 6.3L17.6 6.1L12.1 3.7L6.7 7.3L2 4.4L0 5.5Z'/%3E%3C/svg%3E");
     /* The same rip as a stroke, to draw the plate's torn edge where ink meets ink. */
     --torn-x-line: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 12' preserveAspectRatio='none'%3E%3Cpath d='M0 5.5L2 4.4L6.7 7.3L12.1 3.7L17.6 6.1L24.2 6.3L29.7 7.3L33.5 3.9L37 6.5L42.7 4.9L47.2 6.1L51 7.2L53.9 4.6L57.5 3.6L61.8 7.1L66.4 3.1L69.6 4.5L75.6 6L79.6 8L84.8 8.5L91.4 8L97.2 5.1L99.2 6.4L104.6 3.6L111.1 0.9L116.3 5.9L123.1 4.1L126.2 6.1L131.8 4.8L134.4 3.1L140.7 7.6L144 3.7L148 3.9L153.7 4L157.2 8.1L163.8 3.9L168.6 3.7L172.8 9.8L177.4 6.4L180.9 6.2L184 4.1L190.1 8.1L192.3 7.3L194.5 3.2L196.5 3.7L199.5 4.4L203.6 3.7L205.9 7.1L212.6 4.8L215.4 8.9L219.8 4.9L221.8 2.4L228.5 3.4L235.3 7L239.3 7L244.6 7.6L251.6 7.2L255.4 9.3L261.1 3.9L267 10.4L272.6 6.8L279 3.9L281.9 6.5L285.6 3.7L288 5.5' fill='none' stroke='%23000' stroke-width='1.1' stroke-linejoin='round'/%3E%3C/svg%3E");
-    /* Vertical torn edge: solid on the left, ragged on the right. */
-    --torn-y: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 48' preserveAspectRatio='none'%3E%3Cpath d='M0 0H3L5 4L2 9L4 13L1 18L5 22L3 27L6 31L2 36L4 40L1 44L3 48H0Z'/%3E%3C/svg%3E");
     position: fixed;
     inset: 0 0 auto;
     z-index: var(--z-nav);
@@ -382,14 +362,10 @@ function tornPath(w: number, h: number, steps: number, seed: number): string {
     overflow: clip;
   }
   .nav__rise {
-    display: flex;
-    gap: 0.7em;
+    display: block;
   }
-  .nav__idx {
-    color: var(--ash);
-  }
-  /* Left of the seam the row is honest: solid type, red numbers. Clip and row move in
-     opposite directions (transforms only), so the type stays put while the torn edge travels. */
+  /* Left of the seam the row is honest: solid type. Clip and row move in opposite directions
+     (transforms only), so the type stays put while the torn edge travels. */
   .nav__honest {
     position: absolute;
     inset: 0;
@@ -405,9 +381,6 @@ function tornPath(w: number, h: number, steps: number, seed: number): string {
   }
   .nav__honest .nav__link {
     color: var(--paper);
-  }
-  .nav__honest .nav__idx {
-    color: var(--red);
   }
   .nav__track {
     position: absolute;
@@ -738,11 +711,6 @@ function tornPath(w: number, h: number, steps: number, seed: number): string {
     align-items: flex-start;
     gap: clamp(0.75rem, 2.5vw, 1.5rem);
     color: var(--paper);
-  }
-  .nav__item-idx {
-    min-width: 2.2em;
-    padding-top: 0.85em;
-    color: var(--red);
   }
   .nav__item-mask {
     display: block;

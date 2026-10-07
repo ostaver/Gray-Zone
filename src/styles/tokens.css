@@ -39,6 +39,9 @@
   --gutter: clamp(1rem, 2.4vw, 2.25rem);
   --nav-h: 4.5rem;
 
+  /* Vertical torn edge as a mask tile: solid on the left, ragged on the right. */
+  --torn-y: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 48' preserveAspectRatio='none'%3E%3Cpath d='M0 0H3L5 4L2 9L4 13L1 18L5 22L3 27L6 31L2 36L4 40L1 44L3 48H0Z'/%3E%3C/svg%3E");
+
   --z-gl: 0;
   --z-content: 10;
   --z-nav: 80;

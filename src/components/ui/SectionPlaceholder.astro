@@ -5,15 +5,13 @@
  */
 interface Props {
   id: string;
-  index: string;
   title: string;
 }
 
-const { id, index, title } = Astro.props;
+const { id, title } = Astro.props;
 ---
 
 <section class="placeholder" id={id} aria-labelledby={`${id}-title`}>
-  <p class="placeholder__index label" aria-hidden="true">{index}</p>
   <h2 class="placeholder__title" id={`${id}-title`}>{title}</h2>
 </section>
 
@@ -27,9 +25,6 @@ const { id, index, title } = Astro.props;
     padding: calc(var(--nav-h) + 3rem) var(--gutter) var(--gutter);
     border-top: 1px solid var(--hairline);
     background: var(--ink);
-  }
-  .placeholder__index {
-    color: var(--red);
   }
   .placeholder__title {
     font-family: var(--font-display);

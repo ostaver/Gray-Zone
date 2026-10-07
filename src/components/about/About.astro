@@ -1,0 +1,405 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../../assets/brand/logo.png';
+import { htmlLang, type Locale } from '../../i18n/config';
+import { ui } from '../../i18n/ui';
+import { about, clockStart, gameClock } from '../../data/about';
+import { tornPath } from '../../lib/torn';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = about[locale];
+const lang = htmlLang[locale];
+const words = t.manifesto.flatMap(({ text, tone }) =>
+  text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => ({ word, tone })),
+);
+const lines = ui[locale].hero.title.map((line) => line.toLocaleUpperCase(lang));
+const { integrity, reputation, time, money } = t.stats;
+---
+
+<section class="ab" id="about" aria-labelledby="about-title" data-about>
+  <p class="ab__statement" data-ab-statement>
+    {words.map(({ word, tone }) => (
+      <>
+        <span class:list={['ab__w', tone && `ab__w--${tone}`]} data-word>
+          <span class="ab__w-gray">{word}</span>
+          <span class="ab__w-lit" aria-hidden="true"><span>{word}</span></span>
+        </span>{' '}
+      </>
+    ))}
+  </p>
+
+  <div class="ab__body">
+    <div class="ab__orb-col">
+      <div class="ab__orb" data-orb data-lines={JSON.stringify(lines)}>
+        <div class="ab__orb-gl" aria-hidden="true" data-orb-gl></div>
+        <Image class="ab__orb-img" src={logo} alt="" widths={[360, 720]} sizes="(min-width: 1024px) 34vw, 80vw" />
+      </div>
+    </div>
+
+    <div class="ab__text">
+      <h2 class="ab__title" id="about-title" data-ab-print>{t.title}</h2>
+      {t.paragraphs.map((p) => <p class="ab__para" data-ab-print>{p}</p>)}
+      <h3 class="ab__goals-title" data-ab-print>{t.goalsTitle}</h3>
+      <ul class="ab__goals">
+        {t.goals.map((goal, i) => (
+          <li data-ab-print>
+            <svg class="ab__goal-tear" viewBox="0 0 6 28" preserveAspectRatio="none" aria-hidden="true">
+              <path d={tornPath(6, 28, 7, i + 5)}></path>
+            </svg>
+            <span>{goal}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+
+  <!-- The stats, played out: see trade.ts. Each art box is where the stage draws that stat. -->
+  <div class="ab__trade" data-trade>
+    <div class="ab__trade-pin" data-trade-pin>
+      <div class="ab__trade-gl" aria-hidden="true" data-trade-gl></div>
+      <h3 class="ab__trade-title" data-ab-print>{t.statsTitle}</h3>
+      <ul class="ab__trade-list">
+        <li class="ab__tr ab__tr--integrity">
+          <span class="ab__tr-art" aria-hidden="true" data-trade-art="integrity" data-word={integrity.label.toLocaleUpperCase(lang)}>
+            <span class="ab__tr-fallback ab__tr-fallback--word">{integrity.label}</span>
+          </span>
+          <p class="ab__tr-text">
+            <strong class="sr-only">{integrity.label}</strong>
+            {integrity.caption}
+          </p>
+        </li>
+        <li class="ab__tr ab__tr--reputation">
+          <span class="ab__tr-art" aria-hidden="true" data-trade-art="reputation"></span>
+          <p class="ab__tr-text">
+            <strong class="ab__tr-name">{reputation.label}</strong>
+            {reputation.caption}
+          </p>
+        </li>
+        <li class="ab__tr ab__tr--time">
+          <span class="ab__tr-art" aria-hidden="true" data-trade-art="time">
+            <span class="ab__tr-fallback">{gameClock(clockStart)}</span>
+          </span>
+          <p class="ab__tr-text">
+            <strong class="ab__tr-name">
+              {time.label} <span class="ab__tr-day">· {t.day} <span data-trade-day>1</span></span>
+            </strong>
+            {time.caption}
+          </p>
+        </li>
+        <li class="ab__tr ab__tr--money">
+          <span class="ab__tr-art" aria-hidden="true" data-trade-art="money"></span>
+          <p class="ab__tr-text">
+            <strong class="ab__tr-name">{money.label}</strong>
+            {money.caption}
+          </p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initAbout } from './about';
+  const root = document.querySelector<HTMLElement>('[data-about]');
+  if (root) initAbout(root);
+</script>
+
+<style>
+  /* No background of its own: the page's WebGL stage draws the orb and the stats from behind. */
+  .ab {
+    position: relative;
+    padding: clamp(7rem, 18vh, 12rem) var(--gutter) 0;
+  }
+
+  /* ── Manifesto ─────────────────────────────────────── */
+  .ab__statement {
+    font-size: clamp(1.9rem, 4.3vw, 4.6rem);
+    font-weight: 500;
+    line-height: 1.06;
+    letter-spacing: -0.028em;
+    text-wrap: pretty;
+  }
+  /* Each word is gray type with a solid copy torn across it as it's read; the tear is the
+     nav menu's (a wrapper and its text slide in opposite directions, transforms only). */
+  .ab__w {
+    display: inline-grid;
+  }
+  .ab__w-gray,
+  .ab__w-lit {
+    grid-area: 1 / 1;
+  }
+  .ab__w-gray {
+    color: color-mix(in srgb, var(--paper) 20%, transparent);
+  }
+  .ab__w-lit {
+    /* Overhangs the word so the torn edge clears the last glyph once fully across. */
+    margin-right: -0.25em;
+    overflow: hidden;
+    mask:
+      linear-gradient(#000 0 0) left / calc(100% - 0.12em) 100% no-repeat,
+      var(--torn-y) right / 0.14em 100% no-repeat;
+  }
+  .ab__w-lit > span {
+    display: block;
+    padding-right: 0.25em;
+  }
+  /* The gray zone stays hollow even once it's read, like the gray half of the hero title. */
+  .ab__w--hollow {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.04em;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  .ab__w--hollow > span {
+    color: transparent;
+    -webkit-text-stroke: max(1px, 0.022em) color-mix(in srgb, var(--paper) 28%, transparent);
+  }
+  .ab__w--hollow .ab__w-lit > span {
+    -webkit-text-stroke-color: var(--paper);
+  }
+  .ab__w--red .ab__w-lit {
+    color: var(--red);
+  }
+
+  /* ── Body: orb + copy ──────────────────────────────── */
+  .ab__body {
+    display: grid;
+    gap: clamp(3rem, 8vh, 5rem);
+    margin-top: clamp(6rem, 16vh, 10rem);
+  }
+  .ab__orb-col {
+    justify-self: center;
+    width: min(100%, 26rem);
+  }
+  .ab__orb {
+    position: relative;
+    aspect-ratio: 1;
+    touch-action: pan-y;
+  }
+  .ab__orb-gl {
+    position: absolute;
+    inset: 0;
+  }
+  /* The real logo stands in when there is no WebGL to print it. */
+  .ab__orb-img {
+    display: none;
+    position: absolute;
+    inset: 8%;
+    width: 84%;
+    height: 84%;
+  }
+  :global(.no-js) .ab__orb-img,
+  :global(.no-webgl) .ab__orb-img {
+    display: block;
+  }
+
+  .ab__title {
+    max-width: 20ch;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.75rem, 2.9vw, 3rem);
+    line-height: 1.02;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .ab__para {
+    max-width: 62ch;
+    margin-top: 1.25rem;
+    color: var(--paper-dim);
+    font-size: clamp(1rem, 1.05vw, 1.0625rem);
+    line-height: 1.7;
+  }
+  .ab__title + .ab__para {
+    margin-top: 2.25rem;
+    color: var(--paper);
+    font-size: clamp(1.1rem, 1.3vw, 1.3rem);
+    line-height: 1.55;
+  }
+  .ab__goals-title {
+    margin-top: clamp(3rem, 8vh, 4.5rem);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.2rem, 1.5vw, 1.5rem);
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+  .ab__goals {
+    max-width: 62ch;
+    margin-top: 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+  .ab__goals li {
+    display: grid;
+    grid-template-columns: 0.5rem minmax(0, 1fr);
+    gap: 1.25rem;
+    padding-block: 0.9rem;
+  }
+  /* A torn mark, not a number: each goal is a line drawn between the two sides. */
+  .ab__goal-tear {
+    width: 0.5rem;
+    height: 1.75rem;
+    overflow: visible;
+  }
+  .ab__goal-tear path {
+    fill: none;
+    stroke: var(--red);
+    stroke-width: 1.4;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* ── The trade (stats) ─────────────────────────────── */
+  /* Pinned for two extra screens: that scroll is the run of shortcuts trade.ts plays out. */
+  .ab__trade {
+    position: relative;
+    height: 300svh;
+    margin-top: clamp(6rem, 16vh, 10rem);
+    margin-inline: calc(var(--gutter) * -1);
+  }
+  .ab__trade-pin {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: clamp(1rem, 3vh, 2rem);
+    padding: calc(var(--nav-h) + clamp(1rem, 4vh, 2.5rem)) var(--gutter) var(--gutter);
+    touch-action: pan-y;
+  }
+  .ab__trade-gl {
+    position: absolute;
+    inset: 0;
+  }
+  .ab__trade-title {
+    position: relative;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.4rem, 2.2vw, 2.25rem);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .ab__trade-list {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'integrity integrity'
+      'reputation time'
+      'money money';
+    gap: clamp(1rem, 3vh, 2rem) var(--gutter);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ab__tr {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    min-height: 0;
+  }
+  .ab__tr--integrity {
+    grid-area: integrity;
+  }
+  .ab__tr--reputation {
+    grid-area: reputation;
+  }
+  .ab__tr--time {
+    grid-area: time;
+  }
+  .ab__tr--money {
+    grid-area: money;
+  }
+  .ab__tr-art {
+    position: relative;
+    display: block;
+    min-height: 0;
+  }
+  .ab__tr-text {
+    max-width: 32ch;
+    color: var(--paper-dim);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  .ab__tr-name {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.125rem;
+    line-height: 1.2;
+    text-transform: uppercase;
+    color: var(--paper);
+  }
+  .ab__tr-day {
+    color: var(--ash);
+  }
+  /* Without the stage, the word and the clock are set as type instead. */
+  .ab__tr-fallback {
+    display: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.5rem, 7vw, 6rem);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .ab__tr-fallback--word {
+    font-size: clamp(3rem, 12vw, 12rem);
+    color: var(--red);
+  }
+  :global(.no-js) .ab__tr-fallback,
+  :global(.no-webgl) .ab__tr-fallback {
+    display: block;
+  }
+
+  /* ── Layouts ───────────────────────────────────────── */
+  @media (min-width: 900px) {
+    .ab__trade-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr);
+      grid-template-areas:
+        'integrity integrity integrity'
+        'reputation time money';
+    }
+  }
+  @media (min-width: 1024px) {
+    .ab__statement {
+      margin-left: calc((100% + var(--gutter)) / 6);
+    }
+    .ab__body {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: calc(var(--gutter) * 3);
+      align-items: start;
+    }
+    /* The column runs the full height of the copy, so the orb rides alongside it. */
+    .ab__orb-col {
+      align-self: stretch;
+      justify-self: stretch;
+      width: auto;
+    }
+    .ab__orb {
+      position: sticky;
+      top: calc(var(--nav-h) + 3rem);
+      max-width: 34rem;
+    }
+  }
+  /* Without motion there is no run to scroll through: one still frame of the scene. */
+  @media (prefers-reduced-motion: reduce) {
+    .ab__trade {
+      height: auto;
+    }
+    .ab__trade-pin {
+      position: relative;
+    }
+  }
+</style>

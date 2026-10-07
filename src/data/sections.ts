@@ -5,6 +5,3 @@
 export const sections = ['about', 'gallery', 'tutorial', 'team', 'contact'] as const;
 
 export type SectionId = (typeof sections)[number];
-
-/** Two-digit display index for the section at position `i` ("01", "02", ...). */
-export const sectionIndex = (i: number): string => String(i + 1).padStart(2, '0');

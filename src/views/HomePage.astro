@@ -3,9 +3,10 @@ import Base from '../layouts/Base.astro';
 import Preloader from '../components/shell/Preloader.astro';
 import Nav from '../components/shell/Nav.astro';
 import Hero from '../components/hero/Hero.astro';
+import About from '../components/about/About.astro';
 import SectionPlaceholder from '../components/ui/SectionPlaceholder.astro';
 import DownloadModal from '../components/ui/DownloadModal.astro';
-import { sectionIndex, sections } from '../data/sections';
+import { sections } from '../data/sections';
 import type { Locale } from '../i18n/config';
 import { ui } from '../i18n/ui';
 
@@ -20,6 +21,6 @@ const { locale } = Astro.props;
   <Preloader slot="chrome" />
   <Nav slot="chrome" locale={locale} />
   <Hero locale={locale} />
-  {sections.map((id, i) => <SectionPlaceholder id={id} index={sectionIndex(i)} title={ui[locale].nav[id]} />)}
+  {sections.map((id) => (id === 'about' ? <About locale={locale} /> : <SectionPlaceholder id={id} title={ui[locale].nav[id]} />))}
   <DownloadModal slot="chrome" locale={locale} />
 </Base>
