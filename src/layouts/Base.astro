@@ -7,18 +7,42 @@ import '../styles/global.css';
 import { htmlLang, locales, localePath, ogLocale, type Locale } from '../i18n/config';
 import { ui } from '../i18n/ui';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImagePath, ogImageVariants, type OgExt } from '../lib/og';
+import { latestRelease, releaseVersion, repo } from '../data/links';
+import FpsStats from '../components/debug/FpsStats.astro';
 
 interface Props {
   locale: Locale;
   /** Locale-free path of this page, e.g. '/'. */
   path?: string;
+  /** Kept out of search (the 404): no robots indexing, canonical or language alternates. */
+  noindex?: boolean;
 }
 
-const { locale, path = '/' } = Astro.props;
+const { locale, path = '/', noindex = false } = Astro.props;
 const t = ui[locale];
 const canonical = new URL(localePath(locale, path), Astro.site);
 const ogImageUrl = (ext: OgExt) => new URL(ogImagePath(ext), Astro.site).href;
 const GA_ID = 'G-ZQ981XQYYV';
+
+// Describes the game to search engines (schema.org VideoGame): free, desktop, in both languages.
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'VideoGame',
+  name: t.meta.siteName,
+  alternateName: locales.filter((l) => l !== locale).map((l) => ui[l].meta.siteName),
+  description: t.meta.description,
+  url: canonical.href,
+  image: ogImageUrl('jpg'),
+  inLanguage: locales.map((l) => htmlLang[l]),
+  genre: ['Educational', 'Simulation'],
+  gamePlatform: ['PC', 'Mac'],
+  operatingSystem: 'Windows, macOS',
+  applicationCategory: 'GameApplication',
+  softwareVersion: releaseVersion,
+  downloadUrl: latestRelease,
+  codeRepository: repo,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' },
+};
 ---
 
 <!doctype html>
@@ -29,9 +53,18 @@ const GA_ID = 'G-ZQ981XQYYV';
     <title>{t.meta.title}</title>
     <meta name="description" content={t.meta.description} />
     <meta name="theme-color" content="#0a0a0a" />
-    <link rel="canonical" href={canonical} />
-    {locales.map((l) => <link rel="alternate" hreflang={htmlLang[l]} href={new URL(localePath(l, path), Astro.site)} />)}
-    <link rel="alternate" hreflang="x-default" href={new URL(localePath('mk', path), Astro.site)} />
+    {
+      noindex ? (
+        <meta name="robots" content="noindex" />
+      ) : (
+        <>
+          <link rel="canonical" href={canonical} />
+          {locales.map((l) => <link rel="alternate" hreflang={htmlLang[l]} href={new URL(localePath(l, path), Astro.site)} />)}
+          <link rel="alternate" hreflang="x-default" href={new URL(localePath('mk', path), Astro.site)} />
+          <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+        </>
+      )
+    }
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
@@ -51,7 +84,7 @@ const GA_ID = 'G-ZQ981XQYYV';
       </>
     ))}
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content={ogImageUrl('png')} />
+    <meta name="twitter:image" content={ogImageUrl('jpg')} />
     <meta name="twitter:image:alt" content={t.meta.title} />
 
     <script is:inline>
@@ -81,7 +114,9 @@ const GA_ID = 'G-ZQ981XQYYV';
     <main id="main">
       <slot />
     </main>
+    <slot name="footer" />
     <div class="grain" aria-hidden="true"></div>
+    {import.meta.env.DEV && <FpsStats />}
   </body>
 </html>
 

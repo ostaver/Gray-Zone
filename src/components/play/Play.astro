@@ -1,0 +1,371 @@
+---
+import type { Locale } from '../../i18n/config';
+import { ui } from '../../i18n/ui';
+import { playCopy } from '../../data/play';
+import { latestRelease, releases, releaseVersion } from '../../data/links';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = playCopy[locale];
+const dl = ui[locale].download;
+const serial = `№ ${releaseVersion.replaceAll('.', '')}-0001`;
+
+// A barcode that looks the part: bar and gap widths from a fixed sequence, so every build prints
+// the same one.
+const bars: { x: number; w: number }[] = [];
+for (let i = 0, x = 0, seed = 7; x < 200; i++) {
+  seed = (seed * 9301 + 49297) % 233280;
+  const w = 1 + (seed % 4);
+  if (i % 2 === 0) bars.push({ x, w });
+  x += w + (i % 2 ? 0 : 1);
+}
+
+const platforms = [
+  {
+    id: 'windows',
+    name: 'Windows',
+    href: releases.windows,
+    label: dl.windows,
+    icon: 'M3 5.5l7.5-1v7H3zM11.5 4.3L21 3v8.5h-9.5zM3 12.5h7.5v7L3 18.5zM11.5 12.5H21V21l-9.5-1.3z',
+  },
+  {
+    id: 'mac',
+    name: 'macOS',
+    href: releases.mac,
+    label: dl.mac,
+    icon: 'M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.3 1.2 9.7.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.5-3.8zM14 5.5c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1 .1 2.1-.6 2.8-1.4z',
+  },
+] as const;
+---
+
+<section class="pl" id="play" aria-labelledby="play-title" data-play>
+  <header class="pl__head">
+    <h2 class="pl__title" id="play-title" data-pl-print>{t.title}</h2>
+    <p class="pl__lead" data-pl-print>{t.lead}</p>
+  </header>
+
+  <!-- The ticket prints out of the slot as the section scrolls in (play.ts). -->
+  <div class="pl__machine">
+    <span class="pl__slot" aria-hidden="true"></span>
+    <div class="pl__feed" data-pl-feed>
+      <article class="tk" aria-labelledby="tk-entry" data-pl-ticket>
+        <div class="tk__main">
+          <header class="tk__top">
+            <span class="label tk__kind">{t.ticket.kind}</span>
+            <span class="label tk__serial">{serial}</span>
+          </header>
+          <h3 class="tk__entry" id="tk-entry">{t.ticket.entry}</h3>
+          <dl class="tk__fields">
+            <div>
+              <dt class="label">{t.ticket.admits}</dt>
+              <dd>{t.ticket.admitsValue}</dd>
+            </div>
+            <div>
+              <dt class="label">{t.ticket.price}</dt>
+              <dd class="tk__price">{t.ticket.priceValue}</dd>
+            </div>
+            <div>
+              <dt class="label">{t.ticket.version}</dt>
+              <dd>{releaseVersion}</dd>
+            </div>
+            <div>
+              <dt class="label">{t.ticket.languages}</dt>
+              <dd>MK · EN</dd>
+            </div>
+          </dl>
+          <svg class="tk__barcode" viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true">
+            {bars.map((b) => <rect x={b.x} width={b.w} height="24"></rect>)}
+          </svg>
+        </div>
+
+        <!-- One stub per platform, each torn off along its perforation to download. -->
+        <div class="tk__stubs" data-pl-stubs>
+          {platforms.map((p) => (
+            <a class="tk__stub" href={p.href} download aria-label={p.label} data-platform={p.id} data-pl-stub>
+              <span class="tk__stub-face">
+                <svg class="tk__os" viewBox="0 0 24 24" aria-hidden="true"><path d={p.icon}></path></svg>
+                <span class="tk__tear label">{t.ticket.tear}</span>
+                <span class="tk__os-name">{p.name}</span>
+                <span class="tk__badge label" data-pl-badge hidden>{dl.detected}</span>
+                <span class="tk__arrow" aria-hidden="true">↓</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <footer class="pl__foot">
+    <p class="pl__note" data-pl-mobile hidden>{dl.desktopOnly}</p>
+    <p class="pl__note">{dl.macNote}</p>
+    <a class="pl__all" href={latestRelease} target="_blank" rel="noopener">{t.allReleases} <span aria-hidden="true">↗</span></a>
+  </footer>
+</section>
+
+<script>
+  import { initPlay } from './play';
+  const root = document.querySelector<HTMLElement>('[data-play]');
+  if (root) initPlay(root);
+</script>
+
+<style>
+  .pl {
+    position: relative;
+    padding: clamp(6rem, 14vh, 10rem) var(--gutter);
+    /* Torn stubs fall past the edges. */
+    overflow-x: clip;
+  }
+  .pl__head {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+  }
+  .pl__title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(3.5rem, 13vw, 13rem);
+    line-height: 0.82;
+    text-transform: uppercase;
+  }
+  .pl__lead {
+    max-width: 26rem;
+    margin-top: 1.5rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+
+  /* ── The machine: a slot the ticket feeds out of ───── */
+  .pl__machine {
+    position: relative;
+    width: min(100%, 58rem);
+    margin: clamp(3rem, 8vh, 5rem) auto 0;
+  }
+  .pl__slot {
+    position: relative;
+    z-index: 2;
+    display: block;
+    height: 0.6rem;
+    margin: 0 -1.5rem;
+    border-radius: 0.3rem;
+    background: var(--ink-2);
+    box-shadow:
+      inset 0 2px 4px rgb(0 0 0 / 0.8),
+      0 0 0 1px var(--hairline);
+  }
+  /* Clips the ticket at the slot only: below it, tilted corners and falling stubs are free. */
+  .pl__feed {
+    margin-top: -0.3rem;
+    padding-top: 0.3rem;
+    clip-path: inset(0 -100vw -200vh -100vw);
+  }
+
+  /* ── The ticket ────────────────────────────────────── */
+  .tk {
+    --tk-ink: var(--zone-black);
+    --notch: 0.8rem;
+    position: relative;
+    display: grid;
+    margin: 0 0.5rem;
+    color: var(--tk-ink);
+    filter: drop-shadow(0 30px 40px rgb(0 0 0 / 0.45));
+    transform-origin: 50% 0;
+  }
+  .tk__main,
+  .tk__stub-face {
+    background: var(--zone-white);
+  }
+  .tk__main {
+    display: grid;
+    gap: clamp(1rem, 2.5vh, 1.5rem);
+    padding: clamp(1.25rem, 3vw, 2.25rem);
+  }
+  .tk__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1.5px solid var(--tk-ink);
+  }
+  .tk__kind {
+    color: var(--red);
+  }
+  .tk__entry {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+  .tk__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem 1.5rem;
+    margin: 0;
+  }
+  .tk__fields dt {
+    color: color-mix(in srgb, var(--tk-ink) 55%, transparent);
+  }
+  .tk__fields dd {
+    margin: 0.2rem 0 0;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px dashed color-mix(in srgb, var(--tk-ink) 30%, transparent);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    text-transform: uppercase;
+  }
+  .tk__price {
+    color: var(--red);
+  }
+  .tk__barcode {
+    width: 100%;
+    height: 2.25rem;
+    fill: var(--tk-ink);
+  }
+
+  /* The stubs: below the main part on narrow screens, beside it on wide ones. */
+  .tk__stubs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tk__stub {
+    position: relative;
+    display: block;
+    /* The perforation it tears along. */
+    background: radial-gradient(circle, var(--zone-white) 0.16rem, transparent 0.18rem) 0 0 / 0.75rem 3px repeat-x;
+    transform-origin: 50% 0;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .tk__stub-face {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'os arrow'
+      'tear tear'
+      'name name'
+      'badge badge';
+    align-content: center;
+    align-items: center;
+    gap: 0.2rem 0.75rem;
+    height: 100%;
+    margin-top: 3px;
+    padding: 1.1rem 1.25rem;
+    transition: background 0.3s;
+  }
+  .tk__stub + .tk__stub .tk__stub-face {
+    border-left: 1.5px dashed color-mix(in srgb, var(--tk-ink) 35%, transparent);
+  }
+  .tk__os {
+    grid-area: os;
+    width: 1.6rem;
+    height: 1.6rem;
+    margin-bottom: 0.6rem;
+    fill: currentColor;
+  }
+  .tk__tear {
+    grid-area: tear;
+    color: color-mix(in srgb, var(--tk-ink) 55%, transparent);
+  }
+  .tk__os-name {
+    grid-area: name;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .tk__arrow {
+    grid-area: arrow;
+    align-self: start;
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    transition: transform 0.5s var(--ease-out);
+  }
+  .tk__badge {
+    grid-area: badge;
+    margin-top: 0.5rem;
+    color: var(--red);
+  }
+  .tk__stub[data-detected] .tk__stub-face {
+    background: color-mix(in srgb, var(--red) 9%, var(--zone-white));
+  }
+  .tk__stub[data-detected] .tk__os {
+    fill: var(--red);
+  }
+  /* About to tear: the stub peels back off its perforation. */
+  @media (hover: hover) {
+    .tk__stub:hover {
+      transform: rotate(-3deg) translateY(4px);
+    }
+    .tk__stub:hover .tk__arrow {
+      transform: translateY(4px);
+    }
+  }
+  .tk__stub:hover .tk__stub-face,
+  .tk__stub:focus-visible .tk__stub-face {
+    background: color-mix(in srgb, var(--red) 14%, var(--zone-white));
+  }
+  .tk__stub:focus-visible {
+    outline-offset: 4px;
+  }
+
+  @media (min-width: 768px) {
+    .tk {
+      grid-template-columns: minmax(0, 1fr) 16rem;
+    }
+    .tk__stubs {
+      grid-template-columns: none;
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+    }
+    .tk__stub {
+      background: radial-gradient(circle, var(--zone-white) 0.16rem, transparent 0.18rem) 0 0 / 3px 0.75rem repeat-y;
+      transform-origin: 0 50%;
+    }
+    .tk__stub-face {
+      margin: 0 0 0 3px;
+      padding: 1.5rem;
+    }
+    .tk__stub + .tk__stub .tk__stub-face {
+      border-left: 0;
+      border-top: 1.5px dashed color-mix(in srgb, var(--tk-ink) 35%, transparent);
+    }
+    @media (hover: hover) {
+      .tk__stub:hover {
+        transform: rotate(4deg) translateX(4px);
+      }
+    }
+  }
+
+  .pl__foot {
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+    margin-top: clamp(2.5rem, 6vh, 4rem);
+    text-align: center;
+  }
+  .pl__note {
+    max-width: 34rem;
+    font-size: 0.875rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+  .pl__all {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px solid var(--hairline);
+    transition:
+      color 0.3s,
+      border-color 0.3s;
+  }
+  .pl__all:hover {
+    color: var(--red);
+    border-color: var(--red);
+  }
+</style>

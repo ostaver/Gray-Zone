@@ -1,0 +1,248 @@
+---
+import type { Locale } from '../../i18n/config';
+import { contactCopy, type ContactChannel } from '../../data/contact';
+import { repo, socials } from '../../data/links';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = contactCopy[locale];
+const [mailbox, domain] = socials.email.split('@');
+
+// Each value is split where it may wrap, so a long address breaks at the @ and not mid-word.
+const channels: { id: ContactChannel; href: string; parts: string[]; external: boolean }[] = [
+  { id: 'email', href: `mailto:${socials.email}`, parts: [mailbox, `@${domain}`], external: false },
+  { id: 'instagram', href: socials.instagram, parts: [`@${socials.instagramHandle}`], external: true },
+  { id: 'github', href: repo, parts: [t.source], external: true },
+];
+---
+
+<section class="ct" id="contact" aria-labelledby="contact-title" data-contact>
+  <header class="ct__head">
+    <h2 class="ct__title" id="contact-title" data-ct-print>{t.title}</h2>
+    <p class="ct__text" data-ct-print>{t.text}</p>
+  </header>
+
+  <ul class="ct__channels" role="list">
+    {channels.map((c) => (
+      <li class="ct__channel" data-ct-channel>
+        <span class="ct__rule" aria-hidden="true" data-ct-rule></span>
+        <div class="ct__row">
+          <span class="ct__label label" data-ct-label>{t.channels[c.id]}</span>
+          <a class="ct__link" href={c.href} target={c.external ? '_blank' : undefined} rel={c.external ? 'noopener' : undefined} data-ct-link>
+            <span class="ct__value">
+              {c.parts.map((part) => (
+                <span class="ct__clip">
+                  <span class="ct__part" data-ct-part>{part}</span>
+                </span>
+              ))}
+            </span>
+            <span class="ct__arrow" aria-hidden="true">↗</span>
+          </a>
+          {c.id === 'email' && (
+            <div class="ct__copy-wrap">
+              <button class="ct__copy label" type="button" data-ct-copy={socials.email}>{t.copy}</button>
+              <span class="ct__stamp" aria-hidden="true" data-ct-stamp>{t.copied}</span>
+            </div>
+          )}
+        </div>
+      </li>
+    ))}
+    <li class="ct__channel ct__channel--end" aria-hidden="true">
+      <span class="ct__rule" data-ct-rule></span>
+    </li>
+  </ul>
+  <p class="sr-only" aria-live="polite" data-ct-status data-copied={t.copied}></p>
+</section>
+
+<script>
+  import { initContact } from './contact';
+  const root = document.querySelector<HTMLElement>('[data-contact]');
+  if (root) initContact(root);
+</script>
+
+<style>
+  .ct {
+    position: relative;
+    padding: clamp(6rem, 14vh, 10rem) var(--gutter) clamp(5rem, 12vh, 8rem);
+  }
+  .ct__head {
+    display: grid;
+    gap: 1.25rem;
+    align-items: end;
+  }
+  .ct__title {
+    max-width: 14ch;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.75rem, 7vw, 7rem);
+    line-height: 0.88;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .ct__text {
+    max-width: 30rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+  @media (min-width: 1024px) {
+    .ct__head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+      gap: 4rem;
+    }
+  }
+
+  /* ── The channels ──────────────────────────────────── */
+  .ct__channels {
+    margin: clamp(3rem, 8vh, 5rem) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ct__rule {
+    display: block;
+    height: 1px;
+    background: var(--hairline);
+    transform-origin: 0 50%;
+  }
+  .ct__row {
+    position: relative;
+    display: grid;
+    grid-template-areas:
+      'label'
+      'link'
+      'copy';
+    gap: 0.75rem;
+    padding: clamp(1.25rem, 3vh, 2rem) 0;
+  }
+  .ct__label {
+    grid-area: label;
+    color: var(--paper-dim);
+  }
+  .ct__link {
+    grid-area: link;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    min-width: 0;
+  }
+  .ct__value {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.9rem, 5.2vw, 5.5rem);
+    line-height: 1;
+  }
+  /* Each part rises out of its own slot on the way in (contact.ts). */
+  .ct__clip {
+    display: block;
+    overflow: hidden;
+  }
+  /* Red ink is rolled across the value on hover: the fill sits off to the right of the text and
+     slides under it. */
+  .ct__part {
+    display: block;
+    /* Room for descenders: the ink is clipped to this box, and the slot to its parent. */
+    padding-bottom: 0.2em;
+    background: linear-gradient(90deg, var(--red) 50%, var(--paper) 50%) 100% 0 / 200% 100% no-repeat;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    transition: background-position 0.7s var(--ease-tear);
+  }
+  .ct__clip + .ct__clip .ct__part {
+    transition-delay: 0.08s;
+  }
+  .ct__arrow {
+    flex: none;
+    font-size: clamp(1.5rem, 3vw, 2.75rem);
+    line-height: 1;
+    transition:
+      transform 0.6s var(--ease-out),
+      color 0.3s;
+  }
+  .ct__link:hover .ct__part,
+  .ct__link:focus-visible .ct__part {
+    background-position: 0 0;
+  }
+  .ct__link:hover .ct__arrow,
+  .ct__link:focus-visible .ct__arrow {
+    color: var(--red);
+    transform: translate(0.25em, -0.25em);
+  }
+  .ct__link:focus-visible {
+    outline-offset: 6px;
+  }
+
+  /* ── Copy the address ──────────────────────────────── */
+  .ct__copy-wrap {
+    grid-area: copy;
+    position: relative;
+    justify-self: start;
+  }
+  .ct__copy {
+    padding: 0.7rem 1rem 0.65rem;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    color: var(--paper);
+    transition:
+      border-color 0.3s,
+      color 0.3s;
+  }
+  .ct__copy:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  /* Rubber-stamped over the button once the address is on the clipboard, like the team's tags. */
+  .ct__stamp {
+    position: absolute;
+    /* Centred without a transform: contact.ts owns the transform to slam it down. */
+    inset: 0;
+    width: max-content;
+    height: max-content;
+    margin: auto;
+    padding: 0.3em 0.55em 0.2em;
+    border: 1.5px solid currentColor;
+    outline: 0.5px solid currentColor;
+    outline-offset: 1.5px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--red);
+    background: var(--ink);
+    transform: rotate(-6deg);
+    opacity: 0;
+    pointer-events: none;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
+  }
+  .ct__stamp[data-on] {
+    opacity: 1;
+  }
+
+  /* Wide: the label (and the copy button under it) in a column of their own, so every value and
+     arrow lines up. */
+  @media (min-width: 768px) {
+    .ct__row {
+      grid-template-columns: 11rem minmax(0, 1fr);
+      grid-template-areas:
+        'label link'
+        'copy link';
+      grid-template-rows: auto 1fr;
+      column-gap: 2rem;
+    }
+    .ct__link {
+      align-self: center;
+    }
+    .ct__copy-wrap {
+      align-self: start;
+    }
+  }
+</style>

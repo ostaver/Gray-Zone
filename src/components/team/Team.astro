@@ -1,0 +1,324 @@
+---
+import { Image } from 'astro:assets';
+import type { Locale } from '../../i18n/config';
+import { team, teamCopy, teamPhoto } from '../../data/team';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = teamCopy[locale];
+const pad = (i: number) => String(i).padStart(2, '0');
+// Each tag is stamped a little askew, its own way.
+const tilts = [-4, 3, -2, 5, -3, 2];
+---
+
+<section class="tm" id="team" aria-labelledby="team-title" data-team>
+  <header class="tm__head">
+    <h2 class="tm__title" id="team-title" data-tm-print>{t.title}</h2>
+    <p class="tm__hint" data-tm-print>{t.hint}</p>
+  </header>
+
+  <div class="tm__body">
+    <figure class="tm__photo">
+      <!-- The torn edge is on the frame, the print sweep on the inner layer: both are masks. -->
+      <div class="tm__photo-print" data-tm-print>
+        <Image class="tm__img" src={teamPhoto} alt={t.photoAlt} widths={[640, 960, 1440, 1920]} sizes="(min-width: 1024px) 42vw, 100vw" data-tm-img />
+      </div>
+    </figure>
+
+    <!-- Native <details>: every file opens without JS; team.ts only animates it. -->
+    <ol class="tm__roster" role="list">
+      {team.map((member, i) => (
+        <li class="tm__member" data-tm-member>
+          <span class="tm__rule" aria-hidden="true" data-tm-rule></span>
+          <details class="tm__details" name="team" data-tm-details>
+            <summary class="tm__row">
+              <span class="tm__num" aria-hidden="true">{pad(i + 1)}</span>
+              <h3 class="tm__name">{member.name[locale]}</h3>
+              <span class="tm__role" data-tm-role>{member.role[locale]}</span>
+              <span class="tm__plus" aria-hidden="true"></span>
+            </summary>
+            <div class="tm__file" data-tm-file>
+              <div class="tm__file-inner">
+                <div class="tm__bio">
+                  {member.bio[locale].split('\n\n').map((p) => <p data-tm-para>{p}</p>)}
+                </div>
+                <div class="tm__side">
+                  <ul class="tm__tags" role="list">
+                    {member.tags.map((tag, k) => (
+                      <li class="tm__tag" style={`--tilt: ${tilts[(i + k) % tilts.length]}deg`} data-tm-tag>
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                  {member.links.length > 0 && (
+                    <ul class="tm__links" role="list">
+                      {member.links.map((link) => (
+                        <li data-tm-link>
+                          <a class="tm__link" href={link.href} target={link.kind === 'email' ? undefined : '_blank'} rel={link.kind === 'email' ? undefined : 'noopener'}>
+                            {t.links[link.kind]}
+                            <span aria-hidden="true">↗</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </details>
+        </li>
+      ))}
+      <li class="tm__member tm__member--end" aria-hidden="true">
+        <span class="tm__rule" data-tm-rule></span>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<script>
+  import { initTeam } from './team';
+  const root = document.querySelector<HTMLElement>('[data-team]');
+  if (root) initTeam(root);
+</script>
+
+<style>
+  .tm {
+    /* Depth of the photo's torn foot (as the nav's). */
+    --tear: 0.75rem;
+    position: relative;
+    /* The roster's rows are slung in from past the edges. */
+    overflow-x: clip;
+    padding: clamp(6rem, 14vh, 10rem) var(--gutter);
+  }
+  .tm__title {
+    max-width: 16ch;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.75rem, 7vw, 7rem);
+    line-height: 0.88;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .tm__hint {
+    max-width: 22rem;
+    margin-top: 1.25rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+  .tm__body {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem) clamp(2rem, 5vw, 5rem);
+    margin-top: clamp(2.5rem, 6vh, 4rem);
+    align-items: start;
+  }
+
+  /* ── The photo ─────────────────────────────────────── */
+  .tm__photo {
+    margin: 0;
+    /* Torn off along its foot. */
+    mask:
+      linear-gradient(#000, #000) top left / 100% calc(100% - var(--tear)) no-repeat,
+      var(--torn-x) bottom left / 18rem var(--tear) repeat-x;
+  }
+  .tm__photo-print {
+    overflow: hidden;
+    aspect-ratio: 3 / 2;
+    background: var(--ink-2);
+  }
+  .tm__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Room for team.ts to drift it with the scroll. */
+    scale: 1.12;
+  }
+
+  /* ── The roster ────────────────────────────────────── */
+  .tm__roster {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tm__member {
+    position: relative;
+  }
+  .tm__rule {
+    display: block;
+    height: 1px;
+    background: var(--hairline);
+    transform-origin: 0 50%;
+  }
+  .tm__row {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      'num name plus'
+      'num role plus';
+    align-items: baseline;
+    gap: 0.35rem 1rem;
+    padding: clamp(1rem, 2.4vh, 1.5rem) 0;
+    list-style: none;
+    cursor: pointer;
+  }
+  .tm__row::-webkit-details-marker {
+    display: none;
+  }
+  .tm__row:focus-visible {
+    outline-offset: 4px;
+  }
+  .tm__num {
+    grid-area: num;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--paper-dim);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
+  }
+  .tm__name {
+    grid-area: name;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.75rem, 3.2vw, 3rem);
+    line-height: 0.95;
+    text-transform: uppercase;
+    transition:
+      color 0.3s,
+      transform 0.6s var(--ease-out);
+  }
+  .tm__role {
+    grid-area: role;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+  /* A plus that turns to a cross when the file is open. */
+  .tm__plus {
+    grid-area: plus;
+    position: relative;
+    align-self: center;
+    width: 1.1rem;
+    aspect-ratio: 1;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .tm__plus::before,
+  .tm__plus::after {
+    content: '';
+    position: absolute;
+    inset: calc(50% - 0.75px) 0 auto;
+    height: 1.5px;
+    background: currentColor;
+  }
+  .tm__plus::after {
+    transform: rotate(90deg);
+  }
+  .tm__details[open] .tm__plus {
+    transform: rotate(135deg);
+    color: var(--red);
+  }
+  .tm__details[open] .tm__num,
+  .tm__row:hover .tm__num {
+    color: var(--red);
+  }
+  @media (hover: hover) {
+    .tm__row:hover .tm__name {
+      transform: translateX(0.4rem);
+    }
+  }
+  @media (min-width: 768px) {
+    .tm__row {
+      grid-template-columns: 3rem minmax(0, 1fr) auto;
+      column-gap: 1.5rem;
+    }
+    /* The file lines up under the name. */
+    .tm__file-inner {
+      padding-left: 4.5rem;
+    }
+  }
+
+  /* ── A member's file ───────────────────────────────── */
+  .tm__file {
+    overflow: hidden;
+  }
+  .tm__file-inner {
+    display: grid;
+    gap: 1.5rem;
+    padding: 0 0 clamp(1.5rem, 4vh, 2.5rem) 3.25rem;
+  }
+  .tm__bio {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 40rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+  .tm__side {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+  }
+  .tm__tags,
+  .tm__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* Rubber-stamped, like the story's verdicts: double rule, worn ink, askew. */
+  .tm__tag {
+    padding: 0.25em 0.5em 0.15em;
+    border: 1.5px solid currentColor;
+    outline: 0.5px solid currentColor;
+    outline-offset: 1.5px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--red);
+    transform: rotate(var(--tilt));
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
+  }
+  .tm__link {
+    display: inline-flex;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 0.2rem;
+    transition:
+      color 0.3s,
+      border-color 0.3s;
+  }
+  .tm__link:hover {
+    color: var(--red);
+    border-color: var(--red);
+  }
+  @media (min-width: 1280px) {
+    .tm__file-inner {
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+      gap: 2.5rem;
+    }
+  }
+
+  /* Wide screens: the photo holds still on the left while the roster scrolls past it. */
+  @media (min-width: 1024px) {
+    .tm__body {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+    .tm__photo {
+      position: sticky;
+      top: calc(var(--nav-h) + 2rem);
+    }
+  }
+</style>

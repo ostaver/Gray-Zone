@@ -2,23 +2,45 @@ import type { ImageMetadata } from 'astro';
 import type { Localized } from '../i18n/config';
 import teamPhotoSrc from '../assets/team/team.jpg';
 
+export type TeamLinkKind = 'instagram' | 'youtube' | 'github' | 'spotify' | 'linkedin' | 'email';
+
 export interface TeamMember {
   id: string;
   name: Localized<string>;
   role: Localized<string>;
+  /** Plain text; paragraphs are separated by a blank line (`\n\n`). */
   bio: Localized<string>;
   tags: string[];
   links: {
-    kind: 'instagram' | 'youtube' | 'github' | 'spotify' | 'linkedin' | 'email';
+    kind: TeamLinkKind;
     href: string;
   }[];
 }
 
 export const teamPhoto: ImageMetadata = teamPhotoSrc;
 
-export const teamTitle: Localized<string> = {
-  en: 'Meet The Team of „Gray Zone“',
-  mk: 'Запознај го тимот на „Сива Зона“',
+export interface TeamCopy {
+  title: string;
+  /** Under the title: how to work the roster. */
+  hint: string;
+  photoAlt: string;
+  /** Names each link in a member's file. */
+  links: Record<TeamLinkKind, string>;
+}
+
+export const teamCopy: Localized<TeamCopy> = {
+  en: {
+    title: 'Meet the team of „Gray Zone“',
+    hint: 'Open a file to read who did what.',
+    photoAlt: 'The Gray Zone team in their Gray Zone T-shirts',
+    links: { instagram: 'Instagram', youtube: 'YouTube', github: 'GitHub', spotify: 'Spotify', linkedin: 'LinkedIn', email: 'Email' },
+  },
+  mk: {
+    title: 'Запознај го тимот на „Сива Зона“',
+    hint: 'Отвори досие и прочитај кој што направил.',
+    photoAlt: 'Тимот на „Сива Зона“ во маици со логото на играта',
+    links: { instagram: 'Instagram', youtube: 'YouTube', github: 'GitHub', spotify: 'Spotify', linkedin: 'LinkedIn', email: 'Е-пошта' },
+  },
 };
 
 export const team: TeamMember[] = [

@@ -52,6 +52,8 @@
   --z-preloader: 120;
   /* Film grain sits over everything, preloader included, so the whole page shares one texture. */
   --z-grain: 130;
+  /* Dev-only FPS meter: above the grain so it reads the same on every section. */
+  --z-debug: 140;
 }
 
 :root[data-zone='white'] {

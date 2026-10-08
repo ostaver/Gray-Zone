@@ -48,8 +48,8 @@ src/
   pages/        Routes (index.astro = mk, en/index.astro = en)
   views/        Page-level compositions (HomePage.astro)
   layouts/      Base HTML shell
-  components/   hero/, about/, story/, gallery/, shell/ (preloader, nav), ui/
-  data/         Content: team, gallery, funders, links, tutorial, about, contact; sections (page order)
+  components/   hero/, about/, story/, gallery/, tutorial/, team/, play/, contact/, shell/ (preloader, nav, footer), ui/
+  data/         Content: team, play, gallery, funders, links, tutorial, about, contact; sections (page order)
   i18n/         Locale config and UI strings
   lib/          gl/ (WebGL stage, shaders), canvas/, motion/ (gsap, lenis), zone.ts (shared zone switch), lifecycle, og.ts (share-image variants)
   styles/       tokens.css, global.css
@@ -67,13 +67,13 @@ Theme changes bloom outward from the selected button over 1.3 seconds, with a so
 
 ## Navigation
 
-`src/components/shell/Nav.astro` (+ `nav.ts`) is a fixed bar: logo disc and wordmark, the section links, the zone disc, the language switch and, once the hero's own CTA has scrolled away, a compact download button that opens the download dialog.
+`src/components/shell/Nav.astro` (+ `nav.ts`) is a fixed bar: logo disc and wordmark (scrolling through the hero rolls the disc out to the full logo and slides the wordmark into it, where it hands over to the logo's own letters from `logoArt.ts`), the section links, the zone disc, the language switch and, once the hero's own CTA has scrolled away, a compact download button that opens the download dialog.
 
 - **Seam index (≥ 1180px).** A small copy of the hero's tear runs through the row of links. Links left of it are solid; links right of it stay gray. It follows the reader, passing through each section's link while that section is read, and reaches the end of the row at the bottom of the page. Hovering pulls it to the pointer and keyboard focus pulls it to the focused link. The current section's links get `aria-current`.
-- **Menu (< 1180px).** The links move into a full-screen sheet that drops from the top with a torn bottom edge. It has hollow display type that tears solid on hover/focus and for the current section, plus language, contact, version and the download CTA. While it is open, `#main` is inert and scroll is locked; Escape closes it. On these layouts the bar hides while scrolling down and returns when scrolling up.
+- **Menu (< 1180px).** The links move into a full-screen sheet slung in from the side with a torn leading edge; it shudders as it lands, and every link and detail inside arrives its own way (slung, hinged, slammed, flipped, sprung; labels scramble, contacts bounce), then scatters on close. It has hollow display type that tears solid on hover/focus and for the current section, plus language, contact, version and the download CTA. While it is open, `#main` is inert and scroll is locked; Escape closes it. On these layouts the bar hides while scrolling down and returns when scrolling up; the logo stays, so its merge with the hero's scroll stays in view.
 - **Plate.** Over the hero the bar has no background of its own. Once the hero has passed, a blurred strip of the page surface with a torn edge slides in behind it.
 
-In-page links scroll with Lenis and move focus to the target section. Sections are listed once in `src/data/sections.ts` (ids = anchors = `ui.nav` keys). Until each phase lands, `HomePage.astro` renders a `SectionPlaceholder` per id so the anchors and seam index have something to track. Replace each placeholder with the real section in its phase.
+In-page links scroll with Lenis and move focus to the target section. Sections are listed once in `src/data/sections.ts` (ids = anchors = `ui.nav` keys).
 
 ## About
 
@@ -105,8 +105,55 @@ Reduced motion lays the forms out in a column with the decision last, stamped an
 
 Reduced motion, no WebGL, or no JS: the screens are a plain two-column grid in colour, and the lightbox still works (without the throws).
 
+## Tutorial
+
+`src/components/tutorial/Tutorial.astro` (+ `tutorial.ts`) follows the Gallery. Steps, screens and copy live in `src/data/tutorial.ts` (screens per locale).
+
+- **The ring.** The step screens stand on a tilted 3D ring in plain CSS (`preserve-3d`, after the "round carousel" pattern; no WebGL), with each screen's back showing its number and name. It turns by itself: it holds on a step while that step's bar fills (6 s), then turns to the next. A drag spins it (a flick coasts on a step or more) and it settles on the nearest screen; clicking a screen, a step number or an arrow turns it there, and the reader's input holds off the autoplay for a while. Page scroll swings the ring a little with the flow and it springs back. Screens dim as they turn away from the front.
+- **Copy.** The step facing front has its copy under the ring: the title decodes, the paragraphs rise in. The copy sits below the ring and its controls, so a long or short step only moves what comes after the section.
+- **Entrance.** The ring fans out of one stack as it comes on screen and spins round to step 1.
+- **Pausing.** The play/pause button stops the autoplay; it also holds while the mouse is over the copy or keyboard focus is in the controls. Arrow keys page when focus is in the controls.
+
+Reduced motion or no JS: the steps are a plain list, screen beside copy.
+
+## Team
+
+`src/components/team/Team.astro` (+ `team.ts`) follows the Tutorial. Members, the photo and the section's copy live in `src/data/team.ts`.
+
+- **Photo.** The team photo prints in with the section's title (the halftone sweep from `lib/motion/reveal.ts`), has a torn foot, and drifts slightly against the scroll. On wide screens it holds still on the left while the roster scrolls past.
+- **Roster.** One line per member, like credits: number, name, role. As they scroll in, each rule draws across and its row is slung in from alternating sides.
+- **Files.** Each member is a native `<details>`: it opens without JS. With it, opening a file unrolls it, the role decodes, the bio rises in, the tags are stamped on one after another (the story's rubber-stamp look) and the links slide in. One file is open at a time; opening another closes the last.
+
+Reduced motion or no JS: the files open and close instantly.
+
+## Play
+
+`src/components/play/Play.astro` (+ `play.ts`) follows the Team: the closing call to play. Its copy lives in `src/data/play.ts`; download links and the version come from `src/data/links.ts`, and the platform strings from the download dialog's (`ui.download`). It is not in the nav (the nav's download button covers it), so it has no entry in `sections.ts`.
+
+- **The pass.** A paper admission ticket into the gray zone (entry, admits one player, price: free, version, languages, a barcode). It feeds out of a slot in steps as the section scrolls in, scrubbed like a ticket printer, and drops onto a slight tilt once it's out.
+- **Stubs.** Each platform is a perforated stub on the ticket (beside it on wide screens, below it on narrow ones) and a real download link. Hovering peels it off its perforation; clicking tears it off and lets it fall while the download starts, then a fresh stub prints back in. The reader's own platform, when it can be told, comes first and is marked; touch devices that are neither get the desktop-only note.
+
+Reduced motion or no JS: the ticket is simply there and the stubs are plain links.
+
+## Contact and footer
+
+`src/components/contact/Contact.astro` (+ `contact.ts`) is the last section. Its copy (and the footer's) lives in `src/data/contact.ts`; the address, Instagram and repo come from `src/data/links.ts`.
+
+- **Channels.** Email, Instagram and GitHub, each on its own ruled line with the value set large. On the way in the rules draw, the labels scramble on and each value rises out of a slot; on hover red ink rolls across the value and it scrambles back into itself. The address breaks at the @ on narrow screens.
+- **Copy.** A button beside the address puts it on the clipboard and slams a "copied" stamp over itself (announced through a live region). Without the clipboard API it is hidden and the mailto link is all there is.
+
+`src/components/shell/Footer.astro` (+ `footer.ts`) sits after `#main` through Base's `footer` slot: the funders' logos and the EU disclaimer on a strip of light paper torn along its top (`src/data/funders.ts`), the rights line and the version (deliberately no back-to-top button; see AGENTS.md). Below that the game's name is set the width of the page; its letters rise out of the floor one after another as the end of the page scrolls in.
+
+Reduced motion or no JS: the channels and the name are simply there.
+
 ## Share image
 
-`public/og-image.png` (1200×630) is the master and the default `og:image` / `twitter:image`. `src/pages/og-image.[ext].ts` encodes `/og-image.jpg` and `/og-image.webp` from it at build time (sharp), and `Base.astro` lists all three as `og:image` entries, PNG first. Replace only the PNG; the other formats follow on the next build.
+`public/og-image.png` (1200×630) is the master and the default `og:image` / `twitter:image`. `src/pages/og-image.[ext].ts` encodes `/og-image.jpg` and `/og-image.webp` from it at build time (sharp), and `Base.astro` lists all three as `og:image` entries, JPEG first (the PNG is ~1MB, over what Instagram and WhatsApp fetch for a preview); `twitter:image` is the JPEG too. Replace only the PNG; the other formats follow on the next build.
+
+## Search and missing pages
+
+- **Structured data.** `Base.astro` describes the game as a schema.org `VideoGame` (free, Windows and macOS, both languages, version and download from `src/data/links.ts`) in a JSON-LD block on each language's page.
+- **Sitemap and robots.** `src/pages/sitemap.xml.ts` lists both language versions, each with the other as its `hreflang` alternate; `src/pages/robots.txt.ts` allows everything and points at the sitemap. Both are built from `site` in `astro.config.mjs`.
+- **404.** `src/pages/404.astro` builds `dist/404.html`, which Cloudflare serves for any missing path. A missing page can't tell which language the reader came in, so it carries both: a slip from the archive's counter, stamped "not found", with a way back to each language's home (copy in `src/data/notFound.ts`). It is `noindex` (Base's `noindex` prop, which also drops the canonical and alternates).
 
 See [AGENTS.md](AGENTS.md) for conventions for AI coding agents.

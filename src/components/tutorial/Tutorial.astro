@@ -1,0 +1,415 @@
+---
+import { Image } from 'astro:assets';
+import type { Locale } from '../../i18n/config';
+import { tutorial, tutorialCopy } from '../../data/tutorial';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = tutorialCopy[locale];
+const n = tutorial.length;
+const pad = (i: number) => String(i).padStart(2, '0');
+// The ring's radius per card width: cards sit edge to edge with a fifth of a card between them.
+const GAP = 1.2;
+const radius = GAP / (2 * Math.tan(Math.PI / n));
+const sizes = '(min-width: 768px) 30vw, 70vw';
+---
+
+<section class="tu" id="tutorial" style={`--count: ${n}; --angle: ${360 / n}deg; --radius-k: ${radius.toFixed(4)}`} aria-labelledby="tutorial-title" data-tutorial>
+  <header class="tu__head">
+    <h2 class="tu__title" id="tutorial-title">{t.title}</h2>
+    <p class="tu__hint">{t.hint}</p>
+  </header>
+
+  <!-- With JS, tutorial.ts sets [data-ring] and the screens turn on a 3D ring here. It only
+       repeats the list below, which carries the steps for keyboard and assistive tech. -->
+  <div class="tu__stage" aria-hidden="true" data-tu-stage>
+    <div class="tu__tilt">
+      <div class="tu__ring" data-tu-ring>
+        {tutorial.map((step, i) => (
+          <div class="tu__card" style={`--i: ${i}`} data-tu-card>
+            <div class="tu__face">
+              <Image class="tu__img" src={step.image[locale]} alt="" widths={[480, 800, 1200]} sizes={sizes} loading="lazy" draggable="false" />
+              <span class="tu__shade" data-tu-shade></span>
+            </div>
+            <div class="tu__back">
+              <span class="tu__back-num">{pad(i + 1)}</span>
+              <span class="tu__back-name">{step.title[locale]}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Under the ring: page through the steps, or stop it turning. -->
+  <div class="tu__controls" data-tu-controls>
+    <button class="tu__btn" type="button" aria-label={t.prev} data-tu-step-by="-1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4l-8 8 8 8"></path></svg>
+    </button>
+    <ol class="tu__index" role="list">
+      {tutorial.map((step, i) => (
+        <li>
+          <button class="tu__dot" type="button" aria-label={`${t.step} ${i + 1}: ${step.title[locale]}`} aria-current={i === 0 ? 'step' : undefined} data-tu-go={i}>
+            <span class="tu__dot-num">{pad(i + 1)}</span>
+            <span class="tu__dot-bar"><span class="tu__dot-fill" data-tu-fill></span></span>
+          </button>
+        </li>
+      ))}
+    </ol>
+    <button class="tu__btn" type="button" aria-label={t.next} data-tu-step-by="1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8"></path></svg>
+    </button>
+    <button class="tu__btn tu__play" type="button" aria-label={t.pause} data-tu-play data-label-pause={t.pause} data-label-play={t.play}>
+      <svg class="tu__icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"></path></svg>
+      <svg class="tu__icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>
+    </button>
+  </div>
+
+  <ol class="tu__steps" role="list">
+    {tutorial.map((step, i) => (
+      <li class="tu__step" data-tu-step data-on={i === 0 ? '' : undefined}>
+        <Image class="tu__step-img" src={step.image[locale]} alt={`${t.shot}: ${step.title[locale]}`} widths={[480, 800, 1200]} sizes={sizes} loading="lazy" />
+        <div class="tu__copy">
+          <p class="tu__count">
+            {t.step} {pad(i + 1)} <span>/ {pad(n)}</span>
+          </p>
+          <h3 class="tu__name" data-tu-name>{step.title[locale]}</h3>
+          <div class="tu__body" data-tu-body>
+            {step.body[locale].split('\n\n').map((p) => <p>{p}</p>)}
+          </div>
+        </div>
+      </li>
+    ))}
+  </ol>
+
+</section>
+
+<script>
+  import { initTutorial } from './tutorial';
+  const root = document.querySelector<HTMLElement>('[data-tutorial]');
+  if (root) initTutorial(root);
+</script>
+
+<style>
+  /* Without the ring (no JS, reduced motion) the steps are a plain list, screen beside copy.
+     With it, tutorial.ts sets [data-ring]: the screens turn on a ring, one step's copy shows. */
+  .tu {
+    --shot-radius: 6px;
+    --card-w: clamp(15rem, 28vw, 28rem);
+    --card-h: calc(var(--card-w) / 1.6);
+    --radius: calc(var(--card-w) * var(--radius-k));
+    position: relative;
+    padding: clamp(6rem, 14vh, 10rem) var(--gutter);
+    /* The ring is wider than the page; its far screens run off both edges. */
+    overflow-x: clip;
+  }
+  .tu__title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(3rem, 8vw, 8rem);
+    line-height: 0.85;
+    text-transform: uppercase;
+    max-width: 12ch;
+  }
+  .tu__hint {
+    max-width: 22rem;
+    margin-top: 1.25rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+  .tu__stage,
+  .tu__controls {
+    display: none;
+  }
+
+  .tu__steps {
+    display: grid;
+    gap: clamp(3rem, 7vw, 5rem);
+    margin: clamp(2.5rem, 6vh, 4rem) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tu__step {
+    display: grid;
+    gap: 1.25rem clamp(1.5rem, 4vw, 4rem);
+    align-items: start;
+  }
+  .tu__step-img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1.6;
+    object-fit: cover;
+    border-radius: var(--shot-radius);
+    background: var(--ink-2);
+  }
+  .tu__copy {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+  .tu__count {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--red);
+    font-variant-numeric: tabular-nums;
+  }
+  .tu__count span {
+    color: var(--paper-dim);
+  }
+  .tu__name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+  .tu__body {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 34rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+  @media (min-width: 768px) {
+    .tu__step {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    }
+  }
+
+  /* ── The ring ──────────────────────────────────────── */
+  /* Title, ring, copy and controls framed as one screen. */
+  .tu[data-ring] {
+    display: grid;
+    align-content: center;
+    min-height: 100svh;
+    padding-top: calc(var(--nav-h) + clamp(1.5rem, 5vh, 3rem));
+    padding-bottom: clamp(3rem, 8vh, 5rem);
+  }
+  [data-ring] .tu__title {
+    max-width: none;
+    font-size: clamp(2.75rem, 6vw, 6rem);
+  }
+  [data-ring] .tu__stage {
+    display: grid;
+    place-items: center;
+    /* The tilted ring shows a sliver above and below its front screen. */
+    height: calc(var(--card-h) * 1.3);
+    margin-top: clamp(0.5rem, 2vh, 1.5rem);
+    perspective: 1800px;
+    /* Horizontal drags turn the ring; vertical ones still scroll the page. */
+    touch-action: pan-y;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  [data-ring] .tu__stage[data-dragging] {
+    cursor: grabbing;
+  }
+  .tu__tilt {
+    transform-style: preserve-3d;
+    transform: rotateX(-7deg);
+  }
+  .tu__ring {
+    position: relative;
+    width: var(--card-w);
+    height: var(--card-h);
+    transform-style: preserve-3d;
+    transform: translateZ(calc(var(--radius) * -1));
+    will-change: transform;
+  }
+  /* --spread folds the ring up into one stack (0) and out to its full round (1). */
+  .tu__card {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: rotateY(calc(var(--i) * var(--angle) * var(--spread, 1))) translateZ(calc(var(--radius) * var(--spread, 1)));
+  }
+  .tu__face,
+  .tu__back {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: var(--shot-radius);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .tu__face {
+    background: var(--ink-2);
+    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.6);
+  }
+  .tu__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  /* Screens dim as they turn away from the front (tutorial.ts sets the opacity). */
+  .tu__shade {
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    opacity: 0;
+  }
+  /* The back of each screen: its number and name, read from behind the ring. */
+  .tu__back {
+    display: grid;
+    align-content: space-between;
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    transform: rotateY(180deg);
+    background: var(--ink-2);
+    border: 1px solid var(--hairline);
+  }
+  .tu__back-num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: calc(var(--card-h) * 0.6);
+    line-height: 0.8;
+    color: transparent;
+    -webkit-text-stroke: max(1px, 0.01em) var(--paper-dim);
+  }
+  .tu__back-name {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+
+  /* One step's copy at a time, under the ring; the rest wait in the same spot. */
+  /* Only the front step's copy. It sits below the ring and its controls, so a longer or
+     shorter step only moves what comes after the section. */
+  [data-ring] .tu__steps {
+    margin-top: clamp(1.25rem, 3.5vh, 2.25rem);
+  }
+  [data-ring] .tu__step:not([data-on]) {
+    display: none;
+  }
+  [data-ring] .tu__step-img {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    [data-ring] .tu__copy {
+      grid-column: 1 / -1;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 1rem clamp(1.5rem, 4vw, 4rem);
+    }
+    [data-ring] .tu__count {
+      grid-column: 1 / -1;
+    }
+    [data-ring] .tu__name {
+      font-size: clamp(2.25rem, 4vw, 3.75rem);
+    }
+  }
+
+  [data-ring] .tu__controls {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+    margin-top: clamp(0.5rem, 2vh, 1.25rem);
+  }
+  .tu__btn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.75rem;
+    aspect-ratio: 1;
+    border: 1px solid var(--hairline);
+    border-radius: 50%;
+    transition:
+      border-color 0.3s,
+      color 0.3s,
+      transform 0.5s var(--ease-out);
+  }
+  .tu__btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .tu__btn svg {
+    width: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tu__play {
+    margin-left: auto;
+  }
+  .tu__play .tu__icon-play,
+  .tu__play[data-paused] .tu__icon-pause {
+    display: none;
+  }
+  .tu__play[data-paused] .tu__icon-play {
+    display: block;
+  }
+  .tu__index {
+    display: flex;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tu__dot {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.5rem 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--paper-dim);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
+  }
+  .tu__dot:hover,
+  .tu__dot[aria-current] {
+    color: var(--paper);
+  }
+  .tu__dot-bar {
+    position: relative;
+    display: block;
+    width: clamp(1.5rem, 3.5vw, 3rem);
+    height: 2px;
+    overflow: hidden;
+    background: var(--hairline);
+  }
+  /* The active step's bar fills while the ring holds on it, then the ring turns. */
+  .tu__dot-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+  @media (max-width: 767px) {
+    .tu {
+      --card-w: 70vw;
+    }
+    /* The step numbers give way to bars that share the row. */
+    .tu__index {
+      flex: 1;
+      min-width: 0;
+    }
+    .tu__index li {
+      flex: 1;
+    }
+    .tu__dot {
+      width: 100%;
+      /* Only a bar is left to see; the padding keeps it a thumb-sized target. */
+      padding-block: 1.3rem;
+    }
+    .tu__dot-num {
+      display: none;
+    }
+    .tu__dot-bar {
+      width: 100%;
+    }
+    .tu__play {
+      margin-left: 0;
+    }
+  }
+</style>

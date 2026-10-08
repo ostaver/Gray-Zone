@@ -1,0 +1,127 @@
+---
+import { Image } from 'astro:assets';
+import type { Locale } from '../../i18n/config';
+import { ui } from '../../i18n/ui';
+import { footerCopy } from '../../data/contact';
+import { funders, fundersImage } from '../../data/funders';
+import { releaseVersion } from '../../data/links';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = footerCopy[locale];
+const f = funders[locale];
+const name = ui[locale].hero.title.join(' ');
+---
+
+<footer class="ft" data-footer>
+  <!-- The funders' strip: the logos need light paper behind them, torn off along its top. -->
+  <div class="ft__paper" data-ft-paper>
+    <Image class="ft__funders" src={fundersImage} alt={f.alt} />
+    <p class="ft__disclaimer">{f.disclaimer}</p>
+  </div>
+
+  <div class="ft__bar">
+    <p class="label">{t.rights}</p>
+    <p class="label ft__version">{ui[locale].download.version} {releaseVersion}</p>
+  </div>
+
+  <!-- The name, set as wide as the page; its letters rise out of the floor at the very end. -->
+  <p class="ft__mark" aria-hidden="true" data-ft-mark>
+    {[...name].map((ch) => (ch === ' ' ? <span class="ft__gap"></span> : <span class="ft__letter" data-ft-letter>{ch}</span>))}
+  </p>
+</footer>
+
+<script>
+  import { initFooter } from './footer';
+  const root = document.querySelector<HTMLElement>('[data-footer]');
+  if (root) initFooter(root);
+</script>
+
+<style>
+  .ft {
+    --tear: 0.75rem;
+    position: relative;
+    z-index: var(--z-content);
+    overflow: hidden;
+    background: var(--ink);
+  }
+
+  /* ── Funders ───────────────────────────────────────── */
+  .ft__paper {
+    position: relative;
+    display: grid;
+    gap: 1.5rem;
+    justify-items: center;
+    padding: calc(var(--tear) + clamp(2rem, 5vh, 3rem)) var(--gutter) clamp(2rem, 5vh, 3rem);
+    color: var(--zone-black);
+    text-align: center;
+    isolation: isolate;
+  }
+  /* The paper is a layer of its own, flipped, so the torn-foot mask tears its top instead. */
+  .ft__paper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--zone-white);
+    transform: scaleY(-1);
+    mask:
+      linear-gradient(#000, #000) top left / 100% calc(100% - var(--tear)) no-repeat,
+      var(--torn-x) bottom left / 18rem var(--tear) repeat-x;
+  }
+  .ft__funders {
+    width: min(100%, 43rem);
+    height: auto;
+    /* The logos come on white; multiplied, they sit on the paper instead. */
+    mix-blend-mode: multiply;
+  }
+  .ft__disclaimer {
+    max-width: 52rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    opacity: 0.7;
+    text-wrap: pretty;
+  }
+
+  /* ── The bar ───────────────────────────────────────── */
+  .ft__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    padding: 1.5rem var(--gutter);
+    color: var(--paper-dim);
+  }
+  .ft__version {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── The name ──────────────────────────────────────── */
+  .ft__mark {
+    display: flex;
+    justify-content: space-between;
+    overflow: hidden;
+    margin: 0 var(--gutter);
+    padding-top: 0.04em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    /* About the page's width in either alphabet; footer.ts fits it exactly. */
+    font-size: 20vw;
+    line-height: 0.78;
+    text-transform: uppercase;
+    color: var(--paper);
+    /* Cut off at the floor, as if the page ends mid-letter. */
+    margin-bottom: -0.04em;
+    user-select: none;
+  }
+  .ft__letter {
+    display: block;
+  }
+  .ft__gap {
+    width: 0.22em;
+  }
+</style>
