@@ -1,6 +1,7 @@
 import { ScrollTrigger, coarsePointer, reducedMotion } from '../../lib/motion/gsap';
 import { getStage } from '../../lib/gl/stage';
 import { createDotBatch, type DotWriter, type RGB } from '../../lib/gl/views/dotBatch';
+import { readColour } from '../../lib/gl/colour';
 import { onZoneChange } from '../../lib/zone';
 import { clockStart } from '../../data/about';
 
@@ -9,7 +10,8 @@ import { clockStart } from '../../data/about';
  * scene is a run of shortcuts: the gray zone eats the word INTEGRITY from the right, its red dots
  * chip off and fall into a pile of money, more and more eyes open and follow you (reputation),
  * and the flip-dot clock never stops; scrolling hard makes time fly. Scroll back and it all
- * reverses: every chip's path is a pure function of progress.
+ * reverses: every chip's path is a pure function of progress. The stage draws the dots; the eyes
+ * are small SVGs over it, so their line work stays sharp.
  */
 
 /** Progress over which the gray zone crosses the word, and the share of the word it leaves. */
@@ -64,11 +66,34 @@ interface Chip {
 interface Eye {
   x: number;
   y: number;
-  r: number;
   /** Progress at which it opens. */
   at: number;
   period: number;
   phase: number;
+  el: SVGSVGElement;
+  lid: SVGGElement;
+  iris: SVGGElement;
+  /** What was last written to it, so a still eye costs no style writes. */
+  shown: string;
+}
+
+// An eye (after the "eye alert" icon): an almond lid, and an iris ring with a glint that slides
+// about inside it, clipped to the lid. User units: 20 × 10, the lid's corners at x = 0 and 20.
+// Opening and blinking squash the lid group; its strokes don't scale, so a shut eye is a slit.
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const EYE_CLIP = 'ab-eye-clip';
+const EYE_DEFS = `<defs><clipPath id="${EYE_CLIP}"><path d="M0 10A12.5 12.5 0 0 1 20 10A12.5 12.5 0 0 1 0 10Z"/></clipPath></defs>`;
+const EYE = `<g class="ab__eye-lid"><path d="M.63 10A12 12 0 0 1 19.37 10A12 12 0 0 1 .63 10Z"/><g clip-path="url(#${EYE_CLIP})"><g class="ab__eye-iris"><circle cx="10" cy="10" r="4.5"/><path d="M11.93 8.41A2.5 2.5 0 0 1 8.41 11.93"/></g></g></g>`;
+/** How far the iris can look sideways and up/down, user units. */
+const LOOK_X = 2.8;
+const LOOK_Y = 1.1;
+
+function svg(markup: string, viewBox: string, className?: string): SVGSVGElement {
+  const el = document.createElementNS(SVG_NS, 'svg');
+  el.setAttribute('viewBox', viewBox);
+  if (className) el.setAttribute('class', className);
+  el.innerHTML = markup;
+  return el;
 }
 
 const smooth = (a: number, b: number, v: number) => {
@@ -93,13 +118,6 @@ function jag(y: number): number {
   return Math.sin(y * 0.09) * 0.6 + Math.sin(y * 0.23 + 1.7) * 0.3 + Math.sin(y * 0.57 + 4.1) * 0.1;
 }
 
-function readColour(style: CSSStyleDeclaration, name: string): RGB {
-  const hex = style.getPropertyValue(name).trim().replace('#', '');
-  const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
-  const n = parseInt(full, 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
-}
-
 /** The scene's colours from the zone's tokens (all hex). */
 function palette() {
   const style = getComputedStyle(document.documentElement);
@@ -108,7 +126,6 @@ function palette() {
     deep: readColour(style, '--red-deep'),
     paper: readColour(style, '--paper'),
     ash: readColour(style, '--ash'),
-    ink: readColour(style, '--ink'),
   };
 }
 
@@ -236,16 +253,28 @@ export function initTrade(section: HTMLElement): void {
     const rows = Math.max(2, Math.min(4, Math.round(eyesBox.h / 64)));
     const cw = eyesBox.w / cols;
     const ch = eyesBox.h / rows;
-    const eyeR = Math.min(cw, ch) * 0.3;
+    const eyeW = Math.min(cw * 0.78, ch * 1.3);
     const order = Array.from({ length: cols * rows }, (_, i) => i).sort((a, b) => hash(a + 101) - hash(b + 101));
-    eyes = order.map((i, rank) => ({
-      x: eyesBox.x + ((i % cols) + 0.5 + (hash(i + 3) - 0.5) * 0.35) * cw,
-      y: eyesBox.y + (Math.floor(i / cols) + 0.5 + (hash(i + 5) - 0.5) * 0.3) * ch,
-      r: eyeR * (0.8 + hash(i + 9) * 0.35),
-      at: 0.1 + (rank / (cols * rows)) * 0.72,
-      period: 3.5 + hash(i + 11) * 4,
-      phase: hash(i + 17) * 8,
-    }));
+    eyes = order.map((i, rank) => {
+      const x = ((i % cols) + 0.5 + (hash(i + 3) - 0.5) * 0.35) * cw;
+      const y = (Math.floor(i / cols) + 0.5 + (hash(i + 5) - 0.5) * 0.3) * ch;
+      const w = eyeW * (0.8 + hash(i + 9) * 0.35);
+      const el = svg(EYE, '0 5 20 10', 'ab__eye');
+      // One user unit wide, in px: the strokes are non-scaling.
+      el.style.cssText = `left: ${x - w / 2}px; top: ${y - w / 4}px; width: ${w}px; height: ${w / 2}px; stroke-width: ${w / 20}px`;
+      return {
+        x: eyesBox.x + x,
+        y: eyesBox.y + y,
+        at: 0.1 + (rank / (cols * rows)) * 0.72,
+        period: 3.5 + hash(i + 11) * 4,
+        phase: hash(i + 17) * 8,
+        el,
+        lid: el.querySelector<SVGGElement>('.ab__eye-lid')!,
+        iris: el.querySelector<SVGGElement>('.ab__eye-iris')!,
+        shown: '',
+      };
+    });
+    arts.reputation.replaceChildren(svg(EYE_DEFS, '0 0 0 0', 'ab__eye-defs'), ...eyes.map((e) => e.el));
 
     const clockPitch = Math.min(clockBox.w / CLOCK_COLS, clockBox.h / 7.6);
     clock = { x: clockBox.x, y: clockBox.y + (clockBox.h - clockPitch * 7) / 2, pitch: clockPitch };
@@ -280,7 +309,7 @@ export function initTrade(section: HTMLElement): void {
 
   // ── Frame ──────────────────────────────────────────────────
   const fill = (out: DotWriter, time: number, dt: number) => {
-    const { red, deep, paper, ash, ink } = colours;
+    const { red, deep, paper, ash } = colours;
     if (!still) {
       progress += (target - progress) * Math.min(1, dt * 7);
       scrollSpeed *= Math.exp(-dt * 2.5);
@@ -300,17 +329,21 @@ export function initTrade(section: HTMLElement): void {
       const open = smooth(e.at, e.at + 0.05, p);
       const blinkT = still ? 1 : ((time + e.phase) % e.period) / 0.16;
       const blink = blinkT < 1 ? Math.sin(blinkT * Math.PI) : 0;
-      const squash = 0.07 + 0.55 * open * (1 - blink);
-      out.dot(e.x, e.y, e.r, paper, 0.35 + 0.65 * open, squash);
-      if (open < 0.05) continue;
+      const lid = 0.08 + 0.92 * open * (1 - blink);
       const dx = look.x - e.x;
       const dy = look.y - e.y;
       const d = Math.hypot(dx, dy) || 1;
-      const reach = e.r * 0.38 * Math.min(1, d / 160);
-      const ix = e.x + (dx / d) * reach;
-      const iy = e.y + (dy / d) * reach * squash;
-      out.dot(ix, iy, e.r * 0.42, red, open, Math.min(1, squash / 0.42));
-      out.dot(ix, iy, e.r * 0.2, ink, open, Math.min(1, squash / 0.2));
+      const reach = Math.min(1, d / 160);
+      const ix = (dx / d) * reach * LOOK_X;
+      const iy = (dy / d) * reach * LOOK_Y;
+      const shown = `${lid.toFixed(3)} ${open.toFixed(3)} ${ix.toFixed(2)} ${iy.toFixed(2)}`;
+      if (shown === e.shown) continue;
+      e.shown = shown;
+      e.el.style.opacity = String(0.35 + 0.65 * open);
+      // Squashed about the lid's middle line (y = 10).
+      e.lid.setAttribute('transform', `translate(0 ${10 * (1 - lid)}) scale(1 ${lid})`);
+      e.iris.setAttribute('transform', `translate(${ix} ${iy})`);
+      e.iris.style.opacity = String(open);
     }
 
     // Time: flip-dot clock; each dot eases toward on/off, so a changing digit ripples.
@@ -381,18 +414,12 @@ export function initTrade(section: HTMLElement): void {
       out.dot(x, y, c.r + (c.cr - c.r) * k, colour);
     }
 
-    // The front itself: a torn paper edge through what's left of the word.
-    if (p > EAT_FROM) {
-      for (let y = word.top - 6; y < word.bottom + 6; y += 1.6) {
-        out.dot(frontAt(y) + (hash(Math.floor(y)) - 0.5) * 2.2, y, 0.9, paper, 0.9);
-      }
-    }
   };
 
   stage.add(
     createDotBatch(stage, {
       el: section.querySelector<HTMLElement>('[data-trade-gl]')!,
-      capacity: MAX_CHIPS + 900,
+      capacity: MAX_CHIPS + CLOCK_COLS * 7,
       fps: coarsePointer.matches ? 30 : 60,
       fill: (out, frame) => fill(out, frame.time, frame.delta),
     }),

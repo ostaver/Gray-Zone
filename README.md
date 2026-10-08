@@ -48,7 +48,7 @@ src/
   pages/        Routes (index.astro = mk, en/index.astro = en)
   views/        Page-level compositions (HomePage.astro)
   layouts/      Base HTML shell
-  components/   hero/, about/, story/, shell/ (preloader, nav), ui/
+  components/   hero/, about/, story/, gallery/, shell/ (preloader, nav), ui/
   data/         Content: team, gallery, funders, links, tutorial, about, contact; sections (page order)
   i18n/         Locale config and UI strings
   lib/          gl/ (WebGL stage, shaders), canvas/, motion/ (gsap, lenis), zone.ts (shared zone switch), lifecycle, og.ts (share-image variants)
@@ -82,7 +82,7 @@ In-page links scroll with Lenis and move focus to the target section. Sections a
 - **Manifesto.** A large statement read across the tear: each word is gray type with a solid copy that rips across it as the reader reaches it (scrubbed, transforms only, the menu's tear technique). Runs marked `hollow` stay hollow display type like the hero's gray half; `red` runs tear in integrity red.
 - **Logo orb.** The logo disc printed in halftone dots by the shared WebGL stage (`src/lib/gl/views/logoOrb.ts`, `logo-orb.frag.glsl`, reusing the hero's noise field pass). The wordmark is drawn to a canvas texture once Oswald's Cyrillic subset has loaded, split across the tear like the logo, and the dark half is solid ink so it reads in both zones. The disc turns as its column scrolls by and dots swell under the pointer. On desktop it rides sticky beside the copy. Without WebGL the real logo image stands in.
 - **Copy.** Title, paragraphs and goals print in through a halftone screen (`print()` in `src/lib/motion/reveal.ts`, mask on `[data-printing]` in `global.css`): a sweeping front with a dot fringe ahead of it. Goals are marked with small torn lines (`src/lib/torn.ts`).
-- **The trade (stats).** A pinned scene, two screens of scroll, drawn as one batch of dots (`src/lib/gl/views/dotBatch.ts`). Scrolling is a run of shortcuts: the gray zone's torn front eats the dot-matrix word INTEGRITY from the right, its dots tremble, break off and arc down into a growing heap of coins (money). Eyes open one by one and follow the front, or your pointer (reputation). A flip-dot clock runs throughout and races when you scroll fast (time). Every chip's path is a pure function of scroll progress, so scrolling back reverses it. DOM text carries each stat's name and caption; without WebGL the word and clock are set as type.
+- **The trade (stats).** A pinned scene, two screens of scroll, drawn as one batch of dots (`src/lib/gl/views/dotBatch.ts`). Scrolling is a run of shortcuts: the gray zone eats the dot-matrix word INTEGRITY from the right, its dots tremble, break off and arc down into a growing heap of coins (money). Eyes open one by one, blink, and follow the front or your pointer (reputation); they are small SVGs over the stage (after an "eye alert" icon: an almond lid, an iris ring with a glint), squashed to open and blink with non-scaling strokes, so a shut eye is a slit. A flip-dot clock runs throughout and races when you scroll fast (time). Every chip's path is a pure function of scroll progress, so scrolling back reverses it. DOM text carries each stat's name and caption; without WebGL the word and clock are set as type.
 
 Reduced motion shows the statement fully torn, the copy in place, and one still frame of the trade, unpinned.
 
@@ -93,6 +93,17 @@ Reduced motion shows the statement fully torn, the copy in place, and one still 
 A pad of four forms, pinned for one screen each: birth certificate, the secretary's confirmation, the English test, the interview. Each form has an honest box and a shortcut box either side of a torn line (real radio inputs). Ticking one draws the tick and signs the form; a shortcut also blooms a gray halftone stain into the paper. Scrolling (or a pointer tick, which scrolls for you) tugs the top sheet and throws it off-screen, alternating sides. Under the pad lies the scholarship decision: a summary of your four choices and a rubber stamp that slams down when it's uncovered. No shortcuts → approved, earned honestly; one or two → approved, with marks; three or more → rejected (`verdictFor`). Changing a tick on the way back up re-decides.
 
 Reduced motion lays the forms out in a column with the decision last, stamped and live. Without JS the forms still tick and stain (`:has()`), and the decision lists all three outcomes.
+
+## Gallery
+
+`src/components/gallery/Gallery.astro` (+ `gallery.ts`) follows Story. Screens and captions live in `src/data/gallery.ts`.
+
+- **The arc.** The screenshots hang on a gentle arc that loops, drawn by the shared WebGL stage (`src/lib/gl/views/arcGallery.ts`, `gallery.vert.glsl`, `gallery.frag.glsl`), after the "circular gallery" pattern: each screen is a flat quad tilted to follow the arc. The centred screen is full size and shown as is; the others are a little smaller, dimmer and less saturated. Corners are rounded and edges anti-aliased in the shader (the stage has no MSAA). The section pins; scrolling turns the arc one screen per half viewport, easing into each screen, and a horizontal drag turns it too (a flick carries on to the next screen). Whenever it comes to rest it settles on the nearest screen, whose caption and number show under it in HTML.
+- **Cost.** Everything is placed in CSS px, so one mesh and one program draw every screen (one draw call each), and the view only asks the stage for frames while the arc moves or a screen is fading in; at rest it isn't redrawn. The arc's 1600px webp copies are the lightbox's images too, so each screenshot downloads once.
+- **Lightbox.** Clicking a screen opens it full size in a dialog, thrown in like a sheet onto a desk: it flies in spinning from a random side, lands with a jolt and wobbles still while its caption scrambles in, then the arrows skid in from their edges and the close button drops in on a spring. Arrows, arrow keys and swipes page through, flinging the sheet off one side as the next lands from the other; closing tosses it away. Closing centres the screen you ended on.
+- **Keyboard and assistive tech.** The real list of screens stays in the DOM, visually hidden while the arc is drawn: tabbing (or arrow keys) to a screen turns the arc to it and rings it; Enter opens it.
+
+Reduced motion, no WebGL, or no JS: the screens are a plain two-column grid in colour, and the lightbox still works (without the throws).
 
 ## Share image
 

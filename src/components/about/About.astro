@@ -325,6 +325,30 @@ const { integrity, reputation, time, money } = t.stats;
     display: block;
     min-height: 0;
   }
+  /* The crowd's eyes (trade.ts builds them): line work in the page's colours. trade.ts sets each
+     eye's box and stroke width, and squashes its lid to open and blink it. */
+  .ab__tr-art :global(.ab__eye) {
+    position: absolute;
+    overflow: visible;
+    fill: none;
+    stroke-linejoin: miter;
+    pointer-events: none;
+  }
+  .ab__tr-art :global(.ab__eye *) {
+    vector-effect: non-scaling-stroke;
+  }
+  .ab__tr-art :global(.ab__eye-defs) {
+    position: absolute;
+    width: 0;
+    height: 0;
+  }
+  .ab__tr-art :global(.ab__eye-lid) {
+    stroke: var(--paper);
+  }
+  .ab__tr-art :global(.ab__eye-iris) {
+    stroke: var(--red);
+    stroke-linecap: round;
+  }
   .ab__tr-text {
     max-width: 32ch;
     color: var(--paper-dim);

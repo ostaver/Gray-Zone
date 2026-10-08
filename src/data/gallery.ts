@@ -13,10 +13,17 @@ export interface GalleryItem {
   caption: Localized<string>;
 }
 
-export const galleryTitle: Localized<string> = {
-  en: 'Gallery',
-  mk: 'Галерија',
-};
+export interface GalleryCopy {
+  title: string;
+  /** How to work the arc. */
+  hint: string;
+  /** Prefixed to each caption for the screenshot's alt text. */
+  shot: string;
+  /** Accessible name of a frame's button, before its caption. */
+  open: string;
+  prev: string;
+  next: string;
+}
 
 export const gallery: GalleryItem[] = [
   { id: 'main-menu', image: mainMenu, caption: { en: 'Main Menu', mk: 'Главно мени' } },
@@ -26,3 +33,22 @@ export const gallery: GalleryItem[] = [
   { id: 'tasks', image: tasks, caption: { en: 'Tasks', mk: 'Задачи' } },
   { id: 'secretary', image: gameSecretary, caption: { en: 'Secretary', mk: 'Секретарка' } },
 ];
+
+export const galleryCopy: Localized<GalleryCopy> = {
+  mk: {
+    title: 'Галерија',
+    hint: 'Скролај или повлечи. Кликни на слика за да ја зголемиш.',
+    shot: 'Слика од играта',
+    open: 'Зголеми',
+    prev: 'Претходна слика',
+    next: 'Следна слика',
+  },
+  en: {
+    title: 'Gallery',
+    hint: 'Scroll or drag. Click a screen to see it full size.',
+    shot: 'Screenshot from the game',
+    open: 'Enlarge',
+    prev: 'Previous screenshot',
+    next: 'Next screenshot',
+  },
+};

@@ -5,6 +5,7 @@ import Nav from '../components/shell/Nav.astro';
 import Hero from '../components/hero/Hero.astro';
 import About from '../components/about/About.astro';
 import Story from '../components/story/Story.astro';
+import Gallery from '../components/gallery/Gallery.astro';
 import SectionPlaceholder from '../components/ui/SectionPlaceholder.astro';
 import DownloadModal from '../components/ui/DownloadModal.astro';
 import { sections } from '../data/sections';
@@ -29,6 +30,8 @@ const { locale } = Astro.props;
           <About locale={locale} />
           <Story locale={locale} />
         </>
+      ) : id === 'gallery' ? (
+        <Gallery locale={locale} />
       ) : (
         <SectionPlaceholder id={id} title={ui[locale].nav[id]} />
       ),

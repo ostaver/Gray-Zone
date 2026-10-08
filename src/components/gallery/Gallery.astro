@@ -1,0 +1,382 @@
+---
+import { Image, getImage } from 'astro:assets';
+import type { Locale } from '../../i18n/config';
+import { ui } from '../../i18n/ui';
+import { gallery, galleryCopy } from '../../data/gallery';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = galleryCopy[locale];
+const close = ui[locale].a11y.close;
+// One full-size copy of each screen, drawn by the arc and shown by the lightbox (so opening a
+// screen the arc has loaded is instant).
+const full = await Promise.all(gallery.map((item) => getImage({ src: item.image, width: 1600, format: 'webp' })));
+const srcs = full.map((image) => image.src);
+const pad = (i: number) => String(i).padStart(2, '0');
+---
+
+<section class="gl" id="gallery" style={`--count: ${gallery.length}`} aria-labelledby="gallery-title" data-gallery>
+  <div class="gl__pin" data-gl-pin>
+    <header class="gl__head">
+      <h2 class="gl__title" id="gallery-title">{t.title}</h2>
+      <p class="gl__hint">{t.hint}</p>
+    </header>
+
+    <!-- With WebGL, gallery.ts hangs the screens on an arc the page stage draws here. -->
+    <div class="gl__arc" aria-hidden="true" data-gl-arc data-srcs={JSON.stringify(srcs)}></div>
+    <span class="gl__ring" aria-hidden="true"></span>
+    <!-- The centred screen's caption (the buttons below carry the names for assistive tech). -->
+    <ol class="gl__names" aria-hidden="true">
+      {gallery.map((item, i) => (
+        <li class="gl__name" data-gl-name data-on={i === 0 ? '' : undefined}>
+          <span class="gl__name-text">{item.caption[locale]}</span>
+          <span class="gl__count">{pad(i + 1)} / {pad(gallery.length)}</span>
+        </li>
+      ))}
+    </ol>
+
+    <!-- The real list. Without the arc it is laid out as a grid; with it, it stays for keyboard
+         and assistive tech only (focusing a screen turns the arc to it). -->
+    <ul class="gl__frames" role="list">
+      {gallery.map((item, i) => (
+        <li class="gl__frame">
+          <button class="gl__shot" type="button" data-gl-open={i} aria-label={`${t.open}: ${item.caption[locale]}`}>
+            <Image class="gl__img" src={item.image} alt="" widths={[640, 960, 1280]} sizes="(min-width: 768px) 48vw, 92vw" />
+          </button>
+          <p class="gl__caption">{item.caption[locale]}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <dialog class="gl-box" aria-label={t.title} data-gl-box>
+    <button class="gl-box__btn gl-box__close" type="button" aria-label={close} data-gl-close>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+    </button>
+    <div class="gl-box__stage">
+      {gallery.map((item, i) => (
+        <figure class="gl-box__fig" hidden={i !== 0} data-gl-fig>
+          <img class="gl-box__img" src={full[i].src} {...full[i].attributes} alt={`${t.shot}: ${item.caption[locale]}`} />
+          <figcaption class="gl-box__caption">{item.caption[locale]}</figcaption>
+        </figure>
+      ))}
+    </div>
+    <button class="gl-box__btn gl-box__prev" type="button" aria-label={t.prev} data-gl-step="-1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4l-8 8 8 8"></path></svg>
+    </button>
+    <button class="gl-box__btn gl-box__next" type="button" aria-label={t.next} data-gl-step="1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8"></path></svg>
+    </button>
+  </dialog>
+</section>
+
+<script>
+  import { initGallery } from './gallery';
+  const root = document.querySelector<HTMLElement>('[data-gallery]');
+  if (root) initGallery(root);
+</script>
+
+<style>
+  /* Without the arc (no WebGL, reduced motion, no JS) the screens are a plain grid in colour.
+     With it, gallery.ts sets [data-arc]: the section pins and the stage draws the arc. */
+  .gl {
+    /* Matches the arc's corners (arcGallery.ts RADIUS_PX). */
+    --shot-radius: 6px;
+    position: relative;
+    padding: clamp(6rem, 14vh, 10rem) var(--gutter);
+  }
+  .gl__title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(3.5rem, 10vw, 10rem);
+    line-height: 0.85;
+    text-transform: uppercase;
+  }
+  .gl__hint {
+    max-width: 22rem;
+    margin-top: 1.25rem;
+    color: var(--paper-dim);
+    text-wrap: pretty;
+  }
+  .gl__arc,
+  .gl__ring,
+  .gl__names {
+    display: none;
+  }
+  .gl__frames {
+    display: grid;
+    gap: clamp(2rem, 4vw, 3.5rem) var(--gutter);
+    margin: clamp(2.5rem, 6vh, 4rem) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gl__frame {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+  }
+  .gl__shot {
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--shot-radius);
+    background: var(--ink-2);
+    cursor: zoom-in;
+  }
+  .gl__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s var(--ease-out);
+  }
+  .gl__shot:hover .gl__img,
+  .gl__shot:focus-visible .gl__img {
+    transform: scale(1.03);
+  }
+  .gl__shot:focus-visible {
+    outline-offset: 4px;
+  }
+  .gl__caption,
+  .gl__name-text {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.15rem, 1.6vw, 1.5rem);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  @media (min-width: 768px) {
+    .gl__frames {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* ── The arc ───────────────────────────────────────── */
+  .gl[data-arc] {
+    /* Half a screen of scroll per screen turned. */
+    height: calc(100svh + (var(--count) - 1) * 55svh);
+    padding: 0;
+  }
+  [data-arc] .gl__pin {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: clip;
+    /* Horizontal drags turn the arc; vertical ones still scroll the page. */
+    touch-action: pan-y;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  [data-arc] .gl__pin[data-dragging] {
+    cursor: grabbing;
+  }
+  [data-arc] .gl__pin[data-over] {
+    cursor: zoom-in;
+  }
+  [data-arc] .gl__head {
+    position: absolute;
+    top: calc(var(--nav-h) + clamp(0.5rem, 3vh, 2rem));
+    left: var(--gutter);
+    z-index: 1;
+    pointer-events: none;
+  }
+  [data-arc] .gl__title {
+    font-size: clamp(3rem, 7vw, 7rem);
+  }
+  [data-arc] .gl__arc {
+    display: block;
+    position: absolute;
+    inset: 0;
+  }
+  /* gallery.ts sets --shot-x/y/w/h: the centred screen's centre and size. */
+  [data-arc] .gl__ring,
+  [data-arc] .gl__names {
+    display: block;
+    position: absolute;
+    left: calc(var(--shot-x) - var(--shot-w) / 2);
+    width: var(--shot-w);
+    pointer-events: none;
+  }
+  /* Keyboard focus on a screen: the arc turns to it and a ring marks the centred screen. */
+  [data-arc] .gl__ring {
+    top: calc(var(--shot-y) - var(--shot-h) / 2);
+    height: var(--shot-h);
+    border-radius: var(--shot-radius);
+    outline: 2px solid var(--red);
+    outline-offset: 6px;
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-out);
+  }
+  [data-arc] .gl__pin:has(.gl__shot:focus-visible) .gl__ring {
+    opacity: 1;
+  }
+  [data-arc] .gl__names {
+    display: grid;
+    top: calc(var(--shot-y) + var(--shot-h) / 2 + clamp(0.9rem, 2.4vh, 1.5rem));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* The caption under the centred screen: the outgoing one fades where it is, the new one rises in. */
+  .gl__name {
+    grid-area: 1 / 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition:
+      opacity 0.25s var(--ease-out),
+      transform 0s 0.25s;
+  }
+  .gl__name[data-on] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.6s var(--ease-out) 0.08s,
+      transform 0.8s var(--ease-out) 0.08s;
+  }
+  .gl__count {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--paper-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  [data-arc] .gl__frames {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  /* The arc draws the screens; the list's own images would only be a second download. */
+  [data-arc] .gl__img {
+    display: none;
+  }
+
+  /* ── Lightbox ──────────────────────────────────────── */
+  .gl-box {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    padding: var(--gutter);
+    border: 0;
+    background: rgb(var(--surface-rgb) / 0.96);
+    color: var(--paper);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--gutter);
+    /* Sheets are thrown in from (and flung off) past its edges. */
+    overflow: clip;
+  }
+  .gl-box:not([open]) {
+    display: none;
+  }
+  .gl-box::backdrop {
+    background: transparent;
+  }
+  .gl-box__stage {
+    grid-column: 2;
+    grid-row: 1;
+    display: grid;
+    min-width: 0;
+  }
+  .gl-box__fig {
+    grid-area: 1 / 1;
+    display: grid;
+    gap: 1rem;
+    justify-items: center;
+  }
+  .gl-box__fig[hidden] {
+    display: none;
+  }
+  .gl-box__img {
+    width: auto;
+    max-height: calc(100svh - var(--gutter) * 2 - 4rem);
+    border-radius: var(--shot-radius);
+    background: var(--ink-2);
+    box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.7);
+  }
+  .gl-box__caption {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .gl-box__btn {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    aspect-ratio: 1;
+    border: 1px solid var(--hairline);
+    border-radius: 50%;
+    transition:
+      border-color 0.3s,
+      color 0.3s,
+      transform 0.5s var(--ease-out);
+  }
+  .gl-box__btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .gl-box__btn svg {
+    width: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .gl-box__prev {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .gl-box__next {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .gl-box__close {
+    position: absolute;
+    top: var(--gutter);
+    right: var(--gutter);
+    z-index: 2;
+  }
+  .gl-box__close:hover {
+    transform: rotate(90deg);
+  }
+  .gl-box__prev:hover {
+    transform: translateX(-3px);
+  }
+  .gl-box__next:hover {
+    transform: translateX(3px);
+  }
+  @media (max-width: 767px) {
+    /* Arrows move under the screen, either side of the caption. */
+    .gl-box {
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-content: center;
+    }
+    .gl-box__stage {
+      grid-column: 1 / -1;
+    }
+    .gl-box__prev,
+    .gl-box__next {
+      grid-row: 2;
+    }
+    .gl-box__img {
+      max-height: calc(100svh - var(--gutter) * 2 - 9rem);
+    }
+  }
+</style>
