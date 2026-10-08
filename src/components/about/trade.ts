@@ -83,7 +83,8 @@ interface Eye {
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const EYE_CLIP = 'ab-eye-clip';
 const EYE_DEFS = `<defs><clipPath id="${EYE_CLIP}"><path d="M0 10A12.5 12.5 0 0 1 20 10A12.5 12.5 0 0 1 0 10Z"/></clipPath></defs>`;
-const EYE = `<g class="ab__eye-lid"><path d="M.63 10A12 12 0 0 1 19.37 10A12 12 0 0 1 .63 10Z"/><g clip-path="url(#${EYE_CLIP})"><g class="ab__eye-iris"><circle cx="10" cy="10" r="4.5"/><path d="M11.93 8.41A2.5 2.5 0 0 1 8.41 11.93"/></g></g></g>`;
+// The iris is drawn first, so the lid's line passes over it: the iris sits behind the lid.
+const EYE = `<g class="ab__eye-lid"><g clip-path="url(#${EYE_CLIP})"><g class="ab__eye-iris"><circle cx="10" cy="10" r="4.5"/><path d="M11.93 8.41A2.5 2.5 0 0 1 8.41 11.93"/></g></g><path d="M.63 10A12 12 0 0 1 19.37 10A12 12 0 0 1 .63 10Z"/></g>`;
 /** How far the iris can look sideways and up/down, user units. */
 const LOOK_X = 2.8;
 const LOOK_Y = 1.1;
