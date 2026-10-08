@@ -6,6 +6,10 @@ import { currentZone, onZoneBusy, onZoneChange, setZone, type Zone } from '../..
 
 /** The reader is "in" a section once its top passes this fraction of the viewport. */
 const READING_LINE = 0.4;
+/** The merged logo's diameter, rem. */
+const LOGO_REM = 3.5;
+/** Where the logo's letters sit in the disc, as fractions of its diameter (from logo.svg). */
+const LOGO_WORD = { x: 0.2314, y: 0.2964, w: 0.5341, h: 0.3835 };
 
 export function initNav(nav: HTMLElement): void {
   const still = reducedMotion.matches;
@@ -19,12 +23,42 @@ export function initNav(nav: HTMLElement): void {
   // ── Menu (compact layouts) ─────────────────────────────────
   const menu = nav.querySelector<HTMLElement>('[data-nav-menu]')!;
   const panel = menu.querySelector<HTMLElement>('[data-nav-panel]')!;
-  const tear = menu.querySelector<SVGElement>('[data-menu-tear]')!;
+  const tear = menu.querySelector<SVGPathElement>('[data-menu-tear]')!;
+  const [dotsHonest, dotsGray] = [...menu.querySelectorAll<HTMLElement>('[data-menu-dots]')];
   const words = [...menu.querySelectorAll<HTMLElement>('[data-menu-word]')];
-  const foot = [...menu.querySelectorAll<HTMLElement>('[data-menu-foot] > *')];
+  const footEl = menu.querySelector<HTMLElement>('[data-menu-foot]')!;
+  const labels = [...footEl.querySelectorAll<HTMLElement>('dt')];
+  const [langs, platforms, contact] = [...footEl.querySelectorAll<HTMLElement>('dd')];
+  const contactLinks = [...contact.children] as HTMLElement[];
+  const menuCta = footEl.querySelector<HTMLElement>('[data-menu-cta]')!;
+  const labelText = labels.map((el) => el.textContent ?? '');
+  const scrambleChars = labelText.join('').replace(/\s/g, '');
+  const details = [...labels, langs, platforms, ...contactLinks, menuCta];
+  const parts = [dotsHonest, dotsGray, ...words, ...details];
+  const rnd = gsap.utils.random;
   let menuOpen = false;
   let menuTl: gsap.core.Timeline | null = null;
-  gsap.set(panel, { yPercent: -100 });
+  gsap.set(panel, { xPercent: 100 });
+
+  /** Back to rest: whatever an interrupted open or close left mid-flight. */
+  const resetMenu = () => {
+    gsap.set(parts, { clearProps: 'transform,opacity' });
+    labels.forEach((el, i) => (el.textContent = labelText[i]));
+  };
+
+  // Every link comes in its own way, so the list lands as a jumble before it lines up.
+  const wordIn: (() => [from: gsap.TweenVars, to: gsap.TweenVars])[] = [
+    // Slung in from beyond the right edge, sheared by the speed, overshooting.
+    () => [{ xPercent: 170, skewX: -38, opacity: 0 }, { xPercent: 0, skewX: 0, opacity: 1, duration: 1.1, ease: 'back.out(2.4)' }],
+    // Dropped from above on a hinge at its left foot, swinging until it hangs straight.
+    () => [{ yPercent: -280, rotation: rnd(-34, -18), transformOrigin: '0% 100%' }, { yPercent: 0, rotation: 0, duration: 1.7, ease: 'elastic.out(1, 0.35)' }],
+    // Slammed down out of the reader's face: huge and faint, then hard onto the page.
+    () => [{ scale: 3.2, rotation: rnd(-14, 14), opacity: 0, transformOrigin: '30% 50%' }, { scale: 1, rotation: 0, opacity: 1, duration: 0.65, ease: 'power4.in' }],
+    // Turned over on its baseline like a card flipped face up.
+    () => [{ rotationX: -110, transformPerspective: 500, transformOrigin: '50% 100%', opacity: 0 }, { rotationX: 0, opacity: 1, duration: 1.4, ease: 'elastic.out(1, 0.45)' }],
+    // Squashed flat under the line, then sprung up to height.
+    () => [{ yPercent: 120, scaleX: 1.7, scaleY: 0.15, transformOrigin: '0% 100%' }, { yPercent: 0, scaleX: 1, scaleY: 1, duration: 1.3, ease: 'elastic.out(1.1, 0.32)' }],
+  ];
 
   const openMenu = () => {
     if (menuOpen) return;
@@ -36,14 +70,30 @@ export function initNav(nav: HTMLElement): void {
     main?.setAttribute('inert', '');
     lockScroll(true);
     menuTl?.kill();
-    menuTl = gsap
-      .timeline()
-      .set(menu, { visibility: 'visible' })
-      .to(panel, { yPercent: 0, duration: 1.05, ease: 'tear' }, 0)
-      .fromTo(tear, { scaleY: 0 }, { scaleY: 1, duration: 1.4, ease: 'expo.inOut' }, 0.1)
-      .fromTo(words, { yPercent: 110 }, { yPercent: 0, duration: 1.1, stagger: 0.065 }, 0.3)
-      .fromTo(foot, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1, stagger: 0.08 }, 0.5);
-    if (still) menuTl.progress(1);
+    resetMenu();
+    const tl = gsap.timeline().set(menu, { visibility: 'visible' });
+    menuTl = tl;
+    // The sheet: thrown in from the side, leaning back against its own speed, and it shudders
+    // as it hits the far edge.
+    tl.to(panel, { xPercent: 0, duration: 0.85, ease: 'tear' }, 0)
+      .fromTo(panel, { skewX: -9, transformOrigin: '0% 50%' }, { skewX: 0, duration: 1.2, ease: 'elastic.out(1, 0.4)' }, 0)
+      .to(panel, { keyframes: { x: [0, -16, 11, -6, 3, 0] }, duration: 0.45, ease: 'none' }, 0.55);
+    // The fields: the honest dots flicker on like a tube light, the gray ones drift in, and the
+    // tear rips outward from its middle.
+    tl.fromTo(dotsHonest, { opacity: 0 }, { keyframes: { opacity: [0, 0.7, 0.05, 0.55, 0, 0.7] }, duration: 0.7, ease: 'none' }, 0.45)
+      .fromTo(dotsGray, { opacity: 0, xPercent: 18 }, { opacity: 0.7, xPercent: 0, duration: 1.6, ease: 'expo.out' }, 0.35)
+      .fromTo(tear, { drawSVG: '50% 50%' }, { drawSVG: '0% 100%', duration: 1.1, ease: 'expo.inOut' }, 0.3);
+    // The links, each its own way, in a shuffled order.
+    const order = gsap.utils.shuffle(words.map((_, i) => i));
+    words.forEach((el, i) => tl.fromTo(el, ...wordIn[i % wordIn.length](), 0.3 + order.indexOf(i) * 0.08));
+    // The details: labels decode, the languages pop, the platforms shear in, the contacts drop
+    // and bounce, and the button is pulled out like tape.
+    labels.forEach((el, i) => tl.to(el, { duration: 1, scrambleText: { text: labelText[i], chars: scrambleChars, speed: 0.5 }, ease: 'none' }, 0.6 + i * 0.1));
+    tl.fromTo(langs, { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.9, ease: 'back.out(3)' }, 0.75)
+      .fromTo(platforms, { x: -60, skewX: 30, opacity: 0 }, { x: 0, skewX: 0, opacity: 1, duration: 1.1, ease: 'expo.out' }, 0.8)
+      .fromTo(contactLinks, { y: -50, rotation: (i: number) => (i % 2 ? 9 : -9), opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 1.1, stagger: 0.12, ease: 'bounce.out' }, 0.85)
+      .fromTo(menuCta, { scaleX: 0, transformOrigin: '100% 50%' }, { scaleX: 1, duration: 1.2, ease: 'elastic.out(1, 0.5)' }, 0.95);
+    if (still) tl.progress(1);
   };
 
   /** `restoreFocus`: hand focus back to the toggle if it was inside the menu. */
@@ -56,12 +106,22 @@ export function initNav(nav: HTMLElement): void {
     lockScroll(false);
     if (restoreFocus && menu.contains(document.activeElement)) toggle.focus();
     menuTl?.kill();
-    menuTl = gsap
-      .timeline({ onComplete: () => void gsap.set(menu, { visibility: 'hidden' }) })
-      .to(words, { yPercent: -110, duration: 0.5, stagger: 0.035, ease: 'power3.in' }, 0)
-      .to(foot, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0)
-      .to(panel, { yPercent: -100, duration: 0.8, ease: 'expo.inOut' }, 0.15);
-    if (still) menuTl.progress(1);
+    labels.forEach((el, i) => (el.textContent = labelText[i]));
+    const tl = gsap.timeline({
+      onComplete: () => {
+        gsap.set(menu, { visibility: 'hidden' });
+        resetMenu();
+      },
+    });
+    menuTl = tl;
+    // Everything is flung apart before the sheet is torn away: links scatter, details fall.
+    tl.to(words, { x: () => rnd(-320, 320), y: () => rnd(-220, 220), rotation: () => rnd(-70, 70), opacity: 0, duration: 0.55, ease: 'power3.in', stagger: { each: 0.03, from: 'random' } }, 0)
+      .to(details, { y: () => innerHeight * rnd(0.3, 0.6), rotation: () => rnd(-45, 45), opacity: 0, duration: 0.6, ease: 'power2.in', stagger: { each: 0.02, from: 'random' } }, 0)
+      .to([dotsHonest, dotsGray], { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0)
+      .to(tear, { drawSVG: '50% 50%', duration: 0.45, ease: 'power3.in' }, 0)
+      .to(panel, { xPercent: 100, skewX: 10, duration: 0.7, ease: 'expo.in' }, 0.2)
+      .set(panel, { skewX: 0 });
+    if (still) tl.progress(1);
   };
 
   toggle.addEventListener('click', () => (menuOpen ? closeMenu(true) : openMenu()));
@@ -226,24 +286,87 @@ export function initNav(nav: HTMLElement): void {
     line.style.transform = `translate3d(${x}px, 0, 0) skewX(${skew}deg)`;
   });
 
+  // ── Brand: disc and word merge into the logo ───────────────
+  // Over the hero's scroll the disc rolls out to the logo's size while the word slides into it
+  // and shrinks to fit, taking the logo's split colours; scrolling back up pulls them apart.
+  const brand = nav.querySelector<HTMLElement>('[data-nav-brand]')!;
+  const mark = nav.querySelector<SVGSVGElement>('[data-nav-mark]')!;
+  const word = nav.querySelector<HTMLElement>('[data-nav-word]')!;
+  const letters = nav.querySelector<SVGGElement>('[data-nav-mark-word]')!;
+  const merge = { t: 0 };
+  let brandGeo = { mark: 0, logo: 0, wordW: 0, wordH: 0, wordC: 0 };
+  let shownMerge = NaN;
+  const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+  const ease = gsap.parseEase('power3.inOut');
+  const drawBrand = () => {
+    const t = merge.t;
+    if (t === shownMerge) return;
+    shownMerge = t;
+    const { mark: m, logo, wordW, wordH, wordC } = brandGeo;
+    if (!m || !wordW) return;
+    // The disc leads, the word follows it in and lands over the logo's letters, then hands over.
+    const d = ease(clamp01(t / 0.7));
+    const w = ease(clamp01((t - 0.15) / 0.7));
+    const swap = clamp01((t - 0.85) / 0.15);
+    const s = 1 + d * (logo / m - 1);
+    // Grows from its left edge, so the logo keeps the gutter; rolls a full turn on the way.
+    mark.style.transform = d ? `translate3d(${(m * (s - 1)) / 2}px, 0, 0) rotate(${d * 360}deg) scale(${s})` : '';
+    const dx = logo * (LOGO_WORD.x + LOGO_WORD.w / 2) - wordC;
+    const dy = logo * (LOGO_WORD.y + LOGO_WORD.h / 2 - 0.5);
+    const sx = 1 + w * ((LOGO_WORD.w * logo) / wordW - 1);
+    const sy = 1 + w * ((LOGO_WORD.h * logo) / wordH - 1);
+    word.style.transform = w ? `translate3d(${w * dx}px, ${w * dy}px, 0) scale(${sx}, ${sy})` : '';
+    word.style.opacity = swap ? String(1 - swap) : '';
+    letters.style.opacity = String(swap);
+    brand.style.setProperty('--merge', String(w));
+    brand.toggleAttribute('data-merged', t > 0.001);
+  };
+  const measureBrand = () => {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    // The box's trailing letter-spacing is not ink: leave it out of the fit.
+    const tracking = parseFloat(getComputedStyle(word).letterSpacing) || 0;
+    const wordW = word.offsetWidth - tracking;
+    brandGeo = { mark: mark.clientWidth, logo: LOGO_REM * rem, wordW, wordH: word.offsetHeight, wordC: word.offsetLeft - brand.offsetLeft + wordW / 2 };
+    shownMerge = NaN;
+    drawBrand();
+  };
+  if (hero) {
+    gsap.to(merge, {
+      t: 1,
+      ease: 'none',
+      duration: still ? 0 : 1,
+      scrollTrigger: {
+        trigger: hero,
+        start: 'top top',
+        end: 'bottom bottom',
+        // Reduced motion: no scrub, just the two states either side of the hero's middle.
+        scrub: still ? false : 0.6,
+        toggleActions: 'play none none reverse',
+        ...(still && { start: 'center top', end: 'center top' }),
+      },
+      onUpdate: drawBrand,
+    });
+  }
+
   measure();
+  measureBrand();
   onScroll();
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', measure);
   // Sections grow as their images decode; fonts change the row's widths.
   new ResizeObserver(measure).observe(document.body);
-  void document.fonts.ready.then(measure);
+  new ResizeObserver(measureBrand).observe(word);
+  void document.fonts.ready.then(() => {
+    measure();
+    measureBrand();
+  });
 
   // ── Intro ──────────────────────────────────────────────────
   // Starts under the preloader; lands just after the hero's headline begins to rise.
   if (still) return;
-  const mark = nav.querySelector<SVGElement>('[data-nav-mark]')!;
-  const word = nav.querySelector<HTMLElement>('[data-nav-word]')!;
   const track = nav.querySelector<HTMLElement>('[data-seam-track]')!;
   const rises = [...nav.querySelectorAll<HTMLElement>('.nav__rise')];
   const controls = [zoneButton, nav.querySelector<HTMLElement>('[data-nav-lang]')!, toggle];
-  gsap.set(mark, { scale: 0, rotation: -120 });
-  gsap.set(word, { opacity: 0, x: -12 });
   gsap.set(rises, { yPercent: 110 });
   gsap.set(track, { scaleX: 0, transformOrigin: 'left center' });
   gsap.set(line, { opacity: 0 });
@@ -251,7 +374,6 @@ export function initNav(nav: HTMLElement): void {
 
   void appReady.then(() => {
     const tl = gsap.timeline({ delay: 0.45 });
-    tl.to(mark, { scale: 1, rotation: 0, duration: 1.6 }, 0).to(word, { opacity: 1, x: 0, duration: 1.2 }, 0.15);
     // Both copies of a link rise together, so the honest row stays registered over the gray one.
     cells.forEach((_, i) => tl.to(rises.filter((el) => el.dataset.i === String(i)), { yPercent: 0, duration: 1.1 }, 0.25 + i * 0.07));
     tl.to(track, { scaleX: 1, duration: 1.6, ease: 'expo.inOut' }, 0.2)
