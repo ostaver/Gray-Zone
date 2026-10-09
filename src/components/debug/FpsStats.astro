@@ -1,0 +1,43 @@
+---
+/**
+ * DEBUG ONLY. Base.astro renders this under `import.meta.env.DEV`, so it is not in production builds.
+ * Frames per second, average and worst frame time over the last second.
+ */
+---
+
+<aside class="fps-debug" aria-label="Debug: frame rate" data-fps-debug>
+  <span class="fps-debug__tag">Debug only</span>
+  <span><b data-fps>--</b> fps</span>
+  <span><span data-avg>--</span> ms avg</span>
+  <span><span data-worst>--</span> ms worst</span>
+</aside>
+
+<script>
+  import { mountFpsMeter } from '../../lib/debug/fpsMeter';
+  mountFpsMeter(document.querySelector<HTMLElement>('[data-fps-debug]')!);
+</script>
+
+<style>
+  .fps-debug {
+    position: fixed;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    z-index: var(--z-debug);
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.6rem 0.75rem;
+    background: rgb(0 0 0 / 0.82);
+    color: #fafafa;
+    font: 0.72rem/1.35 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  .fps-debug__tag {
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .fps-debug b {
+    font-weight: 600;
+  }
+</style>

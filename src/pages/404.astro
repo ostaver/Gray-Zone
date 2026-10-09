@@ -1,0 +1,166 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import { localePath } from '../i18n/config';
+import { ui } from '../i18n/ui';
+import { notFoundCopy } from '../data/notFound';
+import logo from '../assets/brand/logo.png';
+import CoolButton from '../components/ui/CoolButton.astro';
+
+const mk = notFoundCopy.mk;
+const en = notFoundCopy.en;
+---
+
+<Base locale="mk" path="/404" noindex>
+  <section class="nf" aria-labelledby="nf-title" data-not-found>
+    <a class="nf__brand" href={localePath('mk')} aria-label={ui.mk.meta.siteName}>
+      <Image src={logo} alt="" width={96} height={96} />
+    </a>
+    <p class="nf__code" aria-hidden="true">404</p>
+
+    <!-- A slip from the archive's counter, in both languages: a missing page can't know which. -->
+    <article class="nf__slip" data-nf-slip>
+      <header class="nf__head">
+        <span class="label">{mk.doc}</span>
+        <span class="label" lang="en">{en.doc}</span>
+      </header>
+      <h1 class="nf__title" id="nf-title">{mk.title}</h1>
+      <p class="nf__text">{mk.text}</p>
+      <div class="nf__en" lang="en">
+        <p class="nf__title nf__title--en">{en.title}</p>
+        <p class="nf__text">{en.text}</p>
+      </div>
+      <span class="nf__stamp" aria-hidden="true" data-nf-stamp>{mk.stamp} · <span lang="en">{en.stamp}</span></span>
+      <nav class="nf__links" aria-label={`${mk.home} · ${en.home}`}>
+        <CoolButton href={localePath('mk')}>
+          <span>{mk.home}</span>
+          <span aria-hidden="true">→</span>
+        </CoolButton>
+        <CoolButton href={localePath('en')} lang="en" hreflang="en">
+          <span>{en.home}</span>
+          <span aria-hidden="true">→</span>
+        </CoolButton>
+      </nav>
+    </article>
+  </section>
+</Base>
+
+<script>
+  import { gsap, reducedMotion } from '../lib/motion/gsap';
+
+  // The slip is dropped onto the counter, then stamped.
+  const slip = document.querySelector<HTMLElement>('[data-nf-slip]');
+  const stamp = document.querySelector<HTMLElement>('[data-nf-stamp]');
+  if (slip && stamp && !reducedMotion.matches) {
+    gsap
+      .timeline({ delay: 0.2 })
+      .from(slip, { yPercent: -40, rotation: 6, opacity: 0, duration: 1.1, ease: 'tear' })
+      .from(stamp, { scale: 2.6, opacity: 0, rotation: 8, duration: 0.32, ease: 'power4.in' }, 0.9)
+      .to(slip, { keyframes: { y: [0, 5, -1, 0] }, duration: 0.4, ease: 'none' }, 1.2);
+  }
+</script>
+
+<style>
+  .nf {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 100svh;
+    padding: 6rem var(--gutter) 4rem;
+    overflow: hidden;
+  }
+  .nf__brand {
+    position: absolute;
+    top: 1.25rem;
+    left: var(--gutter);
+    width: 3.5rem;
+  }
+  .nf__brand img {
+    width: 100%;
+    height: auto;
+  }
+  /* The number, hollow and huge, behind the slip. */
+  .nf__code {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    translate: -50% -50%;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(12rem, 42vw, 40rem);
+    line-height: 0.8;
+    color: transparent;
+    -webkit-text-stroke: max(1px, 0.004em) var(--paper-dim);
+    user-select: none;
+  }
+  /* Paper as the story's forms: fixed colours whatever the zone. */
+  .nf__slip {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+    width: min(100%, 34rem);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    background: var(--zone-white);
+    color: var(--zone-black);
+    transform: rotate(-1.5deg);
+    margin-top: 2rem;
+    box-shadow: 0 34px 60px -28px rgb(0 0 0 / 0.75);
+  }
+  .nf__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid currentColor;
+    opacity: 0.7;
+  }
+  .nf__title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    line-height: 0.95;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .nf__title--en {
+    font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+  }
+  .nf__text {
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+  .nf__en {
+    display: grid;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px dashed currentColor;
+    opacity: 0.75;
+  }
+  /* The rubber stamp, as on the story's verdicts, struck across the slip's corner (clear of the
+     text). */
+  .nf__stamp {
+    position: absolute;
+    right: clamp(-1.5rem, -2vw, -0.25rem);
+    top: -0.6em;
+    padding: 0.18em 0.45em 0.12em;
+    border: 0.09em solid currentColor;
+    outline: 0.035em solid currentColor;
+    outline-offset: 0.07em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.25rem, 3.4vw, 1.9rem);
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--red);
+    transform: rotate(-12deg);
+    pointer-events: none;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
+  }
+  .nf__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+</style>

@@ -6,11 +6,14 @@ import Hero from '../components/hero/Hero.astro';
 import About from '../components/about/About.astro';
 import Story from '../components/story/Story.astro';
 import Gallery from '../components/gallery/Gallery.astro';
-import SectionPlaceholder from '../components/ui/SectionPlaceholder.astro';
+import Tutorial from '../components/tutorial/Tutorial.astro';
+import Team from '../components/team/Team.astro';
+import Play from '../components/play/Play.astro';
+import Contact from '../components/contact/Contact.astro';
+import Footer from '../components/shell/Footer.astro';
 import DownloadModal from '../components/ui/DownloadModal.astro';
 import { sections } from '../data/sections';
 import type { Locale } from '../i18n/config';
-import { ui } from '../i18n/ui';
 
 interface Props {
   locale: Locale;
@@ -32,10 +35,18 @@ const { locale } = Astro.props;
         </>
       ) : id === 'gallery' ? (
         <Gallery locale={locale} />
+      ) : id === 'tutorial' ? (
+        <Tutorial locale={locale} />
+      ) : id === 'team' ? (
+        <>
+          <Team locale={locale} />
+          <Play locale={locale} />
+        </>
       ) : (
-        <SectionPlaceholder id={id} title={ui[locale].nav[id]} />
+        <Contact locale={locale} />
       ),
     )
   }
+  <Footer slot="footer" locale={locale} />
   <DownloadModal slot="chrome" locale={locale} />
 </Base>

@@ -23,9 +23,48 @@ export interface TutorialStep {
   body: Localized<string>;
 }
 
-export const tutorialTitle: Localized<string> = {
-  en: 'Game Tutorial',
-  mk: 'Упатство за играње',
+export interface TutorialCopy {
+  title: string;
+  /** How to work the ring. */
+  hint: string;
+  manualHint: string;
+  staticHint: string;
+  /** Prefixed to each step's title for its screenshot's alt text. */
+  shot: string;
+  /** Before a step's number, e.g. "Step 3". */
+  step: string;
+  prev: string;
+  next: string;
+  /** The ring turns on its own; these name the button that stops and restarts it. */
+  pause: string;
+  play: string;
+}
+
+export const tutorialCopy: Localized<TutorialCopy> = {
+  mk: {
+    title: 'Упатство за играње',
+    hint: 'Тркалото се врти само. Повлечи го или избери чекор.',
+    manualHint: 'Избери чекор или користи ги стрелките. Сликите не се менуваат сами.',
+    staticHint: 'Прочитај ги чекорите и разгледај ги сликите од играта.',
+    shot: 'Упатство од играта',
+    step: 'Чекор',
+    prev: 'Претходен чекор',
+    next: 'Следен чекор',
+    pause: 'Запри го вртењето',
+    play: 'Продолжи го вртењето',
+  },
+  en: {
+    title: 'Game Tutorial',
+    hint: 'The wheel turns by itself. Drag it, or pick a step.',
+    manualHint: 'Pick a step or use the arrows. Screens do not advance automatically.',
+    staticHint: 'Read the steps and explore the in-game screenshots.',
+    shot: 'In-game tutorial',
+    step: 'Step',
+    prev: 'Previous step',
+    next: 'Next step',
+    pause: 'Stop the wheel',
+    play: 'Start the wheel',
+  },
 };
 
 export const tutorial: TutorialStep[] = [

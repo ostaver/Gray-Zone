@@ -2,13 +2,13 @@ import type { Localized } from './config';
 
 const mk = {
   meta: {
-    title: 'Сива Зона',
+    title: 'Сива Зона — бесплатна едукативна игра за интегритет',
     description:
       'Бесплатна едукативна игра за Windows и macOS за интегритет и антикорупција. Секој избор остава трага — чесниот пат или кратенката низ сивата зона.',
     siteName: 'Сива Зона',
+    imageAlt: 'Логото на „Сива Зона“, поделено со скинат раб на црвена и темна половина.',
   },
   a11y: {
-    skip: 'Прескокни до содржината',
     langSwitch: 'Јазик',
     close: 'Затвори',
   },
@@ -25,20 +25,20 @@ const mk = {
   },
   hero: {
     title: ['Сива', 'Зона'],
-    lead: 'Стипендија во странство. Краток рок. Секој чекор е избор, дали ќе го задржиш интегритетот?',
+    description: 'Бесплатна едукативна игра за корупција, избори и интегритет.',
+    lead: 'Стипендија во странство. Краток рок. Секој избор остава трага.',
     honest: 'Бела зона',
     gray: 'Црна зона',
-    facts: ['Репутација', 'Интелигенција', 'Интегритет'],
+    facts: ['Интегритет', 'Репутација', 'Време', 'Пари'],
     cta: 'Преземи бесплатно',
+    appearance: 'Изглед на страницата',
   },
   download: {
     title: 'Избери платформа',
     windows: 'Преземи за Windows',
     mac: 'Преземи за macOS',
-    macNote: 'На macOS можеби ќе треба првпат десен клик → Open и дозвола преку Gatekeeper.',
+    platforms: { windows: 'Windows', mac: 'macOS' },
     version: 'Верзија',
-    size: 'ZIP архива',
-    desktopOnly: 'Играта е за компјутер — отвори ја оваа страница на Windows или macOS.',
     detected: 'Препорачано за твојот уред',
   },
 };
@@ -47,13 +47,13 @@ export type UIDict = typeof mk;
 
 const en: UIDict = {
   meta: {
-    title: 'Gray Zone',
+    title: 'Gray Zone — Free educational game about integrity',
     description:
       'A free educational game for Windows and macOS about integrity and anti-corruption. Every choice leaves a mark — the honest path, or a shortcut through the gray zone.',
     siteName: 'Gray Zone',
+    imageAlt: 'The Gray Zone logo, divided by a torn edge into red and dark halves.',
   },
   a11y: {
-    skip: 'Skip to content',
     langSwitch: 'Language',
     close: 'Close',
   },
@@ -70,20 +70,20 @@ const en: UIDict = {
   },
   hero: {
     title: ['Gray', 'Zone'],
-    lead: 'A scholarship abroad. A tight deadline. Every step is a choice, will you save your integrity?',
+    description: 'A free educational game about corruption, choices, and integrity.',
+    lead: 'A scholarship abroad. A tight deadline. Every choice leaves a mark.',
     honest: 'White zone',
     gray: 'Black zone',
-    facts: ['Reputation', 'Intelligence', 'Integrity'],
+    facts: ['Integrity', 'Reputation', 'Time', 'Money'],
     cta: 'Download free',
+    appearance: 'Page appearance',
   },
   download: {
     title: 'Choose your platform',
     windows: 'Download for Windows',
     mac: 'Download for macOS',
-    macNote: 'On macOS, you may need to right-click → Open the first time and allow Gatekeeper.',
+    platforms: { windows: 'Windows', mac: 'macOS' },
     version: 'Version',
-    size: 'ZIP archive',
-    desktopOnly: 'The game runs on computers — open this page on Windows or macOS.',
     detected: 'Recommended for your device',
   },
 };

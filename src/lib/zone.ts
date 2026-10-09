@@ -7,7 +7,7 @@ const changeListeners = new Set<(zone: Zone) => void>();
 const busyListeners = new Set<(busy: boolean) => void>();
 let busy = false;
 
-/** The zone the page shows now; black unless switched during this visit. */
+/** The selected palette, retained across pages for this browser session. */
 export function currentZone(): Zone {
   return document.documentElement.dataset.zone === 'white' ? 'white' : 'black';
 }
@@ -39,6 +39,7 @@ export async function setZone(zone: Zone, origin: HTMLElement): Promise<void> {
     await transitionZone(origin, zone === 'white', () => {
       const root = document.documentElement;
       root.dataset.zone = zone;
+      try { sessionStorage.setItem('sz-zone', zone); } catch {}
       document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(root).getPropertyValue('--ink').trim());
       changeListeners.forEach((fn) => fn(zone));
     });

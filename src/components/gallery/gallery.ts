@@ -4,6 +4,7 @@ import { getStage } from '../../lib/gl/stage';
 import { readColour } from '../../lib/gl/colour';
 import { createArcGallery, type ArcGalleryState } from '../../lib/gl/views/arcGallery';
 import { onZoneChange } from '../../lib/zone';
+import { onCleanup } from '../../lib/lifecycle';
 
 interface Lightbox {
   /** The screen showing (or last shown). */
@@ -13,7 +14,9 @@ interface Lightbox {
 
 export function initGallery(root: HTMLElement): void {
   const box = initLightbox(root);
-  if (!reducedMotion.matches) initArc(root, box);
+  const media = gsap.matchMedia();
+  media.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', () => initArc(root, box));
+  onCleanup(() => media.revert());
 }
 
 const ink = () => readColour(getComputedStyle(document.documentElement), '--ink');
@@ -32,11 +35,11 @@ const ease = (u: number) => {
 
 /**
  * The screens hang on an arc drawn by the page stage (lib/gl/views/arcGallery.ts). The section
- * pins and scrolling turns the arc a screen per half viewport; a horizontal drag (or a flick)
+ * pins and scrolling turns the arc a screen per quarter viewport; a horizontal drag (or a flick)
  * turns it too. Whenever it comes to rest it settles on the nearest screen, whose caption shows
  * under it. Without WebGL the list stays a grid.
  */
-function initArc(root: HTMLElement, box: Lightbox): void {
+function initArc(root: HTMLElement, box: Lightbox): (() => void) | undefined {
   const stage = getStage();
   if (!stage) return;
   const pin = root.querySelector<HTMLElement>('[data-gl-pin]')!;
@@ -48,31 +51,35 @@ function initArc(root: HTMLElement, box: Lightbox): void {
 
   const state: ArcGalleryState = { position: 0, ink: ink() };
   const arc = createArcGallery(stage, { el, srcs, tilt: 8, state });
-  stage.add(arc);
+  const removeArc = stage.add(arc);
+  const events = new AbortController();
+  const { signal } = events;
   root.dataset.arc = '';
-  onZoneChange(() => {
+  const unsubscribeZone = onZoneChange(() => {
     state.ink = ink();
     arc.invalidate();
     // View Transitions pause rAF during capture; flush the stage synchronously (as hero.ts does).
     stage.draw();
   });
-  new IntersectionObserver(
+  const loader = new IntersectionObserver(
     ([entry], io) => {
       if (!entry.isIntersecting) return;
       arc.load();
       io.disconnect();
     },
     { rootMargin: '100% 0px' },
-  ).observe(root);
+  );
+  loader.observe(root);
 
   // The centred screen's box, which its caption and the keyboard ring are placed against.
-  new ResizeObserver(() => {
+  const resize = new ResizeObserver(() => {
     const { x, y, width, height } = arc.layout();
     pin.style.setProperty('--shot-x', `${x}px`);
     pin.style.setProperty('--shot-y', `${y}px`);
     pin.style.setProperty('--shot-w', `${width}px`);
     pin.style.setProperty('--shot-h', `${height}px`);
-  }).observe(el);
+  });
+  resize.observe(el);
 
   // Where the arc is headed, in screens: the page's scroll through the pin, plus an offset that
   // drags, settling and keyboard focus adjust.
@@ -85,7 +92,7 @@ function initArc(root: HTMLElement, box: Lightbox): void {
     offset = at - fromScroll;
   };
   let settleCall: gsap.core.Tween | null = null;
-  ScrollTrigger.create({
+  const trigger = ScrollTrigger.create({
     trigger: root,
     start: 'top top',
     end: 'bottom bottom',
@@ -101,9 +108,10 @@ function initArc(root: HTMLElement, box: Lightbox): void {
   };
 
   let inView = false;
-  new IntersectionObserver(([entry]) => (inView = entry.isIntersecting)).observe(pin);
+  const visibility = new IntersectionObserver(([entry]) => (inView = entry.isIntersecting));
+  visibility.observe(pin);
   let named = names.findIndex((name) => name.hasAttribute('data-on'));
-  gsap.ticker.add((_time, deltaMs) => {
+  const tick = (_time: number, deltaMs: number) => {
     if (!inView) return;
     const target = fromScroll + offset;
     state.position += (target - state.position) * (1 - Math.exp(-deltaMs / 120));
@@ -114,7 +122,8 @@ function initArc(root: HTMLElement, box: Lightbox): void {
     names[named]?.removeAttribute('data-on');
     names[i].setAttribute('data-on', '');
     named = i;
-  });
+  };
+  gsap.ticker.add(tick);
 
   // ── Pointer: drag or flick to turn, click a screen to open it ─
   const local = (e: PointerEvent) => {
@@ -122,11 +131,11 @@ function initArc(root: HTMLElement, box: Lightbox): void {
     return arc.hit(e.clientX - r.left, e.clientY - r.top);
   };
   /** `trail`: where the pointer was over the last FLICK_MS, for a flick's speed. */
-  let down: { x: number; offset: number; moved: boolean; trail: { x: number; t: number }[] } | null = null;
+  let down: { pointerId: number; x: number; offset: number; moved: boolean; trail: { x: number; t: number }[] } | null = null;
   pin.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    down = { x: e.clientX, offset, moved: false, trail: [{ x: e.clientX, t: e.timeStamp }] };
-  });
+    down = { pointerId: e.pointerId, x: e.clientX, offset, moved: false, trail: [{ x: e.clientX, t: e.timeStamp }] };
+  }, { signal });
   pin.addEventListener('pointermove', (e) => {
     if (!down) {
       if (e.pointerType === 'mouse') pin.toggleAttribute('data-over', local(e) !== null);
@@ -143,7 +152,7 @@ function initArc(root: HTMLElement, box: Lightbox): void {
     offset = down.offset - dx / Math.max(1, arc.layout().step);
     down.trail.push({ x: e.clientX, t: e.timeStamp });
     while (e.timeStamp - down.trail[0].t > FLICK_MS) down.trail.shift();
-  });
+  }, { signal });
   const release = (e: PointerEvent) => {
     if (!down) return;
     const { moved, trail } = down;
@@ -169,21 +178,44 @@ function initArc(root: HTMLElement, box: Lightbox): void {
       box.open(i);
     }
   };
-  pin.addEventListener('pointerup', release);
-  pin.addEventListener('pointercancel', release);
-  pin.addEventListener('pointerleave', () => pin.removeAttribute('data-over'));
+  pin.addEventListener('pointerup', release, { signal });
+  pin.addEventListener('pointercancel', release, { signal });
+  pin.addEventListener('pointerleave', () => pin.removeAttribute('data-over'), { signal });
 
-  // ── Keyboard: focusing a screen's button turns the arc to it ─
+  // ── Keyboard: focusing a screen's link turns the arc to it ─
   shots.forEach((shot, i) => {
-    shot.addEventListener('focus', () => turnTo(i));
+    shot.addEventListener('focus', () => turnTo(i), { signal });
     shot.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       e.preventDefault();
       shots[(i + (e.key === 'ArrowRight' ? 1 : n - 1)) % n].focus();
-    });
+    }, { signal });
   });
   // The screen paged to in the lightbox is the one centred when it closes.
-  root.addEventListener('gl:closed', () => shots[box.current]?.focus({ preventScroll: true }));
+  root.addEventListener('gl:closed', () => shots[box.current]?.focus({ preventScroll: true }), { signal });
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    if (down && pin.hasPointerCapture(down.pointerId)) pin.releasePointerCapture(down.pointerId);
+    down = null;
+    events.abort();
+    settleCall?.kill();
+    trigger.kill();
+    gsap.ticker.remove(tick);
+    loader.disconnect();
+    resize.disconnect();
+    visibility.disconnect();
+    unsubscribeZone();
+    removeArc();
+    delete root.dataset.arc;
+    delete pin.dataset.dragging;
+    delete pin.dataset.over;
+    for (const prop of ['--shot-x', '--shot-y', '--shot-w', '--shot-h']) pin.style.removeProperty(prop);
+    ScrollTrigger.refresh();
+  };
+  document.querySelector('#gl-stage')?.addEventListener('webglcontextlost', cleanup, { signal });
+  return cleanup;
 }
 
 /**
@@ -204,6 +236,8 @@ function initLightbox(root: HTMLElement): Lightbox {
   const steps = [...dialog.querySelectorAll<HTMLElement>('[data-gl-step]')];
   const controls = [closer, ...steps];
   const still = reducedMotion.matches;
+  const events = new AbortController();
+  const options = { signal: events.signal };
   const { random } = gsap.utils;
   const side = () => (Math.random() < 0.5 ? -1 : 1);
   let swap: gsap.core.Timeline | null = null;
@@ -320,27 +354,30 @@ function initLightbox(root: HTMLElement): Lightbox {
       .to(dialog, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0.2);
   };
 
-  // Without the arc, the list's buttons open screens directly.
+  // Real image links work without JS; only unmodified clicks open the lightbox.
   root.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const shot = (e.target as Element).closest<HTMLElement>('[data-gl-open]');
-    if (shot) box.open(Number(shot.dataset.glOpen));
-  });
+    if (!shot) return;
+    e.preventDefault();
+    box.open(Number(shot.dataset.glOpen));
+  }, options);
   steps.forEach((btn) => {
     const dir = Number(btn.dataset.glStep);
-    btn.addEventListener('click', () => show(box.current + dir, dir));
+    btn.addEventListener('click', () => show(box.current + dir, dir), options);
   });
-  closer.addEventListener('click', close);
+  closer.addEventListener('click', close, options);
   dialog.addEventListener('click', (e) => {
     if (e.target === dialog) close();
-  });
+  }, options);
   dialog.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') show(box.current - 1, -1);
     else if (e.key === 'ArrowRight') show(box.current + 1, 1);
-  });
+  }, options);
   dialog.addEventListener('cancel', (e) => {
     e.preventDefault();
     close();
-  });
+  }, options);
   dialog.addEventListener('close', () => {
     closing?.kill();
     closing = null;
@@ -350,16 +387,28 @@ function initLightbox(root: HTMLElement): Lightbox {
     gsap.set(controls, { clearProps: 'all' });
     lockScroll(false);
     root.dispatchEvent(new Event('gl:closed'));
-  });
+  }, options);
 
   // A horizontal swipe pages on touch screens.
   let downX: number | null = null;
-  dialog.addEventListener('pointerdown', (e) => (downX = e.pointerType === 'mouse' ? null : e.clientX));
+  dialog.addEventListener('pointerdown', (e) => (downX = e.pointerType === 'mouse' ? null : e.clientX), options);
   dialog.addEventListener('pointerup', (e) => {
     if (downX === null) return;
     const dx = e.clientX - downX;
     downX = null;
     if (Math.abs(dx) > 48) show(box.current - Math.sign(dx), -Math.sign(dx));
+  }, options);
+  onCleanup(() => {
+    events.abort();
+    closing?.kill();
+    swap?.kill();
+    intro?.kill();
+    gsap.killTweensOf(dialog);
+    gsap.killTweensOf(dialog.querySelectorAll('*'));
+    if (dialog.open) {
+      dialog.close();
+      lockScroll(false);
+    }
   });
 
   return box;

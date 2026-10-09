@@ -83,7 +83,8 @@ interface Eye {
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const EYE_CLIP = 'ab-eye-clip';
 const EYE_DEFS = `<defs><clipPath id="${EYE_CLIP}"><path d="M0 10A12.5 12.5 0 0 1 20 10A12.5 12.5 0 0 1 0 10Z"/></clipPath></defs>`;
-const EYE = `<g class="ab__eye-lid"><path d="M.63 10A12 12 0 0 1 19.37 10A12 12 0 0 1 .63 10Z"/><g clip-path="url(#${EYE_CLIP})"><g class="ab__eye-iris"><circle cx="10" cy="10" r="4.5"/><path d="M11.93 8.41A2.5 2.5 0 0 1 8.41 11.93"/></g></g></g>`;
+// The iris is drawn first, so the lid's line passes over it: the iris sits behind the lid.
+const EYE = `<g class="ab__eye-lid"><g clip-path="url(#${EYE_CLIP})"><g class="ab__eye-iris"><circle cx="10" cy="10" r="4.5"/><path d="M11.93 8.41A2.5 2.5 0 0 1 8.41 11.93"/></g></g><path d="M.63 10A12 12 0 0 1 19.37 10A12 12 0 0 1 .63 10Z"/></g>`;
 /** How far the iris can look sideways and up/down, user units. */
 const LOOK_X = 2.8;
 const LOOK_Y = 1.1;
@@ -133,6 +134,7 @@ export function initTrade(section: HTMLElement): void {
   const stage = getStage();
   if (!stage) return;
   const still = reducedMotion.matches;
+  const desktop = window.matchMedia('(min-width: 900px)');
   const pin = section.querySelector<HTMLElement>('[data-trade-pin]')!;
   const art = (id: string) => section.querySelector<HTMLElement>(`[data-trade-art="${id}"]`)!;
   const arts = { integrity: art('integrity'), reputation: art('reputation'), time: art('time'), money: art('money') };
@@ -291,8 +293,8 @@ export function initTrade(section: HTMLElement): void {
   if (!still) {
     ScrollTrigger.create({
       trigger: section,
-      start: 'top top',
-      end: 'bottom bottom',
+      start: () => desktop.matches ? 'top top' : 'top bottom',
+      end: () => desktop.matches ? 'bottom bottom' : 'bottom top',
       onUpdate: (self) => {
         target = self.progress;
         scrollSpeed = Math.max(scrollSpeed, Math.abs(self.getVelocity()));

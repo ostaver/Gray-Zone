@@ -2,7 +2,8 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://sivazona.mk',
+  // Absolute metadata URLs must match the deployed host; sivazona.mk still serves the legacy site.
+  site: 'https://siva-zona.ostaver.com',
   trailingSlash: 'ignore',
   i18n: {
     locales: ['mk', 'en'],

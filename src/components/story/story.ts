@@ -1,13 +1,13 @@
 import { gsap, ScrollTrigger, reducedMotion } from '../../lib/motion/gsap';
 import { scrollToTarget } from '../../lib/motion/scroll';
 import { verdictFor } from '../../data/story';
+import { onCleanup } from '../../lib/lifecycle';
 
 /** Timeline units each form holds before it's ripped off, and how long the rip takes. */
 const HOLD = 0.55;
 const RIP = 0.45;
 
 export function initStory(root: HTMLElement): void {
-  const still = reducedMotion.matches;
   const sheets = [...root.querySelectorAll<HTMLElement>('[data-sheet]')];
   const inputs = [...root.querySelectorAll<HTMLInputElement>('input[data-step]')];
   const decision = root.querySelector<HTMLElement>('[data-decision]')!;
@@ -35,12 +35,12 @@ export function initStory(root: HTMLElement): void {
   decide();
 
   // ── The pad: each form is tugged, then thrown off, alternating sides ──
-  let atDecision = still;
+  let atDecision = true;
   // Each stamp's own tilt (CSS), so the slam lands askew rather than straightening it.
   const tilts = new Map([...stamps].map((stamp) => [stamp, Number(gsap.getProperty(stamp, 'rotation'))]));
   const slam = () => {
     const stamp = decision.querySelector<HTMLElement>('.verdict:not([hidden]) [data-stamp]');
-    if (!stamp || still) return;
+    if (!stamp || reducedMotion.matches) return;
     const tilt = tilts.get(stamp) ?? 0;
     gsap.killTweensOf(stamp);
     gsap.fromTo(stamp, { scale: 2.6, opacity: 0, rotation: tilt + 14 }, { scale: 1, opacity: 1, rotation: tilt, duration: 0.38, ease: 'power4.in' });
@@ -48,7 +48,12 @@ export function initStory(root: HTMLElement): void {
   };
 
   let trigger: ScrollTrigger | null = null;
-  if (!still) {
+  let advanceCall: gsap.core.Tween | null = null;
+  const media = gsap.matchMedia();
+  onCleanup(() => media.revert());
+  media.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', () => {
+    root.dataset.pad = '';
+    atDecision = false;
     gsap.set(stamps, { opacity: 0 });
     // Checked on the timeline's own updates: with scrub it keeps moving after the scroll stops.
     const pad = gsap.timeline({
@@ -83,7 +88,14 @@ export function initStory(root: HTMLElement): void {
       scrub: 0.7,
       invalidateOnRefresh: true,
     });
-  }
+    return () => {
+      advanceCall?.kill();
+      advanceCall = null;
+      trigger = null;
+      atDecision = true;
+      delete root.dataset.pad;
+    };
+  });
 
   // ── Ticking a box ──────────────────────────────────────────
   // A pointer tick rips the form off for you; keyboard selection (arrow keys move and select
@@ -92,6 +104,14 @@ export function initStory(root: HTMLElement): void {
   root.addEventListener('pointerdown', () => (byPointer = true));
   root.addEventListener('keydown', () => (byPointer = false));
   for (const input of inputs) {
+    input.addEventListener('focus', () => {
+      if (!trigger || byPointer) return;
+      const sheet = input.closest<HTMLElement>('[data-sheet]')!;
+      const index = sheets.indexOf(sheet);
+      const { start, end } = trigger;
+      const total = trigger.animation?.duration() ?? 1;
+      scrollToTarget(start + ((end - start) * (index + HOLD * 0.4)) / total, 0.35);
+    });
     input.addEventListener('change', () => {
       if (decide() && atDecision) slam();
       if (!trigger) return;
@@ -108,7 +128,10 @@ export function initStory(root: HTMLElement): void {
       if (!byPointer || i < 0) return;
       const { start, end } = trigger;
       const total = trigger.animation?.duration() ?? 1;
-      gsap.delayedCall(0.45, () => scrollToTarget(start + ((end - start) * (i + 1)) / total, 1.4));
+      advanceCall?.kill();
+      advanceCall = gsap.delayedCall(0.3, () => {
+        if (trigger) scrollToTarget(start + ((end - start) * (i + 1)) / total, 0.8);
+      });
     });
   }
 }

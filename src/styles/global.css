@@ -10,17 +10,29 @@
   margin: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   color-scheme: dark;
   background: var(--ink);
-  /* No native scrollbar: Lenis drives the page, and a scrollbar reappearing after the
-     preloader's scroll lock would shift the layout mid-intro. */
-  scrollbar-width: none;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: var(--ash) var(--ink);
 }
 html::-webkit-scrollbar {
-  display: none;
+  width: 12px;
+}
+html::-webkit-scrollbar-track {
+  background: var(--ink);
+}
+html::-webkit-scrollbar-thumb {
+  background: var(--ash);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
 }
 
 body {

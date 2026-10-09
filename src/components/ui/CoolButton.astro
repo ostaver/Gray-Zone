@@ -43,6 +43,11 @@ const Tag = as as any;
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* display above would otherwise win over the [hidden] attribute. */
+  .cool-btn[hidden] {
+    display: none;
+  }
+
   .cool-btn:focus-visible {
     outline: 2px solid var(--red);
     outline-offset: 3px;

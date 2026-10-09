@@ -259,10 +259,10 @@ const { integrity, reputation, time, money } = t.stats;
   }
 
   /* ── The trade (stats) ─────────────────────────────── */
-  /* Pinned for two extra screens: that scroll is the run of shortcuts trade.ts plays out. */
+  /* One extra screen plays the integrity-to-money trade on desktop. */
   .ab__trade {
     position: relative;
-    height: 300svh;
+    height: 200svh;
     margin-top: clamp(6rem, 16vh, 10rem);
     margin-inline: calc(var(--gutter) * -1);
   }
@@ -416,6 +416,27 @@ const { integrity, reputation, time, money } = t.stats;
       top: calc(var(--nav-h) + 3rem);
       max-width: 34rem;
     }
+  }
+  @media (max-width: 899px) {
+    .ab__trade {
+      height: auto;
+    }
+    .ab__trade-pin {
+      position: relative;
+      height: auto;
+      min-height: 90svh;
+    }
+    .ab__trade-list {
+      grid-template-rows: minmax(7rem, 0.8fr) minmax(9rem, 1fr) minmax(9rem, 1fr);
+    }
+  }
+  :global(.no-js) .ab__trade,
+  :global(.no-webgl) .ab__trade {
+    height: auto;
+  }
+  :global(.no-js) .ab__trade-pin,
+  :global(.no-webgl) .ab__trade-pin {
+    position: relative;
   }
   /* Without motion there is no run to scroll through: one still frame of the scene. */
   @media (prefers-reduced-motion: reduce) {
