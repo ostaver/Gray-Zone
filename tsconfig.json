@@ -1,5 +1,9 @@
 {
-  "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "src/**/*", "astro.config.mjs"],
+  "extends": "./node_modules/astro/tsconfigs/strict.json",
+  "files": [],
+  "compilerOptions": {
+    "types": []
+  },
+  "include": ["src/**/*", "astro.config.mjs"],
   "exclude": ["dist", "Chromatic theme"]
 }
