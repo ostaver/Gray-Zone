@@ -10,7 +10,7 @@ export interface ContactCopy {
   /** Shown for the GitHub channel in place of its address. */
   source: string;
   bugReport: string;
-  /** The button beside the address, and the stamp that lands once it's on the clipboard. */
+  /** The button beside the address, and the word its face flips to once it's on the clipboard. */
   copy: string;
   copied: string;
 }

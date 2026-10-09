@@ -88,7 +88,7 @@ const structuredData = {
     <meta name="twitter:image:alt" content={t.meta.imageAlt} />
 
     <script is:inline>
-      // Before first paint: restore session preferences; preload only on the first non-reduced visit.
+      // Before first paint: restore session preferences; preload runs in full on the first visit, short after.
       (function () {
         var d = document.documentElement;
         d.classList.replace('no-js', 'js');
@@ -99,7 +99,7 @@ const structuredData = {
           sessionStorage.setItem('sz-seen', '1');
           if (sessionStorage.getItem('sz-zone') === 'white') d.dataset.zone = 'white';
         } catch (e) {}
-        d.dataset.preload = reduce || seen ? 'none' : 'full';
+        d.dataset.preload = reduce ? 'none' : seen ? 'short' : 'full';
         document.querySelector('meta[name="theme-color"]').setAttribute('content', getComputedStyle(d).getPropertyValue('--ink').trim());
       })();
     </script>

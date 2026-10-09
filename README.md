@@ -54,7 +54,7 @@ src/
   data/         Content: team, play, gallery, funders, links, tutorial, about, contact; sections (page order)
   i18n/         Locale config and UI strings
   lib/          gl/ (WebGL stage, shaders), canvas/, motion/ (gsap, lenis), zone.ts (shared zone switch), lifecycle, og.ts (share-image variants)
-  styles/       tokens.css, global.css
+  styles/       tokens.css, global.css, flap.css (split-flap boards)
   assets/       Optimised images (brand, gallery, team, tutorial per locale)
 public/         Static files copied as-is (favicons, og-image.png)
 ```
@@ -94,9 +94,9 @@ Below 900px the trade follows normal vertical flow. Reduced motion shows the sta
 
 `src/components/story/Story.astro` (+ `story.ts`) follows About, with no nav entry of its own (the seam index counts it as About). Copy and steps live in `src/data/story.ts`.
 
-A pad of four forms in a 320svh desktop scene: birth certificate, the secretary's confirmation, the English test, the interview. Each form has an honest box and a shortcut box either side of a torn line (real radio inputs). Ticking one draws the tick and signs the form; a shortcut also blooms a gray halftone stain into the paper. Scrolling (or a pointer tick, which scrolls for you) tugs the top sheet and throws it off-screen, alternating sides. Keyboard focus reveals its corresponding form. Under the pad lies the scholarship decision: a summary of your four choices and a rubber stamp that slams down when it's uncovered. No shortcuts → approved, earned honestly; one or two → approved, with marks; three or more → rejected (`verdictFor`). Changing a tick on the way back up re-decides.
+A pad of four forms in a 320svh desktop scene: birth certificate, the secretary's confirmation, the English test, the interview. Each form has an honest box and a shortcut box either side of a torn line (real radio inputs). Ticking one draws the tick and signs the form; a shortcut also blooms a gray halftone stain into the paper. Scrolling (or a pointer tick, which scrolls for you) tugs the top sheet and throws it off-screen, alternating sides. Keyboard focus reveals its corresponding form. Under the pad lies the scholarship decision: a summary of your four choices and the verdict on a split-flap board that clatters through letters and lands on the word, left to right, when the decision is uncovered (`src/lib/motion/flap.ts`). No shortcuts → approved, earned honestly; one or two → approved, with marks; three or more → rejected (`verdictFor`). Changing a tick on the way back up re-decides, and the board flips to the new verdict.
 
-Below 900px and with reduced motion, the forms are a normal column with the decision last, stamped and live. Without JS the forms still tick and stain (`:has()`), and the decision lists all three outcomes.
+Below 900px and with reduced motion, the forms are a normal column with the decision last, its verdict board already landed and live. Without JS the forms still tick and stain (`:has()`), and the decision lists all three outcomes (the verdict word as a plain label).
 
 ## Gallery
 
@@ -145,7 +145,7 @@ Reduced motion or no JS: the ticket is simply there and the stubs are plain link
 `src/components/contact/Contact.astro` (+ `contact.ts`) is the last section. Its copy (and the footer's) lives in `src/data/contact.ts`; the address, Instagram and repo come from `src/data/links.ts`.
 
 - **Channels.** Email, Instagram, source code and public GitHub bug reports, each on its own ruled line with the value set large. Copy explains feedback, classroom use and collaboration, plus the details needed for a bug report and the warning not to post personal information. On the way in the rules draw, the labels scramble on and each value rises out of a slot; on hover red ink rolls across the value and it scrambles back into itself. The address breaks at the @ on narrow screens.
-- **Copy.** A button beside the address puts it on the clipboard and slams a "copied" stamp over itself (announced through a live region). Without the clipboard API it is hidden and the mailto link is all there is.
+- **Copy.** A button beside the address puts it on the clipboard; a split-flap board covers the button's face and clatters out "copied" before the button returns (announced through a live region). Without the clipboard API it is hidden and the mailto link is all there is.
 
 `src/components/shell/Footer.astro` (+ `footer.ts`) sits after `#main` through Base's `footer` slot: the funders' logos and the EU disclaimer on a strip of light paper torn along its top (`src/data/funders.ts`), a link block (the page's sections, the game: download, release notes, source, bug reports, Instagram, and the other language, kept on the same section hash), then the build-year rights line and the version (deliberately no back-to-top button; see AGENTS.md). Below that Gray Zone is set the width of the page, whole and uncut; its letters rise out of the floor one after another as the end of the page scrolls in.
 
@@ -160,6 +160,6 @@ Reduced motion or no JS: the channels and the name are simply there.
 - **Structured data.** `Base.astro` describes the game as a schema.org `VideoGame` (free, Windows and macOS, both languages, version and download from `src/data/links.ts`) in a JSON-LD block on each language's page.
 - **Sitemap and robots.** `src/pages/sitemap.xml.ts` lists both language versions, each with the other as its `hreflang` alternate; `src/pages/robots.txt.ts` allows everything and points at the sitemap. Both are built from `site` in `astro.config.mjs`.
 - **Signature.** `OSTAVER: The intersection of Art and Abstract Expression` is a hidden source comment in Base and a comment in both `/robots.txt` and the requested `/robotx.txt`. `robotx.txt` is a signature file, not a replacement for the crawler-standard `robots.txt`.
-- **404.** `src/pages/404.astro` builds `dist/404.html`, which Cloudflare serves for any missing path. A missing page can't tell which language the reader came in, so it carries both: a slip from the archive's counter, stamped "not found", with a way back to each language's home (copy in `src/data/notFound.ts`). It is `noindex` (Base's `noindex` prop, which also drops the canonical and alternates).
+- **404.** `src/pages/404.astro` builds `dist/404.html`, which Cloudflare serves for any missing path. A missing page can't tell which language the reader came in, so it carries both: a slip from the archive's counter with a two-line split-flap board hung on its corner that clatters out "not found" in each language, with a way back to each language's home (copy in `src/data/notFound.ts`). It is `noindex` (Base's `noindex` prop, which also drops the canonical and alternates).
 
 See [AGENTS.md](AGENTS.md) for conventions for AI coding agents.
