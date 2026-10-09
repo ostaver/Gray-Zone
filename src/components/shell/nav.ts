@@ -20,7 +20,7 @@ export function initNav(nav: HTMLElement): void {
   const actions = nav.querySelector<HTMLElement>('[data-nav-actions]')!;
   const cta = nav.querySelector<HTMLElement>('[data-nav-cta]')!;
   const toggle = nav.querySelector<HTMLButtonElement>('[data-nav-toggle]')!;
-  const background = [...document.querySelectorAll<HTMLElement>('main, footer')];
+  const background = [...document.querySelectorAll<HTMLElement>('main, footer, .skip-link')];
   const hero = document.querySelector<HTMLElement>('[data-hero]');
   const heroPin = hero?.querySelector<HTMLElement>('[data-hero-pin]');
   const heroCta = heroPin?.querySelector<HTMLElement>('[data-download]');

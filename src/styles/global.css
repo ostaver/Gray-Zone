@@ -168,6 +168,20 @@ html[data-zone-transition]::view-transition-new(root) {
 
 /* ── Utilities ─────────────────────────────────────────────── */
 
+.skip-link {
+  position: fixed;
+  top: var(--gutter);
+  left: var(--gutter);
+  z-index: calc(var(--z-nav) + 1);
+  padding: 0.75rem 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  transform: translateY(calc(-100% - 2 * var(--gutter)));
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

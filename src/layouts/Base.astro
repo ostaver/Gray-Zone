@@ -17,10 +17,12 @@ interface Props {
   path?: string;
   /** Kept out of search (the 404): no robots indexing, canonical or language alternates. */
   noindex?: boolean;
+  title?: string;
 }
 
-const { locale, path = '/', noindex = false } = Astro.props;
+const { locale, path = '/', noindex = false, title } = Astro.props;
 const t = ui[locale];
+const pageTitle = title ?? t.meta.title;
 const canonical = new URL(localePath(locale, path), Astro.site);
 const ogImageUrl = (ext: OgExt) => new URL(ogImagePath(ext), Astro.site).href;
 
@@ -50,7 +52,7 @@ const structuredData = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>{t.meta.title}</title>
+    <title>{pageTitle}</title>
     <meta name="description" content={t.meta.description} />
     <meta name="theme-color" content="#0a0a0a" />
     {
@@ -70,7 +72,7 @@ const structuredData = {
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={t.meta.siteName} />
-    <meta property="og:title" content={t.meta.title} />
+    <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={t.meta.description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={ogLocale[locale]} />
@@ -108,9 +110,10 @@ const structuredData = {
   </head>
   <body>
     <Fragment set:html="<!-- OSTAVER: The intersection of Art and Abstract Expression -->" />
+    <a class="skip-link" href="#main">{t.a11y.skipToContent}</a>
     <canvas id="gl-stage" aria-hidden="true"></canvas>
     <slot name="chrome" />
-    <main id="main">
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <slot name="footer" />
