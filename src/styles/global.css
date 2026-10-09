@@ -35,6 +35,15 @@ html::-webkit-scrollbar-thumb {
   border: 3px solid var(--ink);
   border-radius: 8px;
 }
+/* Mouse-driven screens get the custom rail (ScrollRail.astro) in place of the system bar. */
+@media (hover: hover) and (pointer: fine) {
+  html.js {
+    scrollbar-width: none;
+  }
+  html.js::-webkit-scrollbar {
+    display: none;
+  }
+}
 
 body {
   min-height: 100svh;

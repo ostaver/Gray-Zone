@@ -14,6 +14,7 @@ const t = story[locale];
 const verdicts: Verdict[] = ['clean', 'scarred', 'lost'];
 // The pad's sheets lie a little askew, each its own way; the decision sits at the bottom.
 const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
+const pad = (i: number) => String(i).padStart(2, '0');
 ---
 
 <section class="st" id="story" aria-labelledby="story-title" data-story>
@@ -21,6 +22,24 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
     <header class="st__head">
       <h2 class="st__title" id="story-title">{t.title}</h2>
       <p class="st__hint">{t.hint}</p>
+      <!-- Wide screens: the queue of counters beside the pad, with the box ticked at each and the
+           deadline running down as the forms go. It repeats the forms and the decision's summary,
+           so assistive tech skips it. -->
+      <div class="st__queue" aria-hidden="true">
+        <ol class="st__counters">
+          {steps.map((step, i) => (
+            <li class="st__counter" data-counter>
+              <span class="st__counter-num">{pad(i + 1)}</span>
+              <span class="st__counter-doc">{step.doc[locale]}</span>
+              <span class="st__counter-mark" data-counter-mark={step.id}>—</span>
+            </li>
+          ))}
+        </ol>
+        <div class="st__deadline">
+          <span class="label">{t.deadline}</span>
+          <span class="st__deadline-track"><span class="st__deadline-fill" data-deadline></span></span>
+        </div>
+      </div>
     </header>
 
     <div class="st__pad">
@@ -131,9 +150,88 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
     text-wrap: balance;
   }
   .st__hint {
-    margin-top: 0.75rem;
+    max-width: 26rem;
+    margin-top: 1rem;
+    color: var(--paper-soft);
+    font-size: var(--text-lead);
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+  /* ── The queue (wide screens) ──────────────────────── */
+  .st__queue {
+    display: none;
+  }
+  .st__counters {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--hairline);
+  }
+  .st__counter {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: clamp(0.55rem, 1.4vh, 0.8rem);
+    border-bottom: 1px solid var(--hairline);
+    color: var(--paper-dim);
+    transition: color 0.4s var(--ease-out);
+  }
+  .st__counter-num,
+  .st__counter-mark {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+  .st__counter-doc {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1rem, 1.35vw, 1.3rem);
+    line-height: 1.1;
+    text-transform: uppercase;
+    transition: transform 0.6s var(--ease-out);
+  }
+  /* The counter whose form is on top: lit, its number in red, stepped in a little. */
+  .st__counter[data-current] {
+    color: var(--paper);
+  }
+  .st__counter[data-current] .st__counter-num {
+    color: var(--red);
+  }
+  .st__counter[data-current] .st__counter-doc {
+    transform: translateX(0.4rem);
+  }
+  /* The box ticked there, marked as on the decision: honest in red, a shortcut struck through. */
+  .st__counter-mark[data-taken='honest'] {
+    color: var(--red);
+  }
+  .st__counter-mark[data-taken='shortcut'] {
+    color: var(--paper-dim);
+    text-decoration: line-through;
+  }
+  .st__deadline {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
     color: var(--paper-dim);
   }
+  .st__deadline-track {
+    position: relative;
+    height: 2px;
+    overflow: hidden;
+    background: var(--hairline);
+  }
+  .st__deadline-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+
   .st__pad {
     display: grid;
     /* All sheets share one grid cell and stretch to the tallest (the decision), so the pad is
@@ -409,6 +507,23 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
     }
     .st__title {
       max-width: 9ch;
+      font-size: clamp(2rem, min(5.5vw, 9.5svh), 5.5rem);
+    }
+    .st__queue {
+      display: grid;
+      gap: clamp(1rem, 2.5vh, 1.5rem);
+      max-width: 28rem;
+      margin-top: clamp(1.5rem, 5vh, 3rem);
+    }
+    /* Without the pinned pad the forms run long beside it: the head rides along with them. */
+    .st:not([data-pad]) .st__head {
+      position: sticky;
+      top: calc(var(--nav-h) + 2rem);
+      align-self: start;
+    }
+    /* No scroll-driven pad, no deadline to run down. */
+    .st:not([data-pad]) .st__deadline {
+      display: none;
     }
   }
   @media (max-width: 560px) {

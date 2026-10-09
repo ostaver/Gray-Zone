@@ -236,10 +236,14 @@ const languages = locales.map((code) => ({ code, lang: htmlLang[code], href: loc
   .nav[data-plated]:not([data-menu]) .nav__plate {
     translate: none;
   }
-  /* A compact bar gets out of the way while reading down, all but the logo: it stays to show
-     its merge with the hero's scroll. */
+  /* A compact bar gets out of the way while reading down. Over the hero the logo stays to show
+     its merge with the hero's scroll; past it the merge is done, and a logo left behind on its
+     own would sit on the copy, so it goes with the bar. */
   .nav[data-hidden][data-plated] .nav__plate {
     translate: 0 calc(-100% - 2px);
+  }
+  .nav[data-hidden][data-plated] .nav__brand {
+    translate: 0 calc(-1 * var(--nav-h) - var(--tear));
   }
   .nav__plate::before {
     content: '';
@@ -282,6 +286,11 @@ const languages = locales.map((code) => ({ code, lang: htmlLang[code], href: loc
     align-items: center;
     gap: 0.7rem;
     min-height: 2.75rem;
+    transition: translate 0.7s var(--ease-out);
+  }
+  .nav:focus-within .nav__brand {
+    translate: none;
+    transition: none;
   }
   /* The logo itself (logoArt.ts), without its letters: the wordmark is set into the disc instead
      and stays live type. Brand colours hold in both zones. Over the hero's scroll the wordmark
@@ -535,6 +544,9 @@ const languages = locales.map((code) => ({ code, lang: htmlLang[code], href: loc
     height: 2.75rem;
     border-radius: 50%;
     color: var(--paper);
+    /* The hero's tear runs up behind the bar; a soft pool of the page's surface keeps it from
+       cutting across the disc. */
+    background: radial-gradient(closest-side, rgb(var(--surface-rgb) / 0.9) 55%, rgb(var(--surface-rgb) / 0));
   }
   .nav__zone[aria-disabled='true'] {
     cursor: progress;
@@ -840,6 +852,9 @@ const languages = locales.map((code) => ({ code, lang: htmlLang[code], href: loc
     overflow-wrap: anywhere;
   }
   .nav__meta dd a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-target);
     transition: color 0.3s;
   }
   .nav__meta dd a:hover {

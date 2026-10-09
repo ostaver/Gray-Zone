@@ -25,13 +25,14 @@ export function initPlay(root: HTMLElement): void {
   const ticket = root.querySelector<HTMLElement>('[data-pl-ticket]')!;
   const feed = root.querySelector<HTMLElement>('[data-pl-feed]')!;
 
-  // Fed out in steps, as a printer would, scrubbed by the scroll.
-  gsap.fromTo(ticket, { yPercent: -101 }, { yPercent: 0, ease: 'steps(18)', scrollTrigger: { trigger: feed, start: 'top 80%', end: 'top 20%', scrub: true } });
+  // Fed out in steps, as a printer would, scrubbed by the scroll. It's all the way out while the
+  // slot is still mid-screen, so the title above it and the whole ticket are seen together.
+  gsap.fromTo(ticket, { yPercent: -101 }, { yPercent: 0, ease: 'steps(18)', scrollTrigger: { trigger: feed, start: 'top 92%', end: 'top 48%', scrub: true } });
   // Once it's all the way out it drops onto its corner; scrolled back, it hangs straight again.
   let dropped = false;
   ScrollTrigger.create({
     trigger: feed,
-    start: 'top 20%',
+    start: 'top 48%',
     onEnter: () => {
       if (dropped) return;
       dropped = true;

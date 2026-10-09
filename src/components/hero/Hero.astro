@@ -223,9 +223,9 @@ const titleText = t.title.join(' ');
     max-width: 34ch;
   }
   .hero__lead p {
-    font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+    font-size: var(--text-body);
     line-height: 1.5;
-    color: var(--paper-dim);
+    color: var(--paper-soft);
   }
   .hero__facts {
     display: flex;
@@ -309,7 +309,13 @@ const titleText = t.title.join(' ');
       font-size: min(33vw, 23svh);
     }
     .hero[data-live] .hero__title {
-      margin-top: calc(var(--control-target) + var(--gutter) / 2);
+      margin-top: calc(var(--control-target) + var(--gutter));
+    }
+    /* A tall screen has field above and below the title: shade only behind the type. */
+    .hero__shade {
+      background:
+        radial-gradient(70% 22% at 50% 52%, rgb(var(--surface-rgb) / 0.45), transparent 75%),
+        linear-gradient(to bottom, rgb(var(--surface-rgb) / 0.85), rgb(var(--surface-rgb) / 0.3) 14%, transparent 22%, transparent 70%, rgb(var(--surface-rgb) / 0.9));
     }
     .hero__bottom {
       grid-template-columns: minmax(0, 1fr);

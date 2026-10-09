@@ -147,7 +147,9 @@ function initRing(root: HTMLElement): () => void {
   };
   const reveal = (i: number) => {
     gsap.killTweensOf([names[i], ...bodies[i].children]);
-    names[i].textContent = '';
+    // Scrambles over its own length rather than typing out from empty, so the title keeps its
+    // lines (and the copy its height) while it decodes.
+    names[i].textContent = nameText[i];
     gsap.to(names[i], { scrambleText: { text: nameText[i], chars: nameText[i].replace(/\s/g, ''), speed: 0.6 }, duration: 0.8, ease: 'none' });
     gsap.fromTo(bodies[i].children, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, stagger: 0.07, delay: 0.1 });
   };

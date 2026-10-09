@@ -101,9 +101,11 @@ const pad = (i: number) => String(i).padStart(2, '0');
     text-wrap: balance;
   }
   .tm__hint {
-    max-width: 22rem;
+    max-width: 26rem;
     margin-top: 1.25rem;
-    color: var(--paper-dim);
+    color: var(--paper-soft);
+    font-size: var(--text-lead);
+    line-height: 1.45;
     text-wrap: pretty;
   }
   .tm__body {
@@ -252,7 +254,9 @@ const pad = (i: number) => String(i).padStart(2, '0');
     display: grid;
     gap: 0.75rem;
     max-width: 40rem;
-    color: var(--paper-dim);
+    color: var(--paper-soft);
+    font-size: var(--text-body);
+    line-height: 1.6;
     text-wrap: pretty;
   }
   .tm__side {
@@ -268,6 +272,10 @@ const pad = (i: number) => String(i).padStart(2, '0');
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+  /* Rows far enough apart that the links' enlarged targets don't overlap. */
+  .tm__links {
+    row-gap: 1.1rem;
   }
   /* Tags are quiet chips: a hairline pill, a red dot, mono caps. */
   .tm__tag {
@@ -292,6 +300,7 @@ const pad = (i: number) => String(i).padStart(2, '0');
     background: var(--red);
   }
   .tm__link {
+    position: relative;
     display: inline-flex;
     gap: 0.35rem;
     font-family: var(--font-mono);
@@ -303,6 +312,12 @@ const pad = (i: number) => String(i).padStart(2, '0');
     transition:
       color 0.3s,
       border-color 0.3s;
+  }
+  /* A finger-sized target around the small type, without moving its underline. */
+  .tm__link::before {
+    content: '';
+    position: absolute;
+    inset: -0.65rem -0.35rem -0.45rem;
   }
   .tm__link:hover {
     color: var(--red);

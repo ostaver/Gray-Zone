@@ -22,6 +22,8 @@ export function initNav(nav: HTMLElement): void {
   const toggle = nav.querySelector<HTMLButtonElement>('[data-nav-toggle]')!;
   const background = [...document.querySelectorAll<HTMLElement>('main, footer')];
   const hero = document.querySelector<HTMLElement>('[data-hero]');
+  const heroPin = hero?.querySelector<HTMLElement>('[data-hero-pin]');
+  const heroCta = heroPin?.querySelector<HTMLElement>('[data-download]');
 
   // ── Menu (compact layouts) ─────────────────────────────────
   const menu = nav.querySelector<HTMLElement>('[data-nav-menu]')!;
@@ -205,7 +207,17 @@ export function initNav(nav: HTMLElement): void {
     compact = toggle.offsetWidth > 0;
     barH = head.offsetHeight;
     plateFrom = hero ? hero.getBoundingClientRect().bottom + scrollY - barH : 0;
-    ctaFrom = hero ? innerHeight * 0.3 : 0;
+    // The bar's download button takes over once the hero's own has gone up under the bar, so the
+    // two are never on screen together. The hero's sits in its pin, which holds for the hero's
+    // extra height and then scrolls away with it.
+    ctaFrom = 0;
+    if (hero) {
+      ctaFrom = innerHeight * 0.3;
+      if (heroPin && heroCta && heroCta.offsetWidth) {
+        const below = heroCta.getBoundingClientRect().bottom - heroPin.getBoundingClientRect().top;
+        ctaFrom = Math.max(0, hero.offsetHeight - heroPin.offsetHeight) + below - barH;
+      }
+    }
     const gap = parseFloat(getComputedStyle(actions).columnGap) || 0;
     nav.style.setProperty('--cta-shift', `${cta.offsetWidth ? cta.offsetWidth + gap : 0}px`);
     shownX = NaN;
@@ -363,7 +375,10 @@ export function initNav(nav: HTMLElement): void {
       scrollTrigger: {
         trigger: hero,
         start: 'top top',
-        end: 'bottom bottom',
+        // Over the pinned hero's scroll. A hero that isn't pinned (phones, short landscapes) is
+        // one screen tall, which would leave no scroll to merge over: there the logo is merged by
+        // the time the title, scrolling away under the bar, reaches it.
+        end: () => (hero.offsetHeight - innerHeight > 1 ? 'bottom bottom' : '40% top'),
         // Reduced motion: no scrub, just the two states either side of the hero's middle.
         scrub: still ? false : 0.6,
         toggleActions: 'play none none reverse',
