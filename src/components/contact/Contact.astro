@@ -1,6 +1,7 @@
 ---
 import type { Locale } from '../../i18n/config';
 import { contactCopy, type ContactChannel } from '../../data/contact';
+import CoolButton from '../ui/CoolButton.astro';
 import { repo, socials } from '../../data/links';
 
 interface Props {
@@ -44,7 +45,7 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
           </a>
           {c.id === 'email' && (
             <div class="ct__copy-wrap">
-              <button class="ct__copy label" type="button" data-ct-copy={socials.email} hidden>{t.copy}</button>
+              <CoolButton as="button" type="button" data-ct-copy={socials.email} hidden>{t.copy}</CoolButton>
               <span class="ct__stamp" aria-hidden="true" data-ct-stamp>{t.copied}</span>
             </div>
           )}
@@ -185,20 +186,7 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
     position: relative;
     justify-self: start;
   }
-  .ct__copy {
-    padding: 0.7rem 1rem 0.65rem;
-    border: 1px solid var(--hairline);
-    border-radius: 999px;
-    color: var(--paper);
-    transition:
-      border-color 0.3s,
-      color 0.3s;
-  }
-  .ct__copy:hover {
-    border-color: var(--red);
-    color: var(--red);
-  }
-  /* Rubber-stamped over the button once the address is on the clipboard, like the team's tags. */
+  /* Rubber-stamped over the button once the address is on the clipboard. */
   .ct__stamp {
     position: absolute;
     /* Centred without a transform: contact.ts owns the transform to slam it down. */

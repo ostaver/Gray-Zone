@@ -38,11 +38,30 @@ export const contactCopy: Localized<ContactCopy> = {
 
 export interface FooterCopy {
   rights: string;
+  explore: string;
+  game: string;
+  follow: string;
+  language: string;
+  releaseNotes: string;
 }
 
 const copyrightYear = new Date().getFullYear();
 
 export const footerCopy: Localized<FooterCopy> = {
-  en: { rights: `© ${copyrightYear} Gray Zone. All rights reserved.` },
-  mk: { rights: `© ${copyrightYear} Сива Зона. Сите права задржани.` },
+  en: {
+    rights: `© ${copyrightYear} Gray Zone. All rights reserved.`,
+    explore: 'Explore',
+    game: 'The game',
+    follow: 'Follow',
+    language: 'Language',
+    releaseNotes: 'Release notes',
+  },
+  mk: {
+    rights: `© ${copyrightYear} Сива Зона. Сите права задржани.`,
+    explore: 'Истражи',
+    game: 'Играта',
+    follow: 'Следи нѐ',
+    language: 'Јазик',
+    releaseNotes: 'Белешки за верзијата',
+  },
 };

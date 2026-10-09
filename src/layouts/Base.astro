@@ -9,7 +9,6 @@ import { ui } from '../i18n/ui';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImagePath, ogImageVariants, type OgExt } from '../lib/og';
 import { latestRelease, releaseVersion, repo } from '../data/links';
 import FpsStats from '../components/debug/FpsStats.astro';
-import PrivacyConsent from '../components/ui/PrivacyConsent.astro';
 
 interface Props {
   locale: Locale;
@@ -108,14 +107,12 @@ const structuredData = {
   </head>
   <body>
     <Fragment set:html="<!-- OSTAVER: The intersection of Art and Abstract Expression -->" />
-    <a class="skip-link label" href="#main">{t.a11y.skip}</a>
     <canvas id="gl-stage" aria-hidden="true"></canvas>
     <slot name="chrome" />
     <main id="main">
       <slot />
     </main>
     <slot name="footer" />
-    <PrivacyConsent locale={locale} enabled={!noindex} />
     <div class="grain" aria-hidden="true"></div>
     {import.meta.env.DEV && <FpsStats />}
   </body>
@@ -138,18 +135,5 @@ const structuredData = {
   main {
     position: relative;
     z-index: var(--z-content);
-  }
-  .skip-link {
-    position: fixed;
-    top: 0.75rem;
-    left: 0.75rem;
-    z-index: calc(var(--z-preloader) + 1);
-    padding: 0.75rem 1rem;
-    background: var(--paper);
-    color: var(--ink);
-    transform: translateY(-200%);
-  }
-  .skip-link:focus-visible {
-    transform: none;
   }
 </style>

@@ -1,12 +1,21 @@
 import { gsap, ScrollTrigger, reducedMotion } from '../../lib/motion/gsap';
+import { onCleanup } from '../../lib/lifecycle';
 
 /**
- * The footer: the name at the foot of the page, whose letters rise out of the floor one after
- * another as the last of the page scrolls in. (No back-to-top button: see AGENTS.md.)
+ * The footer: links out, then the name at the foot of the page, whose letters rise out of the
+ * floor one after another as the last of the page scrolls in. (No back-to-top button: see AGENTS.md.)
  */
 export function initFooter(root: HTMLElement): void {
   const mark = root.querySelector<HTMLElement>('[data-ft-mark]')!;
   const letters = [...mark.querySelectorAll<HTMLElement>('[data-ft-letter]')];
+  // The language link keeps the reader's place, like the nav's.
+  const lang = root.querySelector<HTMLAnchorElement>('[data-ft-lang]');
+  if (lang) {
+    const sync = () => { lang.hash = location.hash; };
+    sync();
+    window.addEventListener('hashchange', sync);
+    onCleanup(() => window.removeEventListener('hashchange', sync));
+  }
   fit(mark);
   if (reducedMotion.matches) return;
 
@@ -18,8 +27,7 @@ export function initFooter(root: HTMLElement): void {
       ease: 'none',
       // Spread over the scroll, the later letters bunched towards the end.
       stagger: { each: 0.08, ease: 'power1.in' },
-      // Ends at the very bottom of the page: the mark hangs a little past it, so 'bottom bottom'
-      // would never be reached.
+      // Ends at the very bottom of the page, where the whole name is in view.
       scrollTrigger: { trigger: mark, start: 'top bottom', end: () => ScrollTrigger.maxScroll(window), scrub: 0.6 },
     },
   );

@@ -1,9 +1,6 @@
 ---
 import { getImage } from 'astro:assets';
 import logo from '../../assets/brand/logo.png';
-import { preloaderCopy } from '../../data/preloader';
-
-const copy = preloaderCopy[Astro.url.pathname.startsWith('/en') ? 'en' : 'mk'];
 
 const logoImg = await getImage({ src: logo, width: 160, format: 'webp' });
 // Progress dots; the first half takes the logo's red, the second its cream.
@@ -15,10 +12,6 @@ const barDots = 16;
   <canvas class="pre__dots" aria-hidden="true"></canvas>
   <div class="pre__bar" aria-hidden="true">
     {Array.from({ length: barDots }, (_, i) => <i class:list={{ 'is-honest': i < barDots / 2 }} style={`--i:${i}`}></i>)}
-  </div>
-  <div class="pre__controls">
-    <p role="status">{copy.loading}</p>
-    <button type="button" data-preloader-skip>{copy.skip}</button>
   </div>
 </div>
 
@@ -32,7 +25,7 @@ const barDots = 16;
     document.documentElement.style.overflow = 'hidden';
     const block = () => {
       if (!root.hasAttribute('data-blocking')) return;
-      document.querySelectorAll('header, main, footer, .skip-link, [data-privacy-consent]').forEach((el) => {
+      document.querySelectorAll('header, main, footer').forEach((el) => {
         if (el.hasAttribute('inert')) return;
         el.setAttribute('data-preload-inert', '');
         el.setAttribute('inert', '');
@@ -47,7 +40,6 @@ const barDots = 16;
       document.removeEventListener('DOMContentLoaded', block);
       root.removeAttribute('data-blocking');
       root.style.pointerEvents = 'none';
-      root.querySelector('[data-preloader-skip]')?.setAttribute('disabled', '');
       document.querySelectorAll('[data-preload-inert]').forEach((el) => {
         el.removeAttribute('inert');
         el.removeAttribute('data-preload-inert');
@@ -61,7 +53,6 @@ const barDots = 16;
       window.dispatchEvent(new Event('grayzone:preload-skip'));
     };
     window.addEventListener('grayzone:ready', release, { once: true });
-    root.querySelector('[data-preloader-skip]')?.addEventListener('click', skip);
     document.addEventListener('DOMContentLoaded', block, { once: true });
     block();
     timer = setTimeout(skip, 6000);
@@ -173,29 +164,6 @@ const barDots = 16;
   }
   .pre[data-blocking] {
     pointer-events: auto;
-  }
-  .pre__controls {
-    position: absolute;
-    left: 50%;
-    bottom: max(2rem, env(safe-area-inset-bottom));
-    translate: -50% 0;
-    width: max-content;
-    max-width: calc(100% - 2rem);
-    text-align: center;
-    font-size: 0.875rem;
-    color: var(--paper);
-  }
-  .pre__controls button {
-    margin-top: 0.75rem;
-    padding: 0.65rem 1rem;
-    border: 1px solid var(--hairline);
-    border-radius: 2px;
-  }
-  .pre__controls button:disabled {
-    visibility: hidden;
-  }
-  .pre:not([data-blocking]) .pre__controls {
-    display: none;
   }
   :global(.no-js) .pre,
   :global([data-preload='none']) .pre {

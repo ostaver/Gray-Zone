@@ -10,8 +10,6 @@ interface Props {
 const { locale } = Astro.props;
 const t = teamCopy[locale];
 const pad = (i: number) => String(i).padStart(2, '0');
-// Each tag is stamped a little askew, its own way.
-const tilts = [-4, 3, -2, 5, -3, 2];
 ---
 
 <section class="tm" id="team" aria-labelledby="team-title" data-team>
@@ -47,8 +45,8 @@ const tilts = [-4, 3, -2, 5, -3, 2];
                 </div>
                 <div class="tm__side">
                   <ul class="tm__tags" role="list">
-                    {member.tags[locale].map((tag, k) => (
-                      <li class="tm__tag" style={`--tilt: ${tilts[(i + k) % tilts.length]}deg`} data-tm-tag>
+                    {member.tags[locale].map((tag) => (
+                      <li class="tm__tag" data-tm-tag>
                         {tag}
                       </li>
                     ))}
@@ -271,21 +269,27 @@ const tilts = [-4, 3, -2, 5, -3, 2];
     padding: 0;
     list-style: none;
   }
-  /* Rubber-stamped, like the story's verdicts: double rule, worn ink, askew. */
+  /* Tags are quiet chips: a hairline pill, a red dot, mono caps. */
   .tm__tag {
-    padding: 0.25em 0.5em 0.15em;
-    border: 1.5px solid currentColor;
-    outline: 0.5px solid currentColor;
-    outline-offset: 1.5px;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.55em 0.95em 0.5em;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     line-height: 1;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--red);
-    transform: rotate(var(--tilt));
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
+    color: var(--paper);
+  }
+  .tm__tag::before {
+    content: '';
+    width: 0.45em;
+    height: 0.45em;
+    border-radius: 50%;
+    background: var(--red);
   }
   .tm__link {
     display: inline-flex;

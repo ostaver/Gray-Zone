@@ -6,7 +6,7 @@ interface UADataNavigator extends Navigator {
 
 
 /** Includes iPadOS desktop user agents; touch laptops are not treated as phones. */
-export function isMobileDevice(): boolean {
+function isMobileDevice(): boolean {
   const nav = navigator as UADataNavigator;
   const source = `${nav.userAgentData?.platform ?? ''} ${nav.userAgent}`.toLowerCase();
   return nav.userAgentData?.mobile === true ||

@@ -20,7 +20,7 @@ export function initNav(nav: HTMLElement): void {
   const actions = nav.querySelector<HTMLElement>('[data-nav-actions]')!;
   const cta = nav.querySelector<HTMLElement>('[data-nav-cta]')!;
   const toggle = nav.querySelector<HTMLButtonElement>('[data-nav-toggle]')!;
-  const background = [...document.querySelectorAll<HTMLElement>('main, footer, [data-privacy-consent]')];
+  const background = [...document.querySelectorAll<HTMLElement>('main, footer')];
   const hero = document.querySelector<HTMLElement>('[data-hero]');
 
   // ── Menu (compact layouts) ─────────────────────────────────

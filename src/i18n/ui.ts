@@ -9,7 +9,6 @@ const mk = {
     imageAlt: 'Логото на „Сива Зона“, поделено со скинат раб на црвена и темна половина.',
   },
   a11y: {
-    skip: 'Прескокни до содржината',
     langSwitch: 'Јазик',
     close: 'Затвори',
   },
@@ -55,7 +54,6 @@ const en: UIDict = {
     imageAlt: 'The Gray Zone logo, divided by a torn edge into red and dark halves.',
   },
   a11y: {
-    skip: 'Skip to content',
     langSwitch: 'Language',
     close: 'Close',
   },

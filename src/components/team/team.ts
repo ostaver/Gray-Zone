@@ -5,7 +5,7 @@ import { print } from '../../lib/motion/reveal';
  * The team: a photo and a roster of files. The title, hint and photo print in as they scroll
  * into view; the photo drifts against the scroll while it holds still beside the roster. Each
  * roster line rules itself in and its row is slung in from alternating sides. Opening a file
- * unrolls it: the bio rises line by line, the tags are stamped on one after another and the links
+ * unrolls it: the bio rises line by line, the tags float up one after another and the links
  * slide in; one file is open at a time. The files are native <details>, so without JS (or with
  * reduced motion) they simply open and close.
  */
@@ -71,11 +71,8 @@ function initFiles(root: HTMLElement): void {
     tl.fromTo(file, { height: 0 }, { height: 'auto', duration: 0.9, ease: 'expo.out' }, 0)
       .to(role, { scrambleText: { text, chars: text.replace(/\s/g, ''), speed: 0.6 }, duration: 0.7, ease: 'none' }, 0)
       .fromTo(paras, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, stagger: 0.07 }, 0.1);
-    // Each tag is slammed down onto its own tilt.
-    tags.forEach((tag, k) => {
-      const tilt = parseFloat(tag.style.getPropertyValue('--tilt')) || 0;
-      tl.fromTo(tag, { scale: 2.4, opacity: 0, rotation: tilt + 14 }, { scale: 1, opacity: 1, rotation: tilt, duration: 0.32, ease: 'power4.in' }, 0.3 + k * 0.09);
-    });
+    // Each tag floats up into place, one after the other.
+    tl.fromTo(tags, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.07, ease: 'power3.out' }, 0.3);
     tl.fromTo(links, { x: -16, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, stagger: 0.05 }, 0.4);
   };
 

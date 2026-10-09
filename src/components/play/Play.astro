@@ -3,8 +3,8 @@ import type { Locale } from '../../i18n/config';
 import { ui } from '../../i18n/ui';
 import { playCopy } from '../../data/play';
 import { latestRelease, releases, releaseVersion } from '../../data/links';
-import DownloadDetails from '../ui/DownloadDetails.astro';
 import { downloadSize } from '../../data/download';
+import CoolButton from '../ui/CoolButton.astro';
 
 interface Props {
   locale: Locale;
@@ -103,9 +103,11 @@ const platforms = [
   </div>
 
   <footer class="pl__foot">
-    <a class="pl__all" href={latestRelease} target="_blank" rel="noopener">{t.allReleases} <span aria-hidden="true">↗</span></a>
+    <CoolButton href={latestRelease} target="_blank" rel="noopener">
+      <span>{t.allReleases}</span>
+      <span aria-hidden="true">↗</span>
+    </CoolButton>
   </footer>
-  <div class="pl__details"><DownloadDetails locale={locale} /></div>
 </section>
 
 <script>
@@ -348,24 +350,5 @@ const platforms = [
     gap: 0.75rem;
     margin-top: clamp(2.5rem, 6vh, 4rem);
     text-align: center;
-  }
-  .pl__details {
-    max-width: 58rem;
-    margin: 2rem auto 0;
-  }
-  .pl__all {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding-bottom: 0.2rem;
-    border-bottom: 1px solid var(--hairline);
-    transition:
-      color 0.3s,
-      border-color 0.3s;
-  }
-  .pl__all:hover {
-    color: var(--red);
-    border-color: var(--red);
   }
 </style>

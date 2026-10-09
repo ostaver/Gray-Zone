@@ -2,7 +2,6 @@
 import type { Locale } from '../../i18n/config';
 import { ui } from '../../i18n/ui';
 import { releases, releaseVersion } from '../../data/links';
-import DownloadDetails from './DownloadDetails.astro';
 import { downloadSize } from '../../data/download';
 
 interface Props {
@@ -47,20 +46,18 @@ const a11y = ui[locale].a11y;
         </span>
       </a>
     </div>
-    <DownloadDetails locale={locale} />
   </div>
 </dialog>
 
 <script>
   import { gsap, reducedMotion } from '../../lib/motion/gsap';
   import { lockScroll } from '../../lib/motion/scroll';
-  import { detectPlatform, isMobileDevice } from '../../lib/platform';
+  import { detectPlatform } from '../../lib/platform';
 
   const dialog = document.querySelector<HTMLDialogElement>('[data-download-dialog]');
   if (dialog) {
     const panel = dialog.querySelector<HTMLElement>('.dl__panel')!;
     const platform = detectPlatform();
-    if (isMobileDevice()) panel.dataset.mobile = '';
     const options = dialog.querySelector<HTMLElement>('.dl__options')!;
     if (platform) {
       const preferred = options.querySelector<HTMLElement>(`[data-platform="${platform}"]`)!;
@@ -144,12 +141,6 @@ const a11y = ui[locale].a11y;
     padding: clamp(1.25rem, 3vw, 2.25rem);
     display: grid;
     gap: 1.25rem;
-  }
-  .dl__panel[data-mobile] :global(.download-details) {
-    order: 1;
-  }
-  .dl__panel[data-mobile] .dl__options {
-    order: 2;
   }
   .dl__head {
     display: flex;

@@ -1,6 +1,7 @@
 ---
 import type { Locale } from '../../i18n/config';
 import { latestRelease } from '../../data/links';
+import CoolButton from '../ui/CoolButton.astro';
 import { steps, story, type Verdict } from '../../data/story';
 import { tornPath } from '../../lib/torn';
 
@@ -89,7 +90,10 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
         </div>
         <p class="sheet__teaser">
           {t.teaser}
-          <a class="sheet__cta" href={latestRelease} data-download>{t.cta} <span aria-hidden="true">↓</span></a>
+          <CoolButton href={latestRelease} data-download>
+            <span>{t.cta}</span>
+            <span class="btn__icon" aria-hidden="true">↓</span>
+          </CoolButton>
         </p>
       </article>
     </div>
@@ -396,20 +400,14 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
     transform: rotate(6deg);
   }
   .sheet__teaser {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
     margin-top: auto;
     padding-top: 0.9rem;
     border-top: 1.5px solid var(--sheet-ink);
     font-size: 0.95rem;
-  }
-  .sheet__cta {
-    display: inline-block;
-    margin-left: 0.35rem;
-    font-family: var(--font-display);
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--red);
-    text-decoration: underline 1.5px;
-    text-underline-offset: 0.2em;
   }
 
   /* ── Layouts ───────────────────────────────────────── */

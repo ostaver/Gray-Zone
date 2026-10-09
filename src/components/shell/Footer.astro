@@ -1,10 +1,11 @@
 ---
 import { Image } from 'astro:assets';
-import type { Locale } from '../../i18n/config';
+import { localeLabel, localePath, locales, type Locale } from '../../i18n/config';
 import { ui } from '../../i18n/ui';
-import { footerCopy } from '../../data/contact';
+import { contactCopy, footerCopy } from '../../data/contact';
 import { funders, fundersImage } from '../../data/funders';
-import { releaseVersion } from '../../data/links';
+import { latestRelease, releaseNotes, releaseVersion, repo, socials } from '../../data/links';
+import { sections } from '../../data/sections';
 
 interface Props {
   locale: Locale;
@@ -12,8 +13,18 @@ interface Props {
 
 const { locale } = Astro.props;
 const t = footerCopy[locale];
+const c = contactCopy[locale];
 const f = funders[locale];
+const nav = ui[locale].nav;
 const name = ui[locale].hero.title.join(' ');
+const otherLocale = locales.find((l) => l !== locale)!;
+
+const game = [
+  { label: nav.download, href: latestRelease, download: true, external: false },
+  { label: t.releaseNotes, href: releaseNotes, download: false, external: true },
+  { label: c.source, href: repo, download: false, external: true },
+  { label: c.bugReport, href: `${repo}/issues/new`, download: false, external: true },
+];
 ---
 
 <footer class="ft" data-footer>
@@ -21,6 +32,71 @@ const name = ui[locale].hero.title.join(' ');
   <div class="ft__paper" data-ft-paper>
     <Image class="ft__funders" src={fundersImage} alt={f.alt} />
     <p class="ft__disclaimer">{f.disclaimer}</p>
+  </div>
+
+  <div class="ft__main">
+    <div class="ft__brand">
+      <p class="ft__tagline">{ui[locale].hero.description}</p>
+    </div>
+
+    <nav aria-labelledby="ft-explore">
+      <p class="label ft__head" id="ft-explore">{t.explore}</p>
+      <ul class="ft__list">
+        {sections.map((id) => <li><a class="ft__link" href={`#${id}`}>{nav[id]}</a></li>)}
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="ft-game">
+      <p class="label ft__head" id="ft-game">{t.game}</p>
+      <ul class="ft__list">
+        {game.map((item) => (
+          <li>
+            <a
+              class="ft__link"
+              href={item.href}
+              target={item.external ? '_blank' : undefined}
+              rel={item.external ? 'noopener' : undefined}
+              data-download={item.download ? '' : undefined}
+            >
+              {item.label}
+              {item.external && <span class="ft__arrow" aria-hidden="true">↗</span>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="ft-follow">
+      <p class="label ft__head" id="ft-follow">{t.follow}</p>
+      <ul class="ft__list">
+        <li>
+          <a class="ft__link" href={socials.instagram} target="_blank" rel="noopener">
+            <svg class="ft__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+              <circle cx="12" cy="12" r="4"></circle>
+              <circle cx="17.3" cy="6.7" r="0.6"></circle>
+            </svg>
+            Instagram
+            <span class="ft__arrow" aria-hidden="true">↗</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="ft-language">
+      <p class="label ft__head" id="ft-language">{t.language}</p>
+      <ul class="ft__list">
+        <li>
+          <a
+            class="ft__link"
+            href={localePath(otherLocale)}
+            hreflang={otherLocale}
+            lang={otherLocale}
+            data-ft-lang
+          >{localeLabel[otherLocale].name}</a>
+        </li>
+      </ul>
+    </nav>
   </div>
 
   <div class="ft__bar">
@@ -86,6 +162,97 @@ const name = ui[locale].hero.title.join(' ');
     text-wrap: pretty;
   }
 
+  /* ── Links ─────────────────────────────────────────── */
+  .ft__main {
+    display: grid;
+    gap: 2.5rem 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    padding: clamp(2.5rem, 6vh, 4rem) var(--gutter) clamp(2rem, 5vh, 3rem);
+  }
+  .ft__brand {
+    /* Takes the full row on narrow screens, the widest share beside the link columns. */
+    grid-column: 1 / -1;
+    max-width: 28rem;
+  }
+  .ft__tagline {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+  .ft__head {
+    margin-bottom: 1rem;
+    color: var(--paper-dim);
+  }
+  .ft__list {
+    display: grid;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ft__link {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35em;
+    padding-block: 0.3rem;
+    color: var(--paper);
+    transition: color 0.3s;
+  }
+  /* The underline is drawn from the left on hover and focus. */
+  .ft__link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.15rem;
+    height: 1px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.45s var(--ease-out);
+  }
+  .ft__link:hover,
+  .ft__link:focus-visible {
+    color: var(--red);
+  }
+  .ft__link:hover::after,
+  .ft__link:focus-visible::after {
+    transform: scaleX(1);
+  }
+  .ft__arrow {
+    font-size: 0.85em;
+    transition: transform 0.3s var(--ease-out);
+  }
+  .ft__link:hover .ft__arrow,
+  .ft__link:focus-visible .ft__arrow {
+    transform: translate(0.15em, -0.15em);
+  }
+  .ft__icon {
+    align-self: center;
+    width: 1em;
+    height: 1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .ft__icon circle:last-child {
+    fill: currentColor;
+    stroke: none;
+  }
+  @media (min-width: 900px) {
+    .ft__main {
+      grid-template-columns: minmax(14rem, 2fr) repeat(4, minmax(8rem, 1fr));
+    }
+    .ft__brand {
+      grid-column: auto;
+    }
+  }
+
   /* ── The bar ───────────────────────────────────────── */
   .ft__bar {
     display: flex;
@@ -94,6 +261,7 @@ const name = ui[locale].hero.title.join(' ');
     justify-content: space-between;
     gap: 0.75rem 2rem;
     padding: 1.5rem var(--gutter);
+    border-top: 1px solid var(--hairline);
     color: var(--paper-dim);
   }
   .ft__version {
@@ -104,18 +272,17 @@ const name = ui[locale].hero.title.join(' ');
   .ft__mark {
     display: flex;
     justify-content: space-between;
+    /* Masks the letters while they rise; the box is tall enough that none of them is cut. */
     overflow: hidden;
     margin: 0 var(--gutter);
-    padding-top: 0.04em;
+    padding-block: 0 0.1em;
     font-family: var(--font-display);
     font-weight: 700;
     /* About the page's width in either alphabet; footer.ts fits it exactly. */
     font-size: 20vw;
-    line-height: 0.78;
+    line-height: 1;
     text-transform: uppercase;
     color: var(--paper);
-    /* Cut off at the floor, as if the page ends mid-letter. */
-    margin-bottom: -0.04em;
     user-select: none;
   }
   .ft__letter {
