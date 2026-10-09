@@ -9,7 +9,7 @@ export interface NotFoundCopy {
   doc: string;
   title: string;
   text: string;
-  /** Stamped across the slip. */
+  /** Flipped out on the board hung on the slip. */
   stamp: string;
   home: string;
 }

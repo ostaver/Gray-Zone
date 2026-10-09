@@ -1,10 +1,11 @@
 import { gsap, ScrollTrigger, reducedMotion } from '../../lib/motion/gsap';
 import { print } from '../../lib/motion/reveal';
+import { flapBoard } from '../../lib/motion/flap';
 
 /**
  * Contact: the title and text print in; each channel rules itself in, its label scrambles on and
  * its value rises out of a slot. Hovering a value rolls red ink across it (CSS) and scrambles it.
- * The address can be copied, and a "copied" stamp is slammed over the button when it is.
+ * The address can be copied, and a split-flap "copied" board clatters out over the button when it is.
  */
 export function initContact(root: HTMLElement): void {
   initCopy(root);
@@ -57,8 +58,9 @@ export function initContact(root: HTMLElement): void {
 function initCopy(root: HTMLElement): void {
   const button = root.querySelector<HTMLButtonElement>('[data-ct-copy]');
   const stamp = root.querySelector<HTMLElement>('[data-ct-stamp]');
+  const face = stamp?.querySelector<HTMLElement>('[data-flap]');
   const status = root.querySelector<HTMLElement>('[data-ct-status]');
-  if (!button || !stamp || !status) return;
+  if (!button || !stamp || !face || !status) return;
   // Without the clipboard API (or off https) the mailto link is all there is.
   if (!navigator.clipboard) {
     button.hidden = true;
@@ -66,6 +68,13 @@ function initCopy(root: HTMLElement): void {
   }
   button.hidden = false;
 
+  const board = flapBoard(face);
+  board.blank();
+  const clear = () => {
+    delete stamp.dataset.on;
+    gsap.set(stamp, { clearProps: 'opacity' });
+    board.blank();
+  };
   let hide: gsap.core.Tween | null = null;
   button.addEventListener('click', async () => {
     try {
@@ -78,24 +87,14 @@ function initCopy(root: HTMLElement): void {
     requestAnimationFrame(() => (status.textContent = status.dataset.copied ?? ''));
 
     hide?.kill();
+    gsap.set(stamp, { clearProps: 'opacity' });
     stamp.dataset.on = '';
     if (reducedMotion.matches) {
-      hide = gsap.delayedCall(1.8, () => delete stamp.dataset.on);
+      board.settle();
+      hide = gsap.delayedCall(1.8, clear);
       return;
     }
-    const tilt = gsap.utils.random(-9, -3);
-    gsap.fromTo(stamp, { scale: 2.6, opacity: 0, rotation: tilt + 16 }, { scale: 1, opacity: 1, rotation: tilt, duration: 0.3, ease: 'power4.in', overwrite: true });
-    // The button takes the blow.
-    gsap.fromTo(button, { scale: 0.94 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.4)', delay: 0.28 });
-    hide = gsap.to(stamp, {
-      opacity: 0,
-      duration: 0.4,
-      delay: 1.8,
-      ease: 'power2.out',
-      onComplete: () => {
-        delete stamp.dataset.on;
-        gsap.set(stamp, { clearProps: 'opacity,transform' });
-      },
-    });
+    const flip = board.flip();
+    hide = gsap.to(stamp, { opacity: 0, duration: 0.4, delay: flip.duration() + 1.4, ease: 'power2.out', onComplete: clear });
   });
 }

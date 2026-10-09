@@ -30,7 +30,10 @@ const en = notFoundCopy.en;
         <p class="nf__title nf__title--en">{en.title}</p>
         <p class="nf__text">{en.text}</p>
       </div>
-      <span class="nf__stamp" aria-hidden="true" data-nf-stamp>{mk.stamp} · <span lang="en">{en.stamp}</span></span>
+      <span class="nf__stamp" aria-hidden="true" data-nf-stamp>
+        <span class="flap-board" data-flap>{mk.stamp}</span>
+        <span class="flap-board" lang="en" data-flap>{en.stamp}</span>
+      </span>
       <nav class="nf__links" aria-label={`${mk.home} · ${en.home}`}>
         <CoolButton href={localePath('mk')}>
           <span>{mk.home}</span>
@@ -47,16 +50,17 @@ const en = notFoundCopy.en;
 
 <script>
   import { gsap, reducedMotion } from '../lib/motion/gsap';
+  import { flapBoard } from '../lib/motion/flap';
 
-  // The slip is dropped onto the counter, then stamped.
+  // The slip is dropped onto the counter, then the board hung on its corner clatters out the verdict.
   const slip = document.querySelector<HTMLElement>('[data-nf-slip]');
-  const stamp = document.querySelector<HTMLElement>('[data-nf-stamp]');
-  if (slip && stamp && !reducedMotion.matches) {
+  const boards = [...document.querySelectorAll<HTMLElement>('[data-nf-stamp] [data-flap]')].map(flapBoard);
+  if (slip && boards.length && !reducedMotion.matches) {
+    for (const board of boards) board.blank();
     gsap
       .timeline({ delay: 0.2 })
       .from(slip, { yPercent: -40, rotation: 6, opacity: 0, duration: 1.1, ease: 'tear' })
-      .from(stamp, { scale: 2.6, opacity: 0, rotation: 8, duration: 0.32, ease: 'power4.in' }, 0.9)
-      .to(slip, { keyframes: { y: [0, 5, -1, 0] }, duration: 0.4, ease: 'none' }, 1.2);
+      .add(() => boards.forEach((board) => board.flip()), 0.9);
   }
 </script>
 
@@ -135,27 +139,19 @@ const en = notFoundCopy.en;
     border-top: 1px dashed currentColor;
     opacity: 0.75;
   }
-  /* The rubber stamp, as on the story's verdicts, struck across the slip's corner (clear of the
-     text). */
+  /* A two-line split-flap board (styles/flap.css) hung across the slip's corner, clear of the
+     text. */
   .nf__stamp {
     position: absolute;
     right: clamp(-1.5rem, -2vw, -0.25rem);
-    top: -0.6em;
-    padding: 0.18em 0.45em 0.12em;
-    border: 0.09em solid currentColor;
-    outline: 0.035em solid currentColor;
-    outline-offset: 0.07em;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(1.25rem, 3.4vw, 1.9rem);
-    line-height: 1;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    color: var(--red);
-    transform: rotate(-12deg);
+    top: -1.75em;
+    display: grid;
+    justify-items: end;
+    gap: 0.14em;
+    font-size: clamp(1.1rem, 3.2vw, 1.75rem);
+    transform: rotate(-3deg);
+    filter: drop-shadow(0 0.35em 0.3em rgb(0 0 0 / 0.35));
     pointer-events: none;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
   }
   .nf__links {
     display: flex;

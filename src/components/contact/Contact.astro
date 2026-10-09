@@ -1,7 +1,6 @@
 ---
 import type { Locale } from '../../i18n/config';
 import { contactCopy, type ContactChannel } from '../../data/contact';
-import CoolButton from '../ui/CoolButton.astro';
 import { repo, socials } from '../../data/links';
 
 interface Props {
@@ -45,8 +44,16 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
           </a>
           {c.id === 'email' && (
             <div class="ct__copy-wrap">
-              <CoolButton as="button" type="button" data-ct-copy={socials.email} hidden>{t.copy}</CoolButton>
-              <span class="ct__stamp" aria-hidden="true" data-ct-stamp>{t.copied}</span>
+              <button class="ct__copy" type="button" data-ct-copy={socials.email} hidden>
+                <svg class="ct__copy-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="9" y="9" width="11" height="11" rx="1"></rect>
+                  <path d="M15 9V4H4v11h5"></path>
+                </svg>
+                <span>{t.copy}</span>
+              </button>
+              <span class="ct__stamp" aria-hidden="true" data-ct-stamp>
+                <span class="flap-board" data-flap>{t.copied}</span>
+              </span>
             </div>
           )}
         </div>
@@ -184,33 +191,76 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
   .ct__copy-wrap {
     grid-area: copy;
     position: relative;
+    /* Flex, so the wrap is exactly the button's box (no line-box slack for the board to cover). */
+    display: flex;
     justify-self: start;
   }
-  /* Rubber-stamped over the button once the address is on the clipboard. */
-  .ct__stamp {
-    position: absolute;
-    /* Centred without a transform: contact.ts owns the transform to slam it down. */
-    inset: 0;
-    width: max-content;
-    height: max-content;
-    margin: auto;
-    padding: 0.3em 0.55em 0.2em;
-    border: 1.5px solid currentColor;
-    outline: 0.5px solid currentColor;
-    outline-offset: 1.5px;
-    font-family: var(--font-display);
+  /* A flat, hard-edged ticket: heavy rule, a red slab for a shadow. On hover red ink rolls across
+     it left to right (the same gesture as the values), and the slab is pressed flat. */
+  .ct__copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 1.2rem 0.7rem 1rem;
+    border: 2px solid var(--paper);
+    background: linear-gradient(90deg, var(--red) 50%, var(--ink) 50%) 100% 0 / 200% 100% no-repeat;
+    box-shadow: 5px 5px 0 var(--red);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     font-weight: 600;
-    font-size: 1.5rem;
-    line-height: 1;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     white-space: nowrap;
-    color: var(--red);
+    cursor: pointer;
+    transition:
+      background-position 0.6s var(--ease-tear),
+      box-shadow 0.3s var(--ease-out),
+      border-color 0.3s,
+      color 0.3s;
+  }
+  .ct__copy[hidden] {
+    display: none;
+  }
+  .ct__copy:hover,
+  .ct__copy:focus-visible {
+    background-position: 0 0;
+    border-color: var(--red);
+    box-shadow: 0 0 0 var(--red);
+    color: var(--button-hover-text);
+  }
+  .ct__copy:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 5px;
+  }
+  .ct__copy-icon {
+    width: 1.15rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 0.4s var(--ease-out);
+  }
+  .ct__copy:hover .ct__copy-icon,
+  .ct__copy:focus-visible .ct__copy-icon {
+    translate: -2px -2px;
+  }
+  /* Once the address is on the clipboard the button's face is covered by a split-flap board
+     (styles/flap.css) that clatters out "copied", in the button's own frame. */
+  .ct__stamp {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--paper);
     background: var(--ink);
-    transform: rotate(-6deg);
+    box-shadow: 5px 5px 0 var(--red);
+    font-size: 1.3rem;
     opacity: 0;
     pointer-events: none;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
   }
   .ct__stamp[data-on] {
     opacity: 1;

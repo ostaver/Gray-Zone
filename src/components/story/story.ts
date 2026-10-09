@@ -2,6 +2,7 @@ import { gsap, ScrollTrigger, reducedMotion } from '../../lib/motion/gsap';
 import { scrollToTarget } from '../../lib/motion/scroll';
 import { verdictFor } from '../../data/story';
 import { onCleanup } from '../../lib/lifecycle';
+import { flapBoard } from '../../lib/motion/flap';
 
 /** Timeline units each form holds before it's ripped off, and how long the rip takes. */
 const HOLD = 0.55;
@@ -12,7 +13,8 @@ export function initStory(root: HTMLElement): void {
   const inputs = [...root.querySelectorAll<HTMLInputElement>('input[data-step]')];
   const decision = root.querySelector<HTMLElement>('[data-decision]')!;
   const verdicts = [...decision.querySelectorAll<HTMLElement>('[data-verdict]')];
-  const stamps = decision.querySelectorAll<HTMLElement>('[data-stamp]');
+  // One split-flap board per verdict; only the current verdict's is showing.
+  const boards = new Map(verdicts.map((el) => [el.dataset.verdict!, flapBoard(el.querySelector<HTMLElement>('[data-flap]')!)] as const));
 
   // ── The decision follows the boxes ticked ──────────────────
   let shown: string | null = null;
@@ -36,15 +38,11 @@ export function initStory(root: HTMLElement): void {
 
   // ── The pad: each form is tugged, then thrown off, alternating sides ──
   let atDecision = true;
-  // Each stamp's own tilt (CSS), so the slam lands askew rather than straightening it.
-  const tilts = new Map([...stamps].map((stamp) => [stamp, Number(gsap.getProperty(stamp, 'rotation'))]));
-  const slam = () => {
-    const stamp = decision.querySelector<HTMLElement>('.verdict:not([hidden]) [data-stamp]');
-    if (!stamp || reducedMotion.matches) return;
-    const tilt = tilts.get(stamp) ?? 0;
-    gsap.killTweensOf(stamp);
-    gsap.fromTo(stamp, { scale: 2.6, opacity: 0, rotation: tilt + 14 }, { scale: 1, opacity: 1, rotation: tilt, duration: 0.38, ease: 'power4.in' });
-    gsap.fromTo(decision, { x: -5, y: 3 }, { x: 0, y: 0, duration: 0.7, delay: 0.36, ease: 'elastic.out(1.1, 0.3)' });
+  // The verdict clatters into place: from blank when the decision comes up, and again from what
+  // it showed if a changed tick changes the verdict.
+  const flip = () => {
+    const board = boards.get(shown ?? '');
+    if (board && !reducedMotion.matches) board.flip();
   };
 
   let trigger: ScrollTrigger | null = null;
@@ -54,7 +52,7 @@ export function initStory(root: HTMLElement): void {
   media.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', () => {
     root.dataset.pad = '';
     atDecision = false;
-    gsap.set(stamps, { opacity: 0 });
+    for (const board of boards.values()) board.blank();
     // Checked on the timeline's own updates: with scrub it keeps moving after the scroll stops.
     const pad = gsap.timeline({
       defaults: { ease: 'none' },
@@ -62,8 +60,8 @@ export function initStory(root: HTMLElement): void {
         const reached = pad.time() >= sheets.length - 0.02;
         if (reached === atDecision) return;
         atDecision = reached;
-        if (reached) slam();
-        else gsap.set(stamps, { opacity: 0 });
+        if (reached) flip();
+        else for (const board of boards.values()) board.blank();
       },
     });
     sheets.forEach((sheet, i) => {
@@ -113,7 +111,7 @@ export function initStory(root: HTMLElement): void {
       scrollToTarget(start + ((end - start) * (index + HOLD * 0.4)) / total, 0.35);
     });
     input.addEventListener('change', () => {
-      if (decide() && atDecision) slam();
+      if (decide() && atDecision) flip();
       if (!trigger) return;
       const tick = input.parentElement!.querySelector('.sheet__tick');
       if (tick) gsap.fromTo(tick, { drawSVG: '0%' }, { drawSVG: '100%', duration: 0.4, ease: 'power2.out' });

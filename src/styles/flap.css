@@ -1,0 +1,93 @@
+/* Split-flap board (lib/motion/flap.ts). Put data-flap on an element holding a short text and
+   colour it with --flap-bg / --flap-fg; size it with font-size. Until the script has built the
+   cells (or without JS) the text is a plain label in the same colours. */
+
+.flap-board {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.18em 0.4em 0.12em;
+  background: var(--flap-bg, var(--red));
+  color: var(--flap-fg, var(--zone-white));
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.flap-board[data-built] {
+  padding: 0;
+  background: none;
+  letter-spacing: 0;
+}
+.flap-board__cells {
+  display: flex;
+  gap: 0.06em;
+}
+/* A space between words: no cell, just a gap in the row. */
+.flap-board__gap {
+  flex: none;
+  width: 0.3em;
+}
+
+.flap {
+  position: relative;
+  flex: none;
+  width: var(--flap-w, 0.7em);
+  height: 1.2em;
+}
+/* The seam where the two halves meet, over everything. */
+.flap::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: max(1px, 0.03em);
+  translate: 0 -50%;
+  background: rgb(0 0 0 / 0.7);
+  z-index: 5;
+}
+.flap__half {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background-color: var(--flap-bg, var(--red));
+  backface-visibility: hidden;
+}
+.flap__top {
+  top: 0;
+  border-radius: 0.11em 0.11em 0 0;
+  background-image: linear-gradient(rgb(255 255 255 / 0.14), rgb(255 255 255 / 0));
+  transform-origin: 50% 100%;
+}
+.flap__bottom {
+  bottom: 0;
+  border-radius: 0 0 0.11em 0.11em;
+  background-image: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.28));
+  transform-origin: 50% 0;
+}
+/* Each half shows the same full-height glyph, cropped to its half. */
+.flap__ch {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: grid;
+  place-items: center;
+  color: var(--flap-fg, var(--zone-white));
+  /* Letters too wide for the cell are squeezed (set from the script). */
+  scale: var(--fit, 1);
+}
+.flap__top .flap__ch {
+  top: 0;
+}
+.flap__bottom .flap__ch {
+  bottom: 0;
+}
+/* The two moving flaps: the top one falls over the static bottom, the bottom one rises into
+   place; they sit above the static halves while they move. */
+.flap__fold,
+.flap__rise {
+  z-index: 3;
+}

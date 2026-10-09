@@ -83,7 +83,7 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
         <div class="sheet__verdicts">
           {verdicts.map((v) => (
             <div class:list={['verdict', `verdict--${v}`]} data-verdict={v}>
-              <span class="stamp" data-stamp>{t.verdicts[v].stamp}</span>
+              <span class="flap-board" data-flap>{t.verdicts[v].stamp}</span>
               <p class="verdict__text">{t.verdicts[v].text}</p>
             </div>
           ))}
@@ -365,8 +365,7 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
   .verdict {
     display: grid;
     justify-items: start;
-    /* Room for the stamp's tilt, so its corners don't land on the verdict. */
-    gap: 1.6rem;
+    gap: 1.25rem;
   }
   .verdict[hidden] {
     display: none;
@@ -375,29 +374,19 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
     font-size: clamp(1rem, 1.3vw, 1.15rem);
     line-height: 1.45;
   }
-  /* A rubber stamp: double rule, worn ink (noise mask), set askew. */
-  .stamp {
-    display: inline-block;
-    padding: 0.18em 0.45em 0.12em;
-    border: 0.09em solid currentColor;
-    outline: 0.035em solid currentColor;
-    outline-offset: 0.07em;
-    font-family: var(--font-display);
-    font-weight: 700;
+  /* The verdict is a split-flap board (styles/flap.css): red cells for a clean run, darkened by
+     the shortcuts taken, black once the opportunity is lost. */
+  .verdict .flap-board {
     font-size: clamp(2.25rem, 5vw, 3.75rem);
-    line-height: 1;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--red);
-    transform: rotate(-9deg);
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px;
   }
-  .verdict--scarred .stamp {
-    color: color-mix(in srgb, var(--red) 70%, var(--sheet-ink));
+  .verdict--clean {
+    --flap-bg: var(--red);
   }
-  .verdict--lost .stamp {
-    color: var(--sheet-ink);
-    transform: rotate(6deg);
+  .verdict--scarred {
+    --flap-bg: color-mix(in srgb, var(--red) 70%, var(--sheet-ink));
+  }
+  .verdict--lost {
+    --flap-bg: var(--sheet-ink);
   }
   .sheet__teaser {
     display: flex;
