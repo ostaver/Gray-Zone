@@ -105,6 +105,20 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
       margin-left: calc(var(--label-col) + var(--label-gap));
     }
   }
+  /* Wide screens: the intro stands beside the title, on its baseline, instead of floating in a
+     narrow column under its left half. */
+  @media (min-width: 1200px) {
+    .ct__head {
+      grid-template-columns: minmax(0, 1fr) minmax(22rem, 34rem);
+      align-items: end;
+      column-gap: clamp(2rem, 5vw, 6rem);
+    }
+    .ct__text {
+      margin-left: 0;
+      /* Down to the title's baseline: its line box sits a little under the caps. */
+      margin-bottom: 0.35rem;
+    }
+  }
 
   /* ── The channels ──────────────────────────────────── */
   .ct__channels {
