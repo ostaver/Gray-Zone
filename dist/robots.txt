@@ -1,0 +1,6 @@
+# OSTAVER: The intersection of Art and Abstract Expression
+
+User-agent: *
+Allow: /
+
+Sitemap: https://siva-zona.ostaver.com/sitemap.xml

@@ -1,0 +1,1 @@
+function e(e,t){let n=e.getPropertyValue(t).trim().replace(`#`,``),r=n.length===3?[...n].map(e=>e+e).join(``):n,i=parseInt(r,16);return[(i>>16&255)/255,(i>>8&255)/255,(i&255)/255]}export{e as t};

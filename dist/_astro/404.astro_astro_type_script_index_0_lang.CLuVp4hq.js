@@ -1,0 +1,1 @@
+import{a as e,n as t}from"./gsap.BXPkAgYx.js";var n=document.querySelector(`[data-nf-slip]`),r=document.querySelector(`[data-nf-stamp]`);n&&r&&!t.matches&&e.timeline({delay:.2}).from(n,{yPercent:-40,rotation:6,opacity:0,duration:1.1,ease:`tear`}).from(r,{scale:2.6,opacity:0,rotation:8,duration:.32,ease:`power4.in`},.9).to(n,{keyframes:{y:[0,5,-1,0]},duration:.4,ease:`none`},1.2);
