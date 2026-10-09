@@ -43,6 +43,9 @@ export interface FooterCopy {
   follow: string;
   language: string;
   releaseNotes: string;
+  /** The label before the OSTAVER signature, and the screen-reader note that its link leaves the site. */
+  madeBy: string;
+  opensNewTab: string;
 }
 
 const copyrightYear = new Date().getFullYear();
@@ -55,6 +58,8 @@ export const footerCopy: Localized<FooterCopy> = {
     follow: 'Follow',
     language: 'Language',
     releaseNotes: 'Release notes',
+    madeBy: 'Made by',
+    opensNewTab: '(opens in a new tab)',
   },
   mk: {
     rights: `© ${copyrightYear} Сива Зона. Сите права задржани.`,
@@ -63,5 +68,7 @@ export const footerCopy: Localized<FooterCopy> = {
     follow: 'Следи нѐ',
     language: 'Јазик',
     releaseNotes: 'Белешки за верзијата',
+    madeBy: 'Направено од',
+    opensNewTab: '(се отвора во ново јазиче)',
   },
 };

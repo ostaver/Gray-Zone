@@ -25,7 +25,7 @@ const barDots = 16;
     document.documentElement.style.overflow = 'hidden';
     const block = () => {
       if (!root.hasAttribute('data-blocking')) return;
-      document.querySelectorAll('header, main, footer').forEach((el) => {
+      document.querySelectorAll('header, main, footer, .skip-link').forEach((el) => {
         if (el.hasAttribute('inert')) return;
         el.setAttribute('data-preload-inert', '');
         el.setAttribute('inert', '');

@@ -4,7 +4,7 @@ import { localeLabel, localePath, locales, type Locale } from '../../i18n/config
 import { ui } from '../../i18n/ui';
 import { contactCopy, footerCopy } from '../../data/contact';
 import { funderLogos, funders } from '../../data/funders';
-import { latestRelease, releaseNotes, releaseVersion, repo, socials } from '../../data/links';
+import { latestRelease, ostaver, releaseNotes, releaseVersion, repo, socials } from '../../data/links';
 import { sections } from '../../data/sections';
 
 interface Props {
@@ -18,6 +18,7 @@ const f = funders[locale];
 const nav = ui[locale].nav;
 const name = ui[locale].hero.title.join(' ');
 const otherLocale = locales.find((l) => l !== locale)!;
+const signatureSrc = `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}ostaver.svg`;
 
 const game = [
   { label: nav.download, href: latestRelease, download: true, external: false },
@@ -41,6 +42,15 @@ const game = [
   <div class="ft__main">
     <div class="ft__brand">
       <p class="ft__tagline">{ui[locale].hero.description}</p>
+      <p class="label ft__sign">
+        <span>{t.madeBy}</span>
+        <a class="ft__sig" href={ostaver} target="_blank" rel="noopener noreferrer">
+          <glow-logo src={signatureSrc} alt="OSTAVER" quality="1" spread="0.9" intensity="1.5" lift="0.3">
+            <img src={signatureSrc} alt="OSTAVER" width="600" height="240" loading="lazy" decoding="async" />
+          </glow-logo>
+          <span class="sr-only">{t.opensNewTab}</span>
+        </a>
+      </p>
     </div>
 
     <nav aria-labelledby="ft-explore">
@@ -116,6 +126,7 @@ const game = [
 
 <script>
   import { initFooter } from './footer';
+  import '../../lib/glow-logo';
   const root = document.querySelector<HTMLElement>('[data-footer]');
   if (root) initFooter(root);
 </script>
@@ -282,6 +293,62 @@ const game = [
   }
   .ft__version {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Keep the signature with the brand; the bottom bar holds only rights and version. */
+  .ft__sign {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin-top: 1.25rem;
+  }
+  .ft__sig {
+    display: block;
+    border-radius: 2px;
+  }
+  .ft__sig:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 4px;
+  }
+  glow-logo {
+    display: block;
+    /* Several lines of the label tall: the glow needs a body to burn around. */
+    height: 4.5em;
+    width: auto;
+    aspect-ratio: 600 / 240;
+    flex: none;
+    /* footer.ts springs --flare from 0 to 1 on hover; the swell rides the same spring as the fire,
+       so there is no transition here to run on a clock of its own. */
+    transform: scale(calc(1 + 0.08 * var(--flare, 0)));
+    /* The glow ramp on the host itself; ancestors can't override the renderer's defaults. */
+    --glow-outer: color-mix(in srgb, var(--oxblood) 30%, #000);
+    --glow-mid: var(--red);
+    --glow-core: var(--ember);
+  }
+  /* The letters are dark in the file: white on the ink, as drawn on the paper. */
+  glow-logo::part(logo),
+  glow-logo > img {
+    filter: brightness(0) invert(1);
+  }
+  glow-logo > img {
+    width: 100%;
+    height: auto;
+  }
+  glow-logo[data-fallback]::part(logo) {
+    filter: brightness(0) invert(1) drop-shadow(0 0 0.35em var(--red));
+  }
+  /* On paper the near-black edge of the ramp reads as grey smoke; burn out to deep red instead. */
+  :global(:root[data-zone='white']) glow-logo {
+    --glow-outer: var(--red-deep);
+  }
+  :global(:root[data-zone='white']) glow-logo::part(logo),
+  :global(:root[data-zone='white']) glow-logo > img {
+    filter: none;
+  }
+  :global(:root[data-zone='white']) glow-logo[data-fallback]::part(logo) {
+    filter: drop-shadow(0 0 0.35em var(--red));
   }
 
   /* ── The name ──────────────────────────────────────── */

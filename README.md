@@ -2,7 +2,7 @@
 
 ![Sivazona MK](public/og-image.png)
 
-Marketing site for **Сива Зона** aka **Gray Zone**, served at <https://siva-zona.ostaver.com>. Bilingual (Macedonian default, English under `/en`), single-page, with a WebGL hero and a preloader that transitions into it.
+Marketing site for **Сива Зона** aka **Gray Zone**, with production URL <https://sivazona.mk>. Bilingual (Macedonian default, English under `/en`), single-page, with a WebGL hero and a preloader that transitions into it.
 
 ## Stack
 
@@ -21,11 +21,23 @@ Static site deployed directly from the `dist/` directory; there is no server run
 
 - Build command: `npm run build`
 - Output directory: `dist`
-- Node version: 22+
+- Node version: 22.12+ (or a supported newer LTS)
 
 Upload or serve the contents of `dist/` to any static web host.
 
-`astro.config.mjs` currently uses `https://siva-zona.ostaver.com`, where this Astro site is deployed. `https://sivazona.mk` still serves the legacy site. Change `site` only when the deployment domain moves; canonical, language alternates, sharing images, sitemap and robots URLs follow it.
+`astro.config.mjs` uses `https://sivazona.mk`. Canonical, language alternate, sharing image, sitemap and robots URLs all follow this setting. A staging deployment of this build also points search engines to the production domain.
+
+Before uploading a release, run `npm ci`, `npm run check`, `npm audit` and `npm run build`. Preview `dist/` with `npm run preview` and check both `/` and `/en/`. Upload the complete build together so HTML and hashed assets belong to the same release; retain a copy of the previous deployment for rollback.
+
+Configure the static host at launch:
+
+- Serve HTTPS on `sivazona.mk`; redirect HTTP and `www` to the canonical HTTPS host, preserving paths and queries. Redirect the old staging domain after the production deployment is verified.
+- Serve `/en/` from `en/index.html`, normalize `/en` to `/en/`, and serve `404.html` with an actual HTTP 404 status for unknown paths. Do not use a single-page-app catch-all to `index.html`.
+- Enable Brotli/gzip. Cache hashed `/_astro/` files for one year with `immutable`; revalidate HTML, robots, sitemap and unversioned files such as share images so new releases appear promptly.
+- Set `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` and `X-Frame-Options: SAMEORIGIN`. Configure HSTS only after HTTPS works for the intended hosts. A Content Security Policy needs separate testing: the page uses inline startup scripts, GSAP inline styles, data-URI masks and WebGL.
+- Confirm `/robots.txt`, `/sitemap.xml`, `/og-image.jpg`, `/favicon.png` and both language routes return the expected content. Make sure crawler requests are not blocked by a challenge page, then submit the sitemap in Search Console.
+
+These are host settings, not features supplied by the static build. The repository does not change DNS, certificates, redirects or response headers automatically.
 
 ## Getting started
 
@@ -163,6 +175,6 @@ Reduced motion or no JS: the channels and the name are simply there.
 - **Structured data.** `Base.astro` describes the game as a schema.org `VideoGame` (free, Windows and macOS, both languages, version and download from `src/data/links.ts`) in a JSON-LD block on each language's page.
 - **Sitemap and robots.** `src/pages/sitemap.xml.ts` lists both language versions, each with the other as its `hreflang` alternate; `src/pages/robots.txt.ts` allows everything and points at the sitemap. Both are built from `site` in `astro.config.mjs`.
 - **Signature.** `OSTAVER: The intersection of Art and Abstract Expression` is a hidden source comment in Base and a comment in both `/robots.txt` and the requested `/robotx.txt`. `robotx.txt` is a signature file, not a replacement for the crawler-standard `robots.txt`.
-- **404.** `src/pages/404.astro` builds `dist/404.html`, which Cloudflare serves for any missing path. A missing page can't tell which language the reader came in, so it carries both: a slip from the archive's counter with a two-line split-flap board hung on its corner that clatters out "not found" in each language, with a way back to each language's home (copy in `src/data/notFound.ts`). It is `noindex` (Base's `noindex` prop, which also drops the canonical and alternates).
+- **404.** `src/pages/404.astro` builds `dist/404.html`; configure the static host to serve it with a 404 status for missing paths. A missing page can't tell which language the reader came in, so it carries both: a slip from the archive's counter with a two-line split-flap board hung on its corner that clatters out "not found" in each language, with a way back to each language's home (copy in `src/data/notFound.ts`). It has a distinct bilingual browser title and is `noindex` (Base's `noindex` prop, which also drops the canonical and alternates).
 
 See [AGENTS.md](AGENTS.md) for conventions for AI coding agents.

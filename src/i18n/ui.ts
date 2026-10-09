@@ -2,13 +2,14 @@ import type { Localized } from './config';
 
 const mk = {
   meta: {
-    title: 'Сива Зона — бесплатна едукативна игра за интегритет',
+    title: 'Сива Зона',
     description:
       'Бесплатна едукативна игра за Windows и macOS за интегритет и антикорупција. Секој избор остава трага — чесниот пат или кратенката низ сивата зона.',
     siteName: 'Сива Зона',
     imageAlt: 'Логото на „Сива Зона“, поделено со скинат раб на црвена и темна половина.',
   },
   a11y: {
+    skipToContent: 'Прескокни до содржината',
     langSwitch: 'Јазик',
     close: 'Затвори',
   },
@@ -47,13 +48,14 @@ export type UIDict = typeof mk;
 
 const en: UIDict = {
   meta: {
-    title: 'Gray Zone — Free educational game about integrity',
+    title: 'Gray Zone',
     description:
       'A free educational game for Windows and macOS about integrity and anti-corruption. Every choice leaves a mark — the honest path, or a shortcut through the gray zone.',
     siteName: 'Gray Zone',
     imageAlt: 'The Gray Zone logo, divided by a torn edge into red and dark halves.',
   },
   a11y: {
+    skipToContent: 'Skip to content',
     langSwitch: 'Language',
     close: 'Close',
   },

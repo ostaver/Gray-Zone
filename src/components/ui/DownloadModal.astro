@@ -14,7 +14,7 @@ const a11y = ui[locale].a11y;
 ---
 
 <dialog class="dl" data-download-dialog aria-labelledby="dl-title">
-  <div class="dl__panel">
+  <div class="dl__panel" data-lenis-prevent>
     <header class="dl__head">
       <p class="label dl__version">{t.version} {releaseVersion}</p>
       <button class="dl__close" type="button" data-download-close aria-label={a11y.close}>
@@ -53,10 +53,20 @@ const a11y = ui[locale].a11y;
   import { gsap, reducedMotion } from '../../lib/motion/gsap';
   import { lockScroll } from '../../lib/motion/scroll';
   import { detectPlatform } from '../../lib/platform';
+  import { onCleanup } from '../../lib/lifecycle';
 
   const dialog = document.querySelector<HTMLDialogElement>('[data-download-dialog]');
   if (dialog) {
+    const events = new AbortController();
+    const listenerOptions = { signal: events.signal };
     const panel = dialog.querySelector<HTMLElement>('.dl__panel')!;
+    const animated = [dialog, panel, ...panel.querySelectorAll('.dl__opt, .dl__title')];
+    let closing = false;
+    const reset = () => {
+      gsap.killTweensOf(animated);
+      gsap.set(animated, { clearProps: 'opacity,transform,clipPath' });
+      closing = false;
+    };
     const platform = detectPlatform();
     const options = dialog.querySelector<HTMLElement>('.dl__options')!;
     if (platform) {
@@ -68,6 +78,7 @@ const a11y = ui[locale].a11y;
 
     const open = () => {
       if (dialog.open) return;
+      reset();
       dialog.showModal();
       lockScroll(true);
       if (!reducedMotion.matches) {
@@ -77,12 +88,13 @@ const a11y = ui[locale].a11y;
       }
     };
     const close = () => {
-      if (!dialog.open) return;
+      if (!dialog.open || closing) return;
+      closing = true;
       if (reducedMotion.matches) {
         dialog.close();
         return;
       }
-      gsap.to(dialog, { opacity: 0, duration: 0.3, ease: 'power2.in', onComplete: () => dialog.close() });
+      gsap.to(dialog, { opacity: 0, duration: 0.3, ease: 'power2.in', overwrite: true, onComplete: () => dialog.close() });
     };
 
     document.addEventListener('click', (e) => {
@@ -92,16 +104,27 @@ const a11y = ui[locale].a11y;
       if (!trigger) return;
       e.preventDefault();
       open();
-    });
-    dialog.querySelector('[data-download-close]')!.addEventListener('click', close);
+    }, listenerOptions);
+    dialog.querySelector('[data-download-close]')!.addEventListener('click', close, listenerOptions);
     dialog.addEventListener('click', (e) => {
       if (e.target === dialog) close();
-    });
+    }, listenerOptions);
     dialog.addEventListener('cancel', (e) => {
       e.preventDefault();
       close();
+    }, listenerOptions);
+    dialog.addEventListener('close', () => {
+      reset();
+      lockScroll(false);
+    }, listenerOptions);
+    onCleanup(() => {
+      events.abort();
+      reset();
+      if (dialog.open) {
+        dialog.close();
+        lockScroll(false);
+      }
     });
-    dialog.addEventListener('close', () => lockScroll(false));
   }
 </script>
 
@@ -156,8 +179,8 @@ const a11y = ui[locale].a11y;
     vertical-align: 0.1em;
   }
   .dl__close {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: var(--control-target);
+    height: var(--control-target);
     display: grid;
     place-items: center;
     border: 1px solid var(--hairline);
@@ -304,7 +327,7 @@ const a11y = ui[locale].a11y;
     align-items: center;
     gap: 0.5rem;
     margin-top: 0.25rem;
-    color: var(--blush);
+    color: var(--paper-soft);
     font-size: 0.6875rem;
   }
   /* An author display value would otherwise override the UA's [hidden] rule. */

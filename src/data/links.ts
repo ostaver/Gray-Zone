@@ -27,3 +27,6 @@ export const socials = {
   instagram: 'https://www.instagram.com/sivazona.igra',
   instagramHandle: 'sivazona.igra',
 } as const;
+
+/** The OSTAVER signature in the footer links here: the maker's own GitHub, the same handle the team page uses. */
+export const ostaver = 'https://github.com/ostaver';
