@@ -16,6 +16,7 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
   { id: 'email', href: `mailto:${socials.email}`, parts: [mailbox, `@${domain}`], external: false },
   { id: 'instagram', href: socials.instagram, parts: [`@${socials.instagramHandle}`], external: true },
   { id: 'github', href: repo, parts: [t.source], external: true },
+  { id: 'issues', href: `${repo}/issues/new`, parts: [t.bugReport], external: true },
 ];
 ---
 
@@ -43,7 +44,7 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
           </a>
           {c.id === 'email' && (
             <div class="ct__copy-wrap">
-              <button class="ct__copy label" type="button" data-ct-copy={socials.email}>{t.copy}</button>
+              <button class="ct__copy label" type="button" data-ct-copy={socials.email} hidden>{t.copy}</button>
               <span class="ct__stamp" aria-hidden="true" data-ct-stamp>{t.copied}</span>
             </div>
           )}

@@ -47,7 +47,7 @@ const tilts = [-4, 3, -2, 5, -3, 2];
                 </div>
                 <div class="tm__side">
                   <ul class="tm__tags" role="list">
-                    {member.tags.map((tag, k) => (
+                    {member.tags[locale].map((tag, k) => (
                       <li class="tm__tag" style={`--tilt: ${tilts[(i + k) % tilts.length]}deg`} data-tm-tag>
                         {tag}
                       </li>

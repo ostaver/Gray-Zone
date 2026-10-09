@@ -1,6 +1,6 @@
 import type { Localized } from '../i18n/config';
 
-export type ContactChannel = 'email' | 'instagram' | 'github';
+export type ContactChannel = 'email' | 'instagram' | 'github' | 'issues';
 
 export interface ContactCopy {
   title: string;
@@ -9,6 +9,7 @@ export interface ContactCopy {
   channels: Record<ContactChannel, string>;
   /** Shown for the GitHub channel in place of its address. */
   source: string;
+  bugReport: string;
   /** The button beside the address, and the stamp that lands once it's on the clipboard. */
   copy: string;
   copied: string;
@@ -17,17 +18,19 @@ export interface ContactCopy {
 export const contactCopy: Localized<ContactCopy> = {
   en: {
     title: 'Get in Touch!',
-    text: 'We always appreciate your honest feedback on our projects. Feel free to send us an email with your ideas!',
-    channels: { email: 'Email', instagram: 'Instagram', github: 'GitHub' },
+    text: 'Share feedback, ask about using Gray Zone in your classroom, or discuss a collaboration. For a game bug, open a GitHub report with your operating system, game version, and steps to reproduce it. Reports are public; do not include personal information.',
+    channels: { email: 'Email', instagram: 'Instagram', github: 'GitHub', issues: 'Game support' },
     source: 'Source code',
+    bugReport: 'Report a bug',
     copy: 'Copy address',
     copied: 'Copied',
   },
   mk: {
     title: 'Контактирај Нѐ!',
-    text: 'Имаш прашање, предлог или идеја за подобрување на „Сива Зона“? Нашиот тим секогаш е отворен за соработка и нови иницијативи. Пиши ни – твоето мислење ни значи.',
-    channels: { email: 'Е-пошта', instagram: 'Instagram', github: 'GitHub' },
+    text: 'Сподели мислење, прашај за користење на „Сива Зона“ во училница или предложи соработка. За грешка во играта, отвори пријава на GitHub со оперативниот систем, верзијата на играта и чекорите за повторување на проблемот. Пријавите се јавни; не внесувај лични податоци.',
+    channels: { email: 'Е-пошта', instagram: 'Instagram', github: 'GitHub', issues: 'Поддршка за играта' },
     source: 'Изворен код',
+    bugReport: 'Пријави грешка',
     copy: 'Копирај адреса',
     copied: 'Копирано',
   },
@@ -37,7 +40,9 @@ export interface FooterCopy {
   rights: string;
 }
 
+const copyrightYear = new Date().getFullYear();
+
 export const footerCopy: Localized<FooterCopy> = {
-  en: { rights: '© 2025 GrayZone. All rights reserved.' },
-  mk: { rights: '© 2025 Сива Зона. Сите права задржани.' },
+  en: { rights: `© ${copyrightYear} Gray Zone. All rights reserved.` },
+  mk: { rights: `© ${copyrightYear} Сива Зона. Сите права задржани.` },
 };

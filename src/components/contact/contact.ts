@@ -64,6 +64,7 @@ function initCopy(root: HTMLElement): void {
     button.hidden = true;
     return;
   }
+  button.hidden = false;
 
   let hide: gsap.core.Tween | null = null;
   button.addEventListener('click', async () => {

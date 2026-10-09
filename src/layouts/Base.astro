@@ -9,6 +9,7 @@ import { ui } from '../i18n/ui';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImagePath, ogImageVariants, type OgExt } from '../lib/og';
 import { latestRelease, releaseVersion, repo } from '../data/links';
 import FpsStats from '../components/debug/FpsStats.astro';
+import PrivacyConsent from '../components/ui/PrivacyConsent.astro';
 
 interface Props {
   locale: Locale;
@@ -22,7 +23,6 @@ const { locale, path = '/', noindex = false } = Astro.props;
 const t = ui[locale];
 const canonical = new URL(localePath(locale, path), Astro.site);
 const ogImageUrl = (ext: OgExt) => new URL(ogImagePath(ext), Astro.site).href;
-const GA_ID = 'G-ZQ981XQYYV';
 
 // Describes the game to search engines (schema.org VideoGame): free, desktop, in both languages.
 const structuredData = {
@@ -74,40 +74,40 @@ const structuredData = {
     <meta property="og:description" content={t.meta.description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={ogLocale[locale]} />
+    {locales.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={ogLocale[l]} />)}
     {ogImageVariants.map(({ ext, type }) => (
       <>
         <meta property="og:image" content={ogImageUrl(ext)} />
         <meta property="og:image:type" content={type} />
         <meta property="og:image:width" content={String(OG_IMAGE_WIDTH)} />
         <meta property="og:image:height" content={String(OG_IMAGE_HEIGHT)} />
-        <meta property="og:image:alt" content={t.meta.title} />
+        <meta property="og:image:alt" content={t.meta.imageAlt} />
       </>
     ))}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogImageUrl('jpg')} />
-    <meta name="twitter:image:alt" content={t.meta.title} />
+    <meta name="twitter:image:alt" content={t.meta.imageAlt} />
 
     <script is:inline>
-      // Before first paint: JS flag, and preloader mode (full on first visit per session, short after).
+      // Before first paint: restore session preferences; preload only on the first non-reduced visit.
       (function () {
         var d = document.documentElement;
         d.classList.replace('no-js', 'js');
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var seen = false;
-        try { seen = sessionStorage.getItem('sz-seen') === '1'; sessionStorage.setItem('sz-seen', '1'); } catch (e) {}
-        d.dataset.preload = reduce ? 'none' : seen ? 'short' : 'full';
+        try {
+          seen = sessionStorage.getItem('sz-seen') === '1';
+          sessionStorage.setItem('sz-seen', '1');
+          if (sessionStorage.getItem('sz-zone') === 'white') d.dataset.zone = 'white';
+        } catch (e) {}
+        d.dataset.preload = reduce || seen ? 'none' : 'full';
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', getComputedStyle(d).getPropertyValue('--ink').trim());
       })();
     </script>
 
-    <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}></script>
-    <script is:inline define:vars={{ GA_ID }}>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() { dataLayer.push(arguments); }
-      gtag('js', new Date());
-      gtag('config', GA_ID);
-    </script>
   </head>
   <body>
+    <Fragment set:html="<!-- OSTAVER: The intersection of Art and Abstract Expression -->" />
     <a class="skip-link label" href="#main">{t.a11y.skip}</a>
     <canvas id="gl-stage" aria-hidden="true"></canvas>
     <slot name="chrome" />
@@ -115,6 +115,7 @@ const structuredData = {
       <slot />
     </main>
     <slot name="footer" />
+    <PrivacyConsent locale={locale} enabled={!noindex} />
     <div class="grain" aria-hidden="true"></div>
     {import.meta.env.DEV && <FpsStats />}
   </body>

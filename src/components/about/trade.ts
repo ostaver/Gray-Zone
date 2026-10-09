@@ -134,6 +134,7 @@ export function initTrade(section: HTMLElement): void {
   const stage = getStage();
   if (!stage) return;
   const still = reducedMotion.matches;
+  const desktop = window.matchMedia('(min-width: 900px)');
   const pin = section.querySelector<HTMLElement>('[data-trade-pin]')!;
   const art = (id: string) => section.querySelector<HTMLElement>(`[data-trade-art="${id}"]`)!;
   const arts = { integrity: art('integrity'), reputation: art('reputation'), time: art('time'), money: art('money') };
@@ -292,8 +293,8 @@ export function initTrade(section: HTMLElement): void {
   if (!still) {
     ScrollTrigger.create({
       trigger: section,
-      start: 'top top',
-      end: 'bottom bottom',
+      start: () => desktop.matches ? 'top top' : 'top bottom',
+      end: () => desktop.matches ? 'bottom bottom' : 'bottom top',
       onUpdate: (self) => {
         target = self.progress;
         scrollSpeed = Math.max(scrollSpeed, Math.abs(self.getVelocity()));

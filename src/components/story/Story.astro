@@ -103,11 +103,10 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
 </script>
 
 <style>
-  /* A pad of forms, pinned for one screen per form: scrolling (or ticking a box) rips the top
-     sheet off and throws it, revealing the next. The last sheet is the decision. */
+  /* Desktop enhanced pad: a compact scroll sequence reveals each real form. */
   .st {
     position: relative;
-    height: 560svh;
+    height: 320svh;
   }
   .st__pin {
     position: sticky;
@@ -227,6 +226,7 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
     display: grid;
     gap: 0.75rem;
     align-content: start;
+    min-height: 44px;
     cursor: pointer;
   }
   .sheet__input {
@@ -441,8 +441,8 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
       width: 110%;
     }
   }
-  /* Without motion, the pad is laid out: every form in a column, the decision last. */
-  @media (prefers-reduced-motion: reduce) {
+  /* Mobile and static modes keep every form in normal document order. */
+  @media (max-width: 899px), (prefers-reduced-motion: reduce) {
     .st {
       height: auto;
     }
@@ -459,5 +459,20 @@ const tilt = [-1.4, 1.2, -0.8, 1.7, -0.5];
       grid-area: auto;
       transform: none;
     }
+  }
+  .st:not([data-pad]) {
+    height: auto;
+  }
+  .st:not([data-pad]) .st__pin {
+    position: relative;
+    height: auto;
+    overflow: visible;
+  }
+  .st:not([data-pad]) .st__pad {
+    gap: 3rem;
+  }
+  .st:not([data-pad]) .sheet {
+    grid-area: auto;
+    transform: none;
   }
 </style>

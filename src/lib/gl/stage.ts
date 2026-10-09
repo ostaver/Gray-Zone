@@ -1,5 +1,6 @@
 import { Renderer, type OGLRenderingContext } from 'ogl';
 import { gsap, coarsePointer } from '../motion/gsap';
+import { onCleanup } from '../lifecycle';
 
 /**
  * One WebGL context for the whole page. A fixed, viewport-sized canvas sits behind the
@@ -85,13 +86,24 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
     // Force every view to redraw at the new size.
     for (const v of views) lastRects.delete(v);
   };
-  new ResizeObserver(resize).observe(canvas);
+  const observer = new ResizeObserver(resize);
+  observer.observe(canvas);
   resize();
 
-  canvas.addEventListener('webglcontextlost', (e) => {
-    e.preventDefault();
+  canvas.addEventListener('webglcontextlost', () => {
+    if (lost) return;
     lost = true;
+    stage = null;
+    gsap.ticker.remove(renderTick);
+    observer.disconnect();
     document.documentElement.classList.add('no-webgl');
+    canvas.style.visibility = 'hidden';
+    for (const view of views) {
+      try { view.dispose?.(); }
+      catch (error) { console.warn('[stage] disposal after context loss', error); }
+    }
+    views.clear();
+    // No restoration: views/resources belonged to the lost context. Keep DOM fallbacks.
   });
 
   const setViewport = (w: number, h: number, x: number, y: number) => {
@@ -157,7 +169,14 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
     gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
-  gsap.ticker.add((time) => tick(time));
+  const renderTick = (time: number) => tick(time);
+  gsap.ticker.add(renderTick);
+  onCleanup(() => {
+    gsap.ticker.remove(renderTick);
+    observer.disconnect();
+    for (const view of views) view.dispose?.();
+    views.clear();
+  });
 
   return {
     renderer,
@@ -167,11 +186,15 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
       tick(gsap.ticker.time, true);
     },
     add(view) {
+      if (lost) {
+        view.dispose?.();
+        return () => {};
+      }
       views.add(view);
       return () => {
-        views.delete(view);
+        if (!views.delete(view)) return;
         view.dispose?.();
-        clear();
+        if (!lost) clear();
       };
     },
   };

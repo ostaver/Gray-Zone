@@ -22,7 +22,7 @@ const pad = (i: number) => String(i).padStart(2, '0');
   <div class="gl__pin" data-gl-pin>
     <header class="gl__head">
       <h2 class="gl__title" id="gallery-title">{t.title}</h2>
-      <p class="gl__hint">{t.hint}</p>
+      <p class="gl__hint"><span class="gl__hint-arc">{t.hint}</span><span class="gl__hint-static">{t.staticHint}</span></p>
     </header>
 
     <!-- With WebGL, gallery.ts hangs the screens on an arc the page stage draws here. -->
@@ -43,9 +43,9 @@ const pad = (i: number) => String(i).padStart(2, '0');
     <ul class="gl__frames" role="list">
       {gallery.map((item, i) => (
         <li class="gl__frame">
-          <button class="gl__shot" type="button" data-gl-open={i} aria-label={`${t.open}: ${item.caption[locale]}`}>
+          <a class="gl__shot" href={full[i].src} data-gl-open={i} aria-label={`${t.open}: ${item.caption[locale]}`}>
             <Image class="gl__img" src={item.image} alt="" widths={[640, 960, 1280]} sizes="(min-width: 768px) 48vw, 92vw" />
-          </button>
+          </a>
           <p class="gl__caption">{item.caption[locale]}</p>
         </li>
       ))}
@@ -101,6 +101,13 @@ const pad = (i: number) => String(i).padStart(2, '0');
     color: var(--paper-dim);
     text-wrap: pretty;
   }
+  .gl__hint-arc,
+  [data-arc] .gl__hint-static {
+    display: none;
+  }
+  [data-arc] .gl__hint-arc {
+    display: inline;
+  }
   .gl__arc,
   .gl__ring,
   .gl__names {
@@ -155,8 +162,8 @@ const pad = (i: number) => String(i).padStart(2, '0');
 
   /* ── The arc ───────────────────────────────────────── */
   .gl[data-arc] {
-    /* Half a screen of scroll per screen turned. */
-    height: calc(100svh + (var(--count) - 1) * 55svh);
+    /* A quarter screen of scroll per screenshot, with dragging and keyboard selection intact. */
+    height: calc(100svh + (var(--count) - 1) * 25svh);
     padding: 0;
   }
   [data-arc] .gl__pin {

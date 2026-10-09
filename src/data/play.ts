@@ -13,6 +13,7 @@ export interface PlayCopy {
     priceValue: string;
     version: string;
     languages: string;
+    languagesValue: string;
     /** Before the platform's name on each stub: "Tear off for" Windows. */
     tear: string;
   };
@@ -32,6 +33,7 @@ export const playCopy: Localized<PlayCopy> = {
       priceValue: 'Бесплатно',
       version: 'Верзија',
       languages: 'Јазици',
+      languagesValue: 'MK · EN',
       tear: 'Откини за',
     },
     allReleases: 'Сите изданија на GitHub',
@@ -48,6 +50,7 @@ export const playCopy: Localized<PlayCopy> = {
       priceValue: 'Free',
       version: 'Version',
       languages: 'Languages',
+      languagesValue: 'MK · EN',
       tear: 'Tear off for',
     },
     allReleases: 'All releases on GitHub',

@@ -17,8 +17,6 @@ export function initPlay(root: HTMLElement): void {
     mine.dataset.detected = '';
     mine.querySelector<HTMLElement>('[data-pl-badge]')!.hidden = false;
     mine.parentElement!.prepend(mine);
-  } else if (window.matchMedia('(pointer: coarse)').matches) {
-    root.querySelector<HTMLElement>('[data-pl-mobile]')!.hidden = false;
   }
 
   print([...root.querySelectorAll('[data-pl-print]')]);

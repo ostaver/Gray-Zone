@@ -1,4 +1,5 @@
-import { gsap, ScrollTrigger, reducedMotion } from '../../lib/motion/gsap';
+import { gsap, ScrollTrigger } from '../../lib/motion/gsap';
+import { onCleanup } from '../../lib/lifecycle';
 
 /** Seconds the ring holds on a step (its bar filling) before turning to the next. */
 const HOLD = 6;
@@ -15,7 +16,52 @@ const SWING = 0.00014;
 const SWING_MAX = 0.45;
 
 export function initTutorial(root: HTMLElement): void {
-  if (!reducedMotion.matches) initRing(root);
+  const media = gsap.matchMedia();
+  media.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', () => initRing(root));
+  media.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', () => initCarousel(root));
+  onCleanup(() => media.revert());
+}
+
+/** Phones show the original screenshot and copy together, with no autoplay or duplicated slides. */
+function initCarousel(root: HTMLElement): () => void {
+  const steps = [...root.querySelectorAll<HTMLElement>('[data-tu-step]')];
+  const dots = [...root.querySelectorAll<HTMLButtonElement>('[data-tu-go]')];
+  const controls = root.querySelector<HTMLElement>('[data-tu-controls]')!;
+  const events = new AbortController();
+  const copy = root.querySelector<HTMLElement>('.tu__steps')!;
+  copy.setAttribute('aria-live', 'polite');
+  copy.setAttribute('aria-atomic', 'true');
+  const { signal } = events;
+  let active = Math.max(0, steps.findIndex((step) => step.hasAttribute('data-on')));
+  root.dataset.carousel = '';
+  const show = (index: number) => {
+    active = (index + steps.length) % steps.length;
+    steps.forEach((step, i) => step.toggleAttribute('data-on', i === active));
+    dots.forEach((dot, i) => {
+      if (i === active) dot.setAttribute('aria-current', 'step');
+      else dot.removeAttribute('aria-current');
+    });
+    const dot = dots[active];
+    const list = dot.closest<HTMLElement>('.tu__index')!;
+    list.scrollLeft = dot.offsetLeft - list.offsetLeft - (list.clientWidth - dot.offsetWidth) / 2;
+  };
+  show(active);
+  controls.querySelectorAll<HTMLElement>('[data-tu-step-by]').forEach((button) => {
+    button.addEventListener('click', () => show(active + Number(button.dataset.tuStepBy)), { signal });
+  });
+  dots.forEach((dot, i) => dot.addEventListener('click', () => show(i), { signal }));
+  controls.addEventListener('keydown', (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    show(event.key === 'Home' ? 0 : event.key === 'End' ? steps.length - 1 : active + (event.key === 'ArrowRight' ? 1 : -1));
+    dots[active].focus({ preventScroll: true });
+  }, { signal });
+  return () => {
+    events.abort();
+    delete root.dataset.carousel;
+    copy.removeAttribute('aria-live');
+    copy.removeAttribute('aria-atomic');
+  };
 }
 
 /**
@@ -25,7 +71,9 @@ export function initTutorial(root: HTMLElement): void {
  * there. Page scroll swings it with the flow and it springs back. The step facing front is the
  * one whose copy shows under the ring. Without JS or with reduced motion the list stays a list.
  */
-function initRing(root: HTMLElement): void {
+function initRing(root: HTMLElement): () => void {
+  const events = new AbortController();
+  const { signal } = events;
   const stage = root.querySelector<HTMLElement>('[data-tu-stage]')!;
   const ring = root.querySelector<HTMLElement>('[data-tu-ring]')!;
   const cards = [...root.querySelectorAll<HTMLElement>('[data-tu-card]')];
@@ -42,6 +90,11 @@ function initRing(root: HTMLElement): void {
   const n = cards.length;
   const angle = 360 / n;
   root.dataset.ring = '';
+  steps.forEach((step, i) => step.toggleAttribute('data-on', i === 0));
+  dots.forEach((dot, i) => {
+    if (i === 0) dot.setAttribute('aria-current', 'step');
+    else dot.removeAttribute('aria-current');
+  });
 
   /** Signed distance from step `from` to step `to` the short way round, in steps. */
   const around = (to: number, from: number) => ((((to - from) % n) + n * 1.5) % n) - n / 2;
@@ -101,10 +154,11 @@ function initRing(root: HTMLElement): void {
 
   // ── The frame loop ─────────────────────────────────
   let inView = false;
-  new IntersectionObserver(([entry]) => (inView = entry.isIntersecting)).observe(stage);
+  const visibility = new IntersectionObserver(([entry]) => (inView = entry.isIntersecting));
+  visibility.observe(stage);
   let lastY = window.scrollY;
   let drawn = NaN;
-  gsap.ticker.add((time, deltaMs) => {
+  const tick = (time: number, deltaMs: number) => {
     const y = window.scrollY;
     const dt = Math.min(deltaMs, 100) / 1000;
     const speed = dt > 0 ? (y - lastY) / dt : 0;
@@ -139,12 +193,13 @@ function initRing(root: HTMLElement): void {
     }
     const front = ((Math.round(pos) % n) + n) % n;
     if (entered && front !== active) show(front);
-  });
+  };
+  gsap.ticker.add(tick);
 
   // ── Entrance: the ring fans out of one stack and spins round to the first step ─
   gsap.set(ring, { '--spread': 0, opacity: 0 });
   pos = -n * 0.4;
-  ScrollTrigger.create({
+  const entrance = ScrollTrigger.create({
     trigger: stage,
     start: 'top 85%',
     once: true,
@@ -156,14 +211,15 @@ function initRing(root: HTMLElement): void {
     },
   });
   // The screens are lazy; fetch them all before the ring arrives so none turns in blank.
-  new IntersectionObserver(
+  const loader = new IntersectionObserver(
     ([entry], io) => {
       if (!entry.isIntersecting) return;
       ring.querySelectorAll('img').forEach((img) => (img.loading = 'eager'));
       io.disconnect();
     },
     { rootMargin: '100% 0px' },
-  ).observe(stage);
+  );
+  loader.observe(stage);
 
   // ── Pointer: drag or flick to spin, click a screen to turn to it ─
   /** `trail`: where the pointer was over the last FLICK_MS, for a flick's speed. */
@@ -173,7 +229,7 @@ function initRing(root: HTMLElement): void {
   stage.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     down = { x: e.clientX, pos, moved: false, trail: [{ x: e.clientX, t: e.timeStamp }] };
-  });
+  }, { signal });
   stage.addEventListener('pointermove', (e) => {
     if (!down) return;
     const dx = e.clientX - down.x;
@@ -186,7 +242,7 @@ function initRing(root: HTMLElement): void {
     pos = target = down.pos - dx / stepPx();
     down.trail.push({ x: e.clientX, t: e.timeStamp });
     while (e.timeStamp - down.trail[0].t > FLICK_MS) down.trail.shift();
-  });
+  }, { signal });
   const release = (e: PointerEvent) => {
     if (!down) return;
     const { moved, trail } = down;
@@ -209,8 +265,8 @@ function initRing(root: HTMLElement): void {
       if (card) turnTo(cards.indexOf(card));
     }
   };
-  stage.addEventListener('pointerup', release);
-  stage.addEventListener('pointercancel', release);
+  stage.addEventListener('pointerup', release, { signal });
+  stage.addEventListener('pointercancel', release, { signal });
 
   // ── Controls ───────────────────────────────────────
   controls.querySelectorAll<HTMLElement>('[data-tu-step-by]').forEach((btn) => {
@@ -219,24 +275,38 @@ function initRing(root: HTMLElement): void {
       turnBy(dir);
       // The chevron punches the way the ring goes.
       gsap.fromTo(btn.firstElementChild, { x: 8 * dir }, { x: 0, duration: 0.7, ease: 'elastic.out(1, 0.35)' });
-    });
+    }, { signal });
   });
-  dots.forEach((dot, i) => dot.addEventListener('click', () => turnTo(i)));
+  dots.forEach((dot, i) => dot.addEventListener('click', () => turnTo(i), { signal }));
   controls.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
     turnBy(e.key === 'ArrowRight' ? 1 : -1);
-  });
+  }, { signal });
   play.addEventListener('click', () => {
     paused = !paused;
     play.toggleAttribute('data-paused', paused);
     play.setAttribute('aria-label', (paused ? play.dataset.labelPlay : play.dataset.labelPause) ?? '');
     if (!paused) idleUntil = 0;
-  });
+  }, { signal });
 
   // Hold still while someone reads the copy or tabs through the controls.
-  copy.addEventListener('pointerenter', (e) => (reading = e.pointerType === 'mouse'));
-  copy.addEventListener('pointerleave', () => (reading = false));
-  root.addEventListener('focusin', (e) => (focused = (e.target as Element).matches(':focus-visible')));
-  root.addEventListener('focusout', () => (focused = false));
+  copy.addEventListener('pointerenter', (e) => (reading = e.pointerType === 'mouse'), { signal });
+  copy.addEventListener('pointerleave', () => (reading = false), { signal });
+  root.addEventListener('focusin', (e) => (focused = (e.target as Element).matches(':focus-visible')), { signal });
+  root.addEventListener('focusout', () => (focused = false), { signal });
+  return () => {
+    events.abort();
+    visibility.disconnect();
+    loader.disconnect();
+    entrance.kill();
+    gsap.ticker.remove(tick);
+    gsap.killTweensOf([ring, ...names, ...bodies.flatMap((body) => [...body.children]), ...fills]);
+    gsap.set([ring, ...names, ...bodies.flatMap((body) => [...body.children]), ...fills], { clearProps: 'all' });
+    names.forEach((name, i) => (name.textContent = nameText[i]));
+    delete root.dataset.ring;
+    delete stage.dataset.dragging;
+    play.removeAttribute('data-paused');
+    play.setAttribute('aria-label', play.dataset.labelPause ?? '');
+  };
 }

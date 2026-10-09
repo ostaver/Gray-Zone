@@ -2,9 +2,7 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  // Absolute URLs (canonical, hreflang, og:image) are built from this, so it must be the host
-  // that actually serves this build. sivazona.mk still points at the legacy site (the image 404s
-  // there, so previews come up blank); switch back once the domain moves to Cloudflare.
+  // Absolute metadata URLs must match the deployed host; sivazona.mk still serves the legacy site.
   site: 'https://siva-zona.ostaver.com',
   trailingSlash: 'ignore',
   i18n: {

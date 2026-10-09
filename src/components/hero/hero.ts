@@ -1,7 +1,7 @@
 import { gsap, ScrollTrigger, SplitText, coarsePointer, reducedMotion } from '../../lib/motion/gsap';
 import { magnetic } from '../../lib/motion/magnetic';
-import { onZoneBusy, onZoneChange, setZone } from '../../lib/zone';
-import { appReady } from '../../lib/lifecycle';
+import { currentZone, onZoneBusy, onZoneChange, setZone } from '../../lib/zone';
+import { appReady, onCleanup } from '../../lib/lifecycle';
 import { getStage } from '../../lib/gl/stage';
 import { createSeamHalftone, type SeamHalftoneState } from '../../lib/gl/views/seamHalftone';
 import { detectPlatform } from '../../lib/platform';
@@ -34,6 +34,9 @@ export function initHero(root: HTMLElement): void {
   const sideHonest = root.querySelector<HTMLElement>('[data-side="honest"]')!;
   const sideGray = root.querySelector<HTMLElement>('[data-side="gray"]')!;
   const still = reducedMotion.matches;
+  const shortLandscape = window.matchMedia('(max-height: 520px) and (orientation: landscape)');
+  const events = new AbortController();
+  let active = true;
   // Seam-driven UI (path labels) is only meaningful once this script is running.
   root.dataset.live = '';
 
@@ -46,21 +49,22 @@ export function initHero(root: HTMLElement): void {
     mouseForce: 0,
     reveal: still ? 1 : 0,
     progress: 0,
-    whiteZone: 0,
+    whiteZone: currentZone() === 'white' ? 1 : 0,
     still,
   };
   const zoneButtons = [sideHonest, sideGray];
+  zoneButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.zone === currentZone())));
   zoneButtons.forEach((button) => {
-    button.addEventListener('click', () => void setZone(button.dataset.zone === 'white' ? 'white' : 'black', button));
+    button.addEventListener('click', () => void setZone(button.dataset.zone === 'white' ? 'white' : 'black', button), { signal: events.signal });
   });
   // The nav has a zone control too; both follow the shared state rather than their own clicks.
-  onZoneChange((zone) => {
+  const unsubscribeZone = onZoneChange((zone) => {
     state.whiteZone = zone === 'white' ? 1 : 0;
     zoneButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.zone === zone)));
     // View Transitions pause rAF during capture; flush the shader synchronously.
     stage?.draw();
   });
-  onZoneBusy((busy) => {
+  const unsubscribeBusy = onZoneBusy((busy) => {
     if (busy) root.setAttribute('aria-busy', 'true');
     else root.removeAttribute('aria-busy');
     zoneButtons.forEach((button) => (busy ? button.setAttribute('aria-disabled', 'true') : button.removeAttribute('aria-disabled')));
@@ -71,8 +75,9 @@ export function initHero(root: HTMLElement): void {
 
   // ── WebGL field (or DOM fallback when the stage is unavailable) ──
   const stage = getStage();
+  let removeView: (() => void) | undefined;
   if (stage) {
-    stage.add(
+    removeView = stage.add(
       createSeamHalftone(stage, {
         el: glEl,
         cell: coarsePointer.matches ? 13 : 16,
@@ -89,12 +94,19 @@ export function initHero(root: HTMLElement): void {
   let heroW = 1;
   let heroH = 1;
   let titleTop = 0;
+  let titleHeight = 0;
+  let labelInset = parseFloat(getComputedStyle(pin).paddingInlineStart);
+  window.addEventListener('resize', () => {
+    labelInset = parseFloat(getComputedStyle(pin).paddingInlineStart);
+  }, { signal: events.signal });
   const boxes = clipped.map(() => ({ shown: false, left: 0, top: 0, width: 1, height: 1, sx: 1, sy: 1 }));
   const measure = () => {
     const pr = pin.getBoundingClientRect();
     heroW = pr.width;
     heroH = pr.height;
-    titleTop = title.getBoundingClientRect().top - pr.top;
+    const tr = title.getBoundingClientRect();
+    titleTop = tr.top - pr.top;
+    titleHeight = tr.height;
     clipped.forEach((el, i) => {
       const b = boxes[i];
       // The static fallback halves are display:none while WebGL draws the field; a box that
@@ -127,17 +139,18 @@ export function initHero(root: HTMLElement): void {
     state.mouse.x = x;
     state.mouse.y = y;
     pointer = { x: x / r.width, y: y / r.height };
-  });
+  }, { signal: events.signal });
   pin.addEventListener('pointerleave', () => {
     pointer = null;
     state.mouse.x = state.mouse.y = -1e4;
-  });
+  }, { signal: events.signal });
 
   // ── Per-frame update (only while the hero is on screen) ────
   let inView = true;
-  new IntersectionObserver(([entry]) => (inView = entry.isIntersecting)).observe(root);
+  const observer = new IntersectionObserver(([entry]) => (inView = entry.isIntersecting));
+  observer.observe(root);
   let prev = 0;
-  gsap.ticker.add((time) => {
+  const tick = (time: number) => {
     const dt = prev ? time - prev : 1 / 60;
     prev = time;
     if (!inView) return;
@@ -153,38 +166,54 @@ export function initHero(root: HTMLElement): void {
 
     // Reads first, then writes: one layout per frame.
     measure();
+    const landscape = shortLandscape.matches;
     const honestLabelW = sideHonest.offsetWidth;
+    const grayLabelW = sideGray.offsetWidth;
+    const labelHeight = landscape ? 0 : Math.max(sideHonest.offsetHeight, sideGray.offsetHeight);
     for (let i = 0; i < clipped.length; i++) {
       if (!boxes[i].shown) continue;
       const side = clipped[i].dataset.seamClip === 'left' ? 'left' : 'right';
       clipped[i].style.clipPath = seam.clipPolygon(side, boxes[i], heroW, heroH);
     }
 
-    // Path labels ride the seam just above the headline.
-    const labelY = Math.max(0, titleTop - 26);
-    const sx = seam.at(labelY / heroH) * heroW;
-    sideHonest.style.transform = `translate3d(${sx - honestLabelW - 18}px, ${labelY}px, 0) translateY(-50%)`;
-    sideGray.style.transform = `translate3d(${sx + 18}px, ${labelY}px, 0) translateY(-50%)`;
-  });
+    // Short landscapes flank the title; elsewhere the pair follows the seam within the gutters.
+    const labelY = landscape ? titleTop + titleHeight / 2 : Math.max(labelHeight / 2, titleTop - labelHeight / 2 - labelInset / 4);
+    let honestX: number;
+    let grayX: number;
+    if (landscape) {
+      honestX = labelInset;
+      grayX = heroW - labelInset - grayLabelW;
+    } else {
+      const gap = Math.min(18, Math.max(0, (heroW - 2 * labelInset - honestLabelW - grayLabelW) / 2));
+      const seamX = seam.at(labelY / heroH) * heroW;
+      const sx = Math.max(labelInset + honestLabelW + gap, Math.min(heroW - labelInset - grayLabelW - gap, seamX));
+      honestX = sx - honestLabelW - gap;
+      grayX = sx + gap;
+    }
+    sideHonest.style.transform = `translate3d(${honestX}px, ${labelY}px, 0) translateY(-50%)`;
+    sideGray.style.transform = `translate3d(${grayX}px, ${labelY}px, 0) translateY(-50%)`;
+  };
+  gsap.ticker.add(tick);
 
   // ── Scroll: sweep into the gray zone ───────────────────────
   const fades = root.querySelectorAll<HTMLElement>('[data-hero-fade]');
-  ScrollTrigger.create({
-    trigger: root,
-    start: 'top top',
-    end: 'bottom bottom',
-    scrub: true,
-    onUpdate: (self) => {
-      state.progress = self.progress;
-    },
-  });
   // The headline's letters, split up front: the scroll scatter and the intro drive the same ones.
   const splits = still ? [] : [...root.querySelectorAll<HTMLElement>('.hero__layer')].map((layer) => SplitText.create(layer.querySelectorAll('.hero__line'), { type: 'chars' }));
-  if (!still) {
+  const media = gsap.matchMedia();
+  if (!still) media.add('(min-width: 761px) and (min-height: 521px)', () => {
+    ScrollTrigger.create({
+      trigger: root,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: true,
+      onUpdate: (self) => {
+        state.progress = self.progress;
+      },
+    });
     const scroll = gsap
       .timeline({ scrollTrigger: { trigger: root, start: 'top top', end: 'bottom bottom', scrub: 0.6, invalidateOnRefresh: true } })
       .to(title, { yPercent: -18, scale: 0.92, duration: 0.85, ease: 'none' }, 0)
-      .to([...root.querySelectorAll('.hero__sides, .hero__bottom')], { opacity: 0, y: -40, ease: 'power1.in', duration: 0.4 }, 0);
+      .to([...root.querySelectorAll('.hero__lead, .hero__facts')], { opacity: 0, y: -40, ease: 'power1.in', duration: 0.4 }, 0);
 
     // The letters scatter outward from the middle of the headline and leave the screen (the pin
     // clips them), inner letters first. Both layers get identical motion by index, so the halves
@@ -198,33 +227,49 @@ export function initHero(root: HTMLElement): void {
         scroll.to(el, { x: () => to().x, y: () => to().y, rotation: () => to().rotation, duration: 0.55, ease: 'power2.in' }, 0.05 + (order.get(i) ?? 0) * 0.15);
       }),
     );
-  }
+    return () => {
+      state.progress = 0;
+    };
+  });
 
   // ── CTAs ───────────────────────────────────────────────────
   const osLabel = root.querySelector<HTMLElement>('[data-os-label]');
   const platform = detectPlatform();
-  if (osLabel && platform) osLabel.textContent = `· ${platform === 'mac' ? 'macOS' : 'Windows'}`;
+  if (osLabel && platform) osLabel.textContent = `· ${osLabel.dataset[platform]}`;
   root.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => magnetic(el, 0.3));
 
+  let intro: gsap.core.Timeline | undefined;
+  onCleanup(() => {
+    active = false;
+    events.abort();
+    observer.disconnect();
+    gsap.ticker.remove(tick);
+    media.revert();
+    intro?.kill();
+    splits.forEach((split) => split.revert());
+    unsubscribeZone();
+    unsubscribeBusy();
+    removeView?.();
+  });
   // ── Intro ──────────────────────────────────────────────────
   if (still) return;
   const chars = splits.flatMap((s) => s.chars);
   gsap.set(chars, { yPercent: 115 });
-  gsap.set(fades, { opacity: 0, y: 24 });
-  gsap.set([sideHonest, sideGray], { opacity: 0 });
+  gsap.set(root.querySelector<HTMLElement>('.hero__scroll'), { opacity: 0 });
 
   void appReady.then(() => {
+    if (!active) return;
     // Same stagger order for both layers so the halves stay welded across the tear.
     const perLayer = splits.map((s) => s.chars);
     // Once the letters are in, their line masks only get in the way of the scroll scatter.
-    const tl = gsap.timeline({ onComplete: () => title.classList.add('is-free') });
+    const tl = intro = gsap.timeline({ onComplete: () => title.classList.add('is-free') });
     tl.to(state, { reveal: 1, duration: 2.4, ease: 'power2.out' }, 0);
     perLayer.forEach((layerChars) => tl.to(layerChars, { yPercent: 0, duration: 1.5, stagger: 0.045 }, 0.15));
     tl.add(() => {
       introDone = true;
       target = 0.5;
     }, 0.1);
-    tl.to(fades, { opacity: 1, y: 0, duration: 1.2, stagger: 0.08 }, 0.55);
-    tl.to([sideHonest, sideGray], { opacity: 1, duration: 1 }, 1.1);
+    tl.to(fades, { opacity: 1, y: 0, duration: 0.35, stagger: 0.04 }, 0);
+    tl.to([sideHonest, sideGray], { opacity: 1, duration: 0.35 }, 0);
   });
 }

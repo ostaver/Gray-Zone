@@ -104,8 +104,9 @@ export function createArcGallery(stage: Stage, opts: ArcGalleryOptions): ArcGall
   let drawnAt = NaN;
 
   let loading = false;
+  let disposed = false;
   const load = () => {
-    if (loading) return;
+    if (loading || disposed) return;
     loading = true;
     for (const screen of screens) {
       const img = new Image();
@@ -114,6 +115,7 @@ export function createArcGallery(stage: Stage, opts: ArcGalleryOptions): ArcGall
       void img
         .decode()
         .then(() => {
+          if (disposed) return;
           gl.deleteTexture(screen.map.texture);
           // Drawn below their size on 1x displays: trilinear mipmaps keep them clean.
           screen.map = new Texture(gl, { image: img, generateMipmaps: true, minFilter: gl.LINEAR_MIPMAP_LINEAR });
@@ -216,6 +218,8 @@ export function createArcGallery(stage: Stage, opts: ArcGalleryOptions): ArcGall
       }
     },
     dispose() {
+      if (disposed) return;
+      disposed = true;
       for (const s of screens) gl.deleteTexture(s.map.texture);
       program.remove();
       geometry.remove();
