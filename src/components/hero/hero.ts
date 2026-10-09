@@ -91,13 +91,17 @@ export function initHero(root: HTMLElement): void {
   // Read every frame: the title is scroll-transformed, so boxes move without resizing.
   // For translate/scale transforms the bounding rect maps local → hero space linearly.
   const title = root.querySelector<HTMLElement>('.hero__title')!;
+  const description = root.querySelector<HTMLElement>('.hero__description')!;
   let heroW = 1;
   let heroH = 1;
   let titleTop = 0;
   let titleHeight = 0;
   let labelInset = parseFloat(getComputedStyle(pin).paddingInlineStart);
+  // The labels ride up with the scattering title, but no higher than the line under the bar.
+  let labelCeiling = description.offsetTop;
   window.addEventListener('resize', () => {
     labelInset = parseFloat(getComputedStyle(pin).paddingInlineStart);
+    labelCeiling = description.offsetTop;
   }, { signal: events.signal });
   const boxes = clipped.map(() => ({ shown: false, left: 0, top: 0, width: 1, height: 1, sx: 1, sy: 1 }));
   const measure = () => {
@@ -176,8 +180,9 @@ export function initHero(root: HTMLElement): void {
       clipped[i].style.clipPath = seam.clipPolygon(side, boxes[i], heroW, heroH);
     }
 
-    // Short landscapes flank the title; elsewhere the pair follows the seam within the gutters.
-    const labelY = landscape ? titleTop + titleHeight / 2 : Math.max(labelHeight / 2, titleTop - labelHeight / 2 - labelInset / 4);
+    // Short landscapes flank the title; elsewhere the pair follows the seam within the gutters,
+    // far enough above the title that they don't crowd its caps.
+    const labelY = landscape ? titleTop + titleHeight / 2 : Math.max(labelCeiling + labelHeight / 2, titleTop - labelHeight / 2 - Math.max(14, labelInset / 2));
     let honestX: number;
     let grayX: number;
     if (landscape) {
@@ -213,6 +218,8 @@ export function initHero(root: HTMLElement): void {
     const scroll = gsap
       .timeline({ scrollTrigger: { trigger: root, start: 'top top', end: 'bottom bottom', scrub: 0.6, invalidateOnRefresh: true } })
       .to(title, { yPercent: -18, scale: 0.92, duration: 0.85, ease: 'none' }, 0)
+      // The supporting copy makes way; the description first, as the zone labels rise into its place.
+      .to(description, { opacity: 0, y: -24, ease: 'power1.in', duration: 0.3 }, 0)
       .to([...root.querySelectorAll('.hero__lead, .hero__facts')], { opacity: 0, y: -40, ease: 'power1.in', duration: 0.4 }, 0);
 
     // The letters scatter outward from the middle of the headline and leave the screen (the pin

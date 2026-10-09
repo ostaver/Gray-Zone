@@ -21,6 +21,8 @@ export interface StoryCopy {
   decision: string;
   /** The signature line at the foot of each form. */
   sign: string;
+  /** Labels the bar beside the queue of counters that runs down as the forms are scrolled. */
+  deadline: string;
   verdicts: Record<Verdict, { stamp: string; text: string }>;
   teaser: string;
   cta: string;
@@ -82,6 +84,7 @@ export const story: Localized<StoryCopy> = {
     honestMark: 'чесно',
     shortcutMark: 'кратенка',
     sign: 'Потпис',
+    deadline: 'Рок',
     decision: 'Одлука за стипендијата',
     verdicts: {
       clean: { stamp: 'Одобрено', text: 'Стипендијата е твоја, заработена чесно. Потрае подолго, но никој не може да ти ја земе.' },
@@ -97,6 +100,7 @@ export const story: Localized<StoryCopy> = {
     honestMark: 'honest',
     shortcutMark: 'shortcut',
     sign: 'Signature',
+    deadline: 'Deadline',
     decision: 'Scholarship decision',
     verdicts: {
       clean: { stamp: 'Approved', text: 'The scholarship is yours, earned honestly. It took longer, but no one can take it away.' },

@@ -15,8 +15,10 @@ export function initStory(root: HTMLElement): void {
   const verdicts = [...decision.querySelectorAll<HTMLElement>('[data-verdict]')];
   // One split-flap board per verdict; only the current verdict's is showing.
   const boards = new Map(verdicts.map((el) => [el.dataset.verdict!, flapBoard(el.querySelector<HTMLElement>('[data-flap]')!)] as const));
+  const counters = [...root.querySelectorAll<HTMLElement>('[data-counter]')];
+  const deadline = root.querySelector<HTMLElement>('[data-deadline]');
 
-  // ── The decision follows the boxes ticked ──────────────────
+  // ── The decision (and the queue) follow the boxes ticked ───
   let shown: string | null = null;
   /** Re-reads the ticks; true when the verdict changed. */
   const decide = (): boolean => {
@@ -24,9 +26,11 @@ export function initStory(root: HTMLElement): void {
     for (const input of inputs) {
       if (!input.checked) continue;
       if (input.value === 'shortcut') shortcuts++;
-      const mark = decision.querySelector<HTMLElement>(`[data-mark="${input.dataset.step}"]`)!;
-      mark.dataset.taken = input.value;
-      mark.textContent = (input.value === 'shortcut' ? decision.dataset.shortcut : decision.dataset.honest) ?? '';
+      const text = (input.value === 'shortcut' ? decision.dataset.shortcut : decision.dataset.honest) ?? '';
+      for (const mark of root.querySelectorAll<HTMLElement>(`[data-mark="${input.dataset.step}"], [data-counter-mark="${input.dataset.step}"]`)) {
+        mark.dataset.taken = input.value;
+        mark.textContent = text;
+      }
     }
     const verdict = verdictFor(shortcuts);
     verdicts.forEach((el) => (el.hidden = el.dataset.verdict !== verdict));
@@ -53,10 +57,23 @@ export function initStory(root: HTMLElement): void {
     root.dataset.pad = '';
     atDecision = false;
     for (const board of boards.values()) board.blank();
+    // The queue lights the counter whose form is on top (none once the decision is up), and the
+    // deadline runs down with the whole pad.
+    let atCounter = -1;
+    const queue = (time: number, progress: number) => {
+      const at = Math.min(sheets.length, Math.floor(time + 0.02));
+      if (at !== atCounter) {
+        atCounter = at;
+        counters.forEach((el, i) => el.toggleAttribute('data-current', i === at));
+      }
+      if (deadline) deadline.style.transform = `scaleX(${progress})`;
+    };
+    queue(0, 0);
     // Checked on the timeline's own updates: with scrub it keeps moving after the scroll stops.
     const pad = gsap.timeline({
       defaults: { ease: 'none' },
       onUpdate: () => {
+        queue(pad.time(), pad.progress());
         const reached = pad.time() >= sheets.length - 0.02;
         if (reached === atDecision) return;
         atDecision = reached;
@@ -91,6 +108,8 @@ export function initStory(root: HTMLElement): void {
       advanceCall = null;
       trigger = null;
       atDecision = true;
+      counters.forEach((el) => el.removeAttribute('data-current'));
+      deadline?.style.removeProperty('transform');
       delete root.dataset.pad;
     };
   });

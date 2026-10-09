@@ -215,8 +215,13 @@ const barDots = 16;
       radial-gradient(ellipse 120% 95% at 50% 50%, transparent 38%, rgb(0 0 0 / 0.72) 100%),
       radial-gradient(ellipse 70% 60% at 50% 48%, #151313 0%, var(--ink) 62%);
   }
-  /* A faint ember behind the logo, breathing slowly. */
-  .pre__veil::before {
+  /* White zone: lit paper instead of a dark pool, one long falloff to warm gray at the edges
+     (no second, banded ring). */
+  :global(:root[data-zone='white']) .pre__veil {
+    background: radial-gradient(ellipse 125% 110% at 50% 46%, #fff 0%, var(--ink) 34%, #ece9e3 72%, #d9d5cd 100%);
+  }
+  /* A faint ember behind the logo, breathing slowly; the dark zone stays plain. */
+  :global(:root[data-zone='white']) .pre__veil::before {
     content: '';
     position: absolute;
     left: 50%;
@@ -225,14 +230,13 @@ const barDots = 16;
     aspect-ratio: 1;
     translate: -50% -50%;
     border-radius: 50%;
-    background: radial-gradient(circle, rgb(227 38 31 / 0.13), rgb(227 38 31 / 0.04) 40%, transparent 68%);
+    background: radial-gradient(circle, rgb(227 38 31 / 0.1), rgb(227 38 31 / 0.03) 42%, transparent 68%);
     animation: pre-breathe 3.2s ease-in-out infinite alternate;
   }
   @keyframes pre-breathe {
     from { opacity: 0.55; scale: 0.94; }
     to { opacity: 1; scale: 1.04; }
   }
-
   .pre__dots {
     position: absolute;
     inset: 0;

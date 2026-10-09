@@ -74,13 +74,15 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
 
 <style>
   .ct {
+    /* The label column of the channel rows; the intro starts where their values do. */
+    --label-col: 11rem;
+    --label-gap: 2rem;
     position: relative;
     padding: clamp(6rem, 14vh, 10rem) var(--gutter) clamp(5rem, 12vh, 8rem);
   }
   .ct__head {
     display: grid;
-    gap: 1.25rem;
-    align-items: end;
+    gap: clamp(1.25rem, 3vh, 2rem);
   }
   .ct__title {
     max-width: 14ch;
@@ -92,14 +94,29 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
     text-wrap: balance;
   }
   .ct__text {
-    max-width: 30rem;
-    color: var(--paper-dim);
+    max-width: 40rem;
+    color: var(--paper-soft);
+    font-size: var(--text-lead);
+    line-height: 1.5;
     text-wrap: pretty;
   }
-  @media (min-width: 1024px) {
+  @media (min-width: 768px) {
+    .ct__text {
+      margin-left: calc(var(--label-col) + var(--label-gap));
+    }
+  }
+  /* Wide screens: the intro stands beside the title, on its baseline, instead of floating in a
+     narrow column under its left half. */
+  @media (min-width: 1200px) {
     .ct__head {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
-      gap: 4rem;
+      grid-template-columns: minmax(0, 1fr) minmax(22rem, 34rem);
+      align-items: end;
+      column-gap: clamp(2rem, 5vw, 6rem);
+    }
+    .ct__text {
+      margin-left: 0;
+      /* Down to the title's baseline: its line box sits a little under the caps. */
+      margin-bottom: 0.35rem;
     }
   }
 
@@ -270,12 +287,12 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
      arrow lines up. */
   @media (min-width: 768px) {
     .ct__row {
-      grid-template-columns: 11rem minmax(0, 1fr);
+      grid-template-columns: var(--label-col) minmax(0, 1fr);
       grid-template-areas:
         'label link'
         'copy link';
       grid-template-rows: auto 1fr;
-      column-gap: 2rem;
+      column-gap: var(--label-gap);
     }
     .ct__link {
       align-self: center;

@@ -9,6 +9,7 @@ import { ui } from '../i18n/ui';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImagePath, ogImageVariants, type OgExt } from '../lib/og';
 import { latestRelease, releaseVersion, repo } from '../data/links';
 import FpsStats from '../components/debug/FpsStats.astro';
+import ScrollRail from '../components/shell/ScrollRail.astro';
 
 interface Props {
   locale: Locale;
@@ -113,6 +114,7 @@ const structuredData = {
       <slot />
     </main>
     <slot name="footer" />
+    <ScrollRail locale={locale} />
     <div class="grain" aria-hidden="true"></div>
     {import.meta.env.DEV && <FpsStats />}
   </body>

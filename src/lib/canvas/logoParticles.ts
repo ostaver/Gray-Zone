@@ -26,10 +26,13 @@ interface Dot {
 const PAPER = '#efece6';
 const RED = '#e3261f';
 const SHADE = '#3a3a3a';
+/** The disc's dark half on the white zone's light paper: solid ink, as the nav's logo has it. */
+const INK = '#141414';
 const RGB: Record<string, [number, number, number]> = {
   [PAPER]: [0.937, 0.925, 0.902],
   [RED]: [0.89, 0.149, 0.122],
   [SHADE]: [0.227, 0.227, 0.227],
+  [INK]: [0.078, 0.078, 0.078],
 };
 
 export class LogoParticles {
@@ -91,6 +94,9 @@ export class LogoParticles {
     const { data } = sctx.getImageData(0, 0, grid, grid);
 
     const o = -size / 2;
+    // On dark ground the dark half is a soft shade between smaller dots; on light paper it has
+    // to be dense ink, or the cream letters wash out into the page.
+    const dark = document.documentElement.dataset.zone === 'white' ? INK : SHADE;
     const dots: Dot[] = [];
     for (let gy = 0; gy < grid; gy++) {
       for (let gx = 0; gx < grid; gx++) {
@@ -101,7 +107,7 @@ export class LogoParticles {
         const g = data[i + 1] / 255;
         const b = data[i + 2] / 255;
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-        const color = lum > 0.62 ? PAPER : r > 0.35 && r > g * 1.8 ? RED : SHADE;
+        const color = lum > 0.62 ? PAPER : r > 0.35 && r > g * 1.8 ? RED : dark;
         const tx = o + (gx + 0.5) * cell;
         const ty = o + (gy + 0.5) * cell;
         // Hashed per grid cell, not Math.random(): a resize mid-flight keeps every dot's path.
@@ -112,7 +118,8 @@ export class LogoParticles {
           ty,
           sx: Math.cos(angle) * dist,
           sy: Math.sin(angle) * dist,
-          r: cell * (color === SHADE ? 0.34 : 0.42) * (0.75 + lum * 0.35),
+          // Light paper shows through the gaps, so there the dots run nearly edge to edge.
+          r: cell * (dark === INK ? 0.5 : color === SHADE ? 0.34 : 0.42) * (dark === INK ? 0.92 : 0.75 + lum * 0.35),
           color,
           delay: Math.hypot(tx, ty) / size * 0.45 + cellRandom(this.seed, gx, gy, 2) * 0.12,
         });

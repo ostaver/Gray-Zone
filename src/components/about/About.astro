@@ -214,8 +214,8 @@ const { integrity, reputation, time, money } = t.stats;
   .ab__para {
     max-width: 62ch;
     margin-top: 1.25rem;
-    color: var(--paper-dim);
-    font-size: clamp(1rem, 1.05vw, 1.0625rem);
+    color: var(--paper-soft);
+    font-size: var(--text-body);
     line-height: 1.7;
   }
   .ab__title + .ab__para {
@@ -288,15 +288,23 @@ const { integrity, reputation, time, money } = t.stats;
     line-height: 1;
     text-transform: uppercase;
   }
+  /* Narrow: the pile sits right under the word, on the right, so chips fall into it without
+     crossing any copy: the word's caption keeps to the left half, and the clock takes the left
+     column beside the pile. The crowd watches from below. */
+  /* Each stat takes two rows of the list, art over text, shared through subgrid with the stats
+     beside it, so their captions line up whatever their length. */
   .ab__trade-list {
     position: relative;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 0.8fr) auto minmax(0, 1.1fr) auto minmax(0, 1fr) auto;
     grid-template-areas:
       'integrity integrity'
-      'reputation time'
-      'money money';
+      'integrity integrity'
+      'time money'
+      'time money'
+      'reputation reputation'
+      'reputation reputation';
     gap: clamp(1rem, 3vh, 2rem) var(--gutter);
     margin: 0;
     padding: 0;
@@ -305,7 +313,8 @@ const { integrity, reputation, time, money } = t.stats;
   .ab__tr {
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
-    gap: 0.75rem;
+    grid-template-rows: subgrid;
+    row-gap: 0.75rem;
     min-height: 0;
   }
   .ab__tr--integrity {
@@ -351,8 +360,8 @@ const { integrity, reputation, time, money } = t.stats;
   }
   .ab__tr-text {
     max-width: 32ch;
-    color: var(--paper-dim);
-    font-size: 0.9375rem;
+    color: var(--paper-soft);
+    font-size: var(--text-body);
     line-height: 1.45;
   }
   .ab__tr-name {
@@ -390,9 +399,11 @@ const { integrity, reputation, time, money } = t.stats;
   @media (min-width: 900px) {
     .ab__trade-list {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1.1fr) auto minmax(0, 1fr) auto;
       grid-template-areas:
         'integrity integrity integrity'
+        'integrity integrity integrity'
+        'reputation time money'
         'reputation time money';
     }
   }
@@ -427,7 +438,10 @@ const { integrity, reputation, time, money } = t.stats;
       min-height: 90svh;
     }
     .ab__trade-list {
-      grid-template-rows: minmax(7rem, 0.8fr) minmax(9rem, 1fr) minmax(9rem, 1fr);
+      grid-template-rows: minmax(4.5rem, 0.8fr) auto minmax(6.5rem, 1.25fr) auto minmax(5.5rem, 1fr) auto;
+    }
+    .ab__tr--integrity .ab__tr-text {
+      max-width: calc(50% - var(--gutter) / 2);
     }
   }
   :global(.no-js) .ab__trade,

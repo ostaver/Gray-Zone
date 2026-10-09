@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import { localeLabel, localePath, locales, type Locale } from '../../i18n/config';
 import { ui } from '../../i18n/ui';
 import { contactCopy, footerCopy } from '../../data/contact';
-import { funders, fundersImage } from '../../data/funders';
+import { funderLogos, funders } from '../../data/funders';
 import { latestRelease, releaseNotes, releaseVersion, repo, socials } from '../../data/links';
 import { sections } from '../../data/sections';
 
@@ -30,7 +30,11 @@ const game = [
 <footer class="ft" data-footer>
   <!-- The funders' strip: the logos need light paper behind them, torn off along its top. -->
   <div class="ft__paper" data-ft-paper>
-    <Image class="ft__funders" src={fundersImage} alt={f.alt} />
+    <ul class="ft__funders" role="list" aria-label={f.label}>
+      {funderLogos.map(({ image, name }) => (
+        <li><Image class="ft__logo" src={image} alt={name[locale]} /></li>
+      ))}
+    </ul>
     <p class="ft__disclaimer">{f.disclaimer}</p>
   </div>
 
@@ -148,9 +152,21 @@ const game = [
       linear-gradient(#000, #000) top left / 100% calc(100% - var(--tear)) no-repeat,
       var(--torn-x) bottom left / 18rem var(--tear) repeat-x;
   }
+  /* One row of logos at one height, evenly spaced; two rows on narrow screens. */
   .ft__funders {
-    width: min(100%, 43rem);
-    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.25rem, 3vh, 1.75rem) clamp(2rem, 5vw, 3.75rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ft__logo {
+    width: auto;
+    /* No taller than the source files, so they stay sharp. */
+    height: clamp(2.25rem, 4vw, 3rem);
     /* The logos come on white; multiplied, they sit on the paper instead. */
     mix-blend-mode: multiply;
   }
