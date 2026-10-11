@@ -110,10 +110,9 @@ const structuredData = {
   </head>
   <body>
     <Fragment set:html="<!-- OSTAVER: The intersection of Art and Abstract Expression -->" />
-    <a class="skip-link" href="#main">{t.a11y.skipToContent}</a>
     <canvas id="gl-stage" aria-hidden="true"></canvas>
     <slot name="chrome" />
-    <main id="main" tabindex="-1">
+    <main id="main">
       <slot />
     </main>
     <slot name="footer" />

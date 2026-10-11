@@ -14,10 +14,9 @@ import { clockStart } from '../../data/about';
  * are small SVGs over it, so their line work stays sharp.
  */
 
-/** Progress over which the gray zone crosses the word, and the share of the word it leaves. */
+/** Progress over which the gray zone crosses the entire word. */
 const EAT_FROM = 0.08;
 const EAT_TO = 0.84;
-const KEEP = 0.14;
 /** Progress a chip spends in the air between the word and the pile. */
 const FLIGHT = 0.13;
 /** Game minutes per second at rest, and extra per px/s of scroll speed. */
@@ -57,7 +56,7 @@ interface Chip {
   r: number;
   /** Radius once it's a coin in the pile (the pile's packing sets it, not the word's grid). */
   cr: number;
-  /** Progress at which the gray zone reaches it; > 1 for the part of the word that survives. */
+  /** Progress at which the gray zone reaches it. */
   t: number;
   hop: number;
   shade: number;
@@ -199,7 +198,7 @@ export function initTrade(section: HTMLElement): void {
       points = sampleAt(cell);
     }
 
-    word = { left: wordBox.x, right: wordBox.x + textW, top: wordBox.y + baseline - cap, bottom: wordBox.y + baseline, eat: textW * (1 - KEEP) };
+    word = { left: wordBox.x, right: wordBox.x + textW, top: wordBox.y + baseline - cap, bottom: wordBox.y + baseline, eat: textW };
     chips = points.map(({ x, y }, i) => {
       const hx = wordBox.x + x;
       const hy = wordBox.y + y;
@@ -211,8 +210,8 @@ export function initTrade(section: HTMLElement): void {
         sy: 0,
         r: cell * 0.43,
         cr: cell * 0.43,
-        // The leftmost part of the word is never reached: it survives the run.
-        t: frac > 1 ? 2 : EAT_FROM + frac * (EAT_TO - EAT_FROM) + jag(hy) * 0.02 + hash(i) * 0.01,
+        // Finish every departure by EAT_TO, leaving room for the last chip's flight.
+        t: Math.min(EAT_TO, EAT_FROM + frac * (EAT_TO - EAT_FROM) + jag(hy) * 0.02 + hash(i) * 0.01),
         hop: 30 + hash(i + 7) * 90,
         shade: hash(i + 13),
         seed: hash(i + 29) * 100,
@@ -221,7 +220,7 @@ export function initTrade(section: HTMLElement): void {
 
     // The pile: a mound of coins on the floor of its box, filled centre-first from the bottom,
     // one slot per chip in the order the chips break away.
-    const falling = chips.filter((c) => c.t <= 1).sort((a, b) => a.t - b.t);
+    const falling = chips.slice().sort((a, b) => a.t - b.t);
     const baseW = pileBox.w * 0.92;
     const moundH = pileBox.h * 0.9;
     // A heap, not a dome: a slightly convex cone (its area is baseW·moundH / 1.75).
@@ -319,8 +318,7 @@ export function initTrade(section: HTMLElement): void {
     }
     const p = progress;
 
-    // Where the gray zone's front is (it stops where the surviving part of the word begins),
-    // and what the crowd is looking at.
+    // Where the gray zone's front is, and what the crowd is looking at.
     const front = Math.min(p, EAT_TO);
     const frontAt = (y: number) => word.right - ((front - EAT_FROM - jag(y) * 0.02) / (EAT_TO - EAT_FROM)) * word.eat;
     const midY = (word.top + word.bottom) / 2;

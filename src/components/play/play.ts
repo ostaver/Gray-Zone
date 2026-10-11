@@ -4,7 +4,7 @@ import { detectPlatform } from '../../lib/platform';
 
 /**
  * The closing call to play: a pass into the gray zone. The title prints in; the ticket feeds out
- * of its slot in steps as the section scrolls in (like a ticket machine) and drops a little once
+ * of its slot smoothly as the section scrolls in and drops a little once
  * it's out. Each platform is a stub on the ticket: hovering peels it off its perforation, and
  * clicking (which downloads) tears it off and lets it fall, then a fresh one prints back in.
  * The reader's own platform, if we can tell, comes first and is marked.
@@ -25,9 +25,9 @@ export function initPlay(root: HTMLElement): void {
   const ticket = root.querySelector<HTMLElement>('[data-pl-ticket]')!;
   const feed = root.querySelector<HTMLElement>('[data-pl-feed]')!;
 
-  // Fed out in steps, as a printer would, scrubbed by the scroll. It's all the way out while the
-  // slot is still mid-screen, so the title above it and the whole ticket are seen together.
-  gsap.fromTo(ticket, { yPercent: -101 }, { yPercent: 0, ease: 'steps(18)', scrollTrigger: { trigger: feed, start: 'top 92%', end: 'top 48%', scrub: true } });
+  // A continuous feed follows Lenis's smoothed scroll without quantizing small movements.
+  // It's all the way out while the slot is still mid-screen, so the title and ticket stay together.
+  gsap.fromTo(ticket, { yPercent: -101 }, { yPercent: 0, ease: 'none', scrollTrigger: { trigger: feed, start: 'top 92%', end: 'top 48%', scrub: true } });
   // Once it's all the way out it drops onto its corner; scrolled back, it hangs straight again.
   let dropped = false;
   ScrollTrigger.create({

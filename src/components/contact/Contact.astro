@@ -32,29 +32,26 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
         <span class="ct__rule" aria-hidden="true" data-ct-rule></span>
         <div class="ct__row">
           <span class="ct__label label" data-ct-label>{t.channels[c.id]}</span>
-          <a class="ct__link" href={c.href} target={c.external ? '_blank' : undefined} rel={c.external ? 'noopener' : undefined} data-ct-link>
+          <a class="ct__link" href={c.href} aria-label={c.parts.join('')} target={c.external ? '_blank' : undefined} rel={c.external ? 'noopener' : undefined} data-ct-link>
             <span class="ct__value">
               {c.parts.map((part) => (
-                <span class="ct__clip">
-                  <span class="ct__part" data-ct-part>{part}</span>
+                <span class="ct__clip" data-text={part}>
+                  <span class="ct__part" aria-hidden="true" data-ct-part>{part}</span>
                 </span>
               ))}
             </span>
             <span class="ct__arrow" aria-hidden="true">↗</span>
           </a>
           {c.id === 'email' && (
-            <div class="ct__copy-wrap">
-              <button class="ct__copy" type="button" data-ct-copy={socials.email} hidden>
-                <svg class="ct__copy-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <rect x="9" y="9" width="11" height="11" rx="1"></rect>
-                  <path d="M15 9V4H4v11h5"></path>
-                </svg>
-                <span>{t.copy}</span>
-              </button>
-              <span class="ct__stamp" aria-hidden="true" data-ct-stamp>
-                <span class="flap-board" data-flap>{t.copied}</span>
-              </span>
-            </div>
+            <button class="ct__copy" type="button" aria-label={t.copy} title={t.copy} data-ct-copy={socials.email} hidden>
+              <svg class="ct__copy-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="8" y="8" width="14" height="14" rx="2"></rect>
+                <path d="M8 16H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"></path>
+              </svg>
+              <svg class="ct__copy-check" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m5 12 4 4L19 6"></path>
+              </svg>
+            </button>
           )}
         </div>
       </li>
@@ -163,14 +160,24 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
     font-size: clamp(1.9rem, 5.2vw, 5.5rem);
     line-height: 1;
   }
-  /* Each part rises out of its own slot on the way in (contact.ts). */
+  /* The original text sizes the slot; wider scrambled glyphs cannot move its wrap point. */
   .ct__clip {
+    position: relative;
     display: block;
     overflow: hidden;
+  }
+  .ct__clip::before {
+    content: attr(data-text);
+    display: block;
+    padding-bottom: 0.2em;
+    visibility: hidden;
   }
   /* Red ink is rolled across the value on hover: the fill sits off to the right of the text and
      slides under it. */
   .ct__part {
+    position: absolute;
+    inset: 0;
+    white-space: nowrap;
     display: block;
     /* Room for descenders: the ink is clipped to this box, and the slot to its parent. */
     padding-bottom: 0.2em;
@@ -205,35 +212,19 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
   }
 
   /* ── Copy the address ──────────────────────────────── */
-  .ct__copy-wrap {
-    grid-area: copy;
-    position: relative;
-    /* Flex, so the wrap is exactly the button's box (no line-box slack for the board to cover). */
-    display: flex;
-    justify-self: start;
-  }
-  /* A flat, hard-edged ticket: heavy rule, a red slab for a shadow. On hover red ink rolls across
-     it left to right (the same gesture as the values), and the slab is pressed flat. */
   .ct__copy {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.7rem;
-    min-height: 2.75rem;
-    padding: 0.7rem 1.2rem 0.7rem 1rem;
-    border: 2px solid var(--paper);
-    background: linear-gradient(90deg, var(--red) 50%, var(--ink) 50%) 100% 0 / 200% 100% no-repeat;
-    box-shadow: 5px 5px 0 var(--red);
-    color: var(--paper);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    white-space: nowrap;
+    grid-area: copy;
+    justify-self: start;
+    align-self: start;
+    display: grid;
+    place-items: center;
+    width: var(--control-target);
+    height: var(--control-target);
+    border: 2px solid var(--hairline);
+    border-radius: calc(var(--control-target) / 4);
+    color: var(--paper-dim);
     cursor: pointer;
     transition:
-      background-position 0.6s var(--ease-tear),
-      box-shadow 0.3s var(--ease-out),
       border-color 0.3s,
       color 0.3s;
   }
@@ -242,45 +233,37 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
   }
   .ct__copy:hover,
   .ct__copy:focus-visible {
-    background-position: 0 0;
     border-color: var(--red);
-    box-shadow: 0 0 0 var(--red);
-    color: var(--button-hover-text);
+    color: var(--red);
   }
   .ct__copy:focus-visible {
     outline: 2px solid var(--red);
-    outline-offset: 5px;
+    outline-offset: 4px;
   }
-  .ct__copy-icon {
-    width: 1.15rem;
-    flex: none;
+  .ct__copy-icon,
+  .ct__copy-check {
+    grid-area: 1 / 1;
+    width: 1.25rem;
     fill: none;
     stroke: currentColor;
-    stroke-width: 2.4;
+    stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: translate 0.4s var(--ease-out);
+    transition: opacity 0.2s;
   }
-  .ct__copy:hover .ct__copy-icon,
-  .ct__copy:focus-visible .ct__copy-icon {
-    translate: -2px -2px;
-  }
-  /* Once the address is on the clipboard the button's face is covered by a split-flap board
-     (styles/flap.css) that clatters out "copied", in the button's own frame. */
-  .ct__stamp {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    border: 2px solid var(--paper);
-    background: var(--ink);
-    box-shadow: 5px 5px 0 var(--red);
-    font-size: 1.3rem;
+  .ct__copy-check,
+  .ct__copy[data-copied] .ct__copy-icon {
     opacity: 0;
-    pointer-events: none;
   }
-  .ct__stamp[data-on] {
+  .ct__copy[data-copied] .ct__copy-check {
     opacity: 1;
+    color: var(--red);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ct__copy-icon,
+    .ct__copy-check {
+      transition: none;
+    }
   }
 
   /* Wide: the label (and the copy button under it) in a column of their own, so every value and
@@ -296,9 +279,6 @@ const channels: { id: ContactChannel; href: string; parts: string[]; external: b
     }
     .ct__link {
       align-self: center;
-    }
-    .ct__copy-wrap {
-      align-self: start;
     }
   }
 </style>

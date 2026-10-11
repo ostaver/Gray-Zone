@@ -1,11 +1,11 @@
 import { gsap, ScrollTrigger, reducedMotion } from '../../lib/motion/gsap';
 import { print } from '../../lib/motion/reveal';
-import { flapBoard } from '../../lib/motion/flap';
+import { onCleanup } from '../../lib/lifecycle';
 
 /**
  * Contact: the title and text print in; each channel rules itself in, its label scrambles on and
  * its value rises out of a slot. Hovering a value rolls red ink across it (CSS) and scrambles it.
- * The address can be copied, and a split-flap "copied" board clatters out over the button when it is.
+ * The icon-only copy button briefly shows a checkmark after the address is copied.
  */
 export function initContact(root: HTMLElement): void {
   initCopy(root);
@@ -57,10 +57,8 @@ export function initContact(root: HTMLElement): void {
 
 function initCopy(root: HTMLElement): void {
   const button = root.querySelector<HTMLButtonElement>('[data-ct-copy]');
-  const stamp = root.querySelector<HTMLElement>('[data-ct-stamp]');
-  const face = stamp?.querySelector<HTMLElement>('[data-flap]');
   const status = root.querySelector<HTMLElement>('[data-ct-status]');
-  if (!button || !stamp || !face || !status) return;
+  if (!button || !status) return;
   // Without the clipboard API (or off https) the mailto link is all there is.
   if (!navigator.clipboard) {
     button.hidden = true;
@@ -68,14 +66,8 @@ function initCopy(root: HTMLElement): void {
   }
   button.hidden = false;
 
-  const board = flapBoard(face);
-  board.blank();
-  const clear = () => {
-    delete stamp.dataset.on;
-    gsap.set(stamp, { clearProps: 'opacity' });
-    board.blank();
-  };
   let hide: gsap.core.Tween | null = null;
+  onCleanup(() => hide?.kill());
   button.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(button.dataset.ctCopy ?? '');
@@ -87,14 +79,10 @@ function initCopy(root: HTMLElement): void {
     requestAnimationFrame(() => (status.textContent = status.dataset.copied ?? ''));
 
     hide?.kill();
-    gsap.set(stamp, { clearProps: 'opacity' });
-    stamp.dataset.on = '';
-    if (reducedMotion.matches) {
-      board.settle();
-      hide = gsap.delayedCall(1.8, clear);
-      return;
-    }
-    const flip = board.flip();
-    hide = gsap.to(stamp, { opacity: 0, duration: 0.4, delay: flip.duration() + 1.4, ease: 'power2.out', onComplete: clear });
+    button.dataset.copied = '';
+    hide = gsap.delayedCall(1.8, () => {
+      delete button.dataset.copied;
+      hide = null;
+    });
   });
 }

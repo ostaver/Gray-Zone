@@ -17,14 +17,21 @@ export function initStory(root: HTMLElement): void {
   const boards = new Map(verdicts.map((el) => [el.dataset.verdict!, flapBoard(el.querySelector<HTMLElement>('[data-flap]')!)] as const));
   const counters = [...root.querySelectorAll<HTMLElement>('[data-counter]')];
   const deadline = root.querySelector<HTMLElement>('[data-deadline]');
+  const marks = [...root.querySelectorAll<HTMLElement>('[data-mark], [data-counter-mark]')];
 
   // ── The decision (and the queue) follow the boxes ticked ───
   let shown: string | null = null;
   /** Re-reads the ticks; true when the verdict changed. */
   const decide = (): boolean => {
+    let answered = 0;
     let shortcuts = 0;
+    for (const mark of marks) {
+      delete mark.dataset.taken;
+      mark.textContent = decision.dataset.unanswered ?? '';
+    }
     for (const input of inputs) {
       if (!input.checked) continue;
+      answered++;
       if (input.value === 'shortcut') shortcuts++;
       const text = (input.value === 'shortcut' ? decision.dataset.shortcut : decision.dataset.honest) ?? '';
       for (const mark of root.querySelectorAll<HTMLElement>(`[data-mark="${input.dataset.step}"], [data-counter-mark="${input.dataset.step}"]`)) {
@@ -32,7 +39,7 @@ export function initStory(root: HTMLElement): void {
         mark.textContent = text;
       }
     }
-    const verdict = verdictFor(shortcuts);
+    const verdict = verdictFor(shortcuts, answered);
     verdicts.forEach((el) => (el.hidden = el.dataset.verdict !== verdict));
     const changed = verdict !== shown;
     shown = verdict;

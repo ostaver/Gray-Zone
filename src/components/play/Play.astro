@@ -133,6 +133,9 @@ const platforms = [
     font-weight: 700;
     font-size: clamp(3.5rem, 13vw, 13rem);
     line-height: 0.82;
+    /* Keep glyph overshoot inside the print mask without changing the spacing below. */
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
     text-transform: uppercase;
   }
   .pl__lead {

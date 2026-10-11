@@ -36,6 +36,7 @@ This site has been tuned to hold 60fps on integrated GPUs. Do not regress it:
 - Match surrounding code style and comment density; comments explain why, not what.
 - Commits use conventional-style prefixes seen in history: `feat(scope):`, `perf(scope):`, `fix(scope):`.
 - **"Back to top" buttons are prohibited**, and specifically in the footer (`src/components/shell/Footer.astro`): its bar holds only the rights line and the version. Do not add one there or anywhere else (e.g. a floating button).
+- **Generic "Skip to content" buttons or links are prohibited.** Do not add a global skip-to-content control, including one hidden until keyboard focus.
 - Do not commit `dist/`, `.astro/`, `node_modules/`, or `.env*`. `/Chromatic theme/` is a local design reference and is git-ignored; do not add it.
 
 ## Deployment

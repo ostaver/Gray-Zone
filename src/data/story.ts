@@ -10,12 +10,13 @@ export interface StoryStep {
   shortcut: Localized<string>;
 }
 
-export type Verdict = 'clean' | 'scarred' | 'lost';
+export type Verdict = 'unknown' | 'clean' | 'scarred' | 'lost';
 
 export interface StoryCopy {
   title: string;
   /** How to play the pad of forms. */
   hint: string;
+  unansweredMark: string;
   honestMark: string;
   shortcutMark: string;
   decision: string;
@@ -71,8 +72,9 @@ export const steps: StoryStep[] = [
   },
 ];
 
-/** Shortcuts taken → ending, after the game's three outcomes. */
-export function verdictFor(shortcuts: number): Verdict {
+/** Incomplete forms have no ending; completed choices follow the game's three outcomes. */
+export function verdictFor(shortcuts: number, answered: number): Verdict {
+  if (answered < steps.length) return 'unknown';
   if (shortcuts === 0) return 'clean';
   return shortcuts < 3 ? 'scarred' : 'lost';
 }
@@ -81,12 +83,14 @@ export const story: Localized<StoryCopy> = {
   mk: {
     title: 'Четири шалтери. Еден рок.',
     hint: 'Штиклирај едно поле на секој формулар.',
+    unansweredMark: '—',
     honestMark: 'чесно',
     shortcutMark: 'кратенка',
     sign: 'Потпис',
     deadline: 'Рок',
     decision: 'Одлука за стипендијата',
     verdicts: {
+      unknown: { stamp: 'Непознато', text: 'Одговори на сите четири формулари за да ја видиш одлуката.' },
       clean: { stamp: 'Одобрено', text: 'Стипендијата е твоја, заработена чесно. Потрае подолго, но никој не може да ти ја земе.' },
       scarred: { stamp: 'Одобрено', text: 'Успеа. Но секоја кратенка остави трага, и ти знаеш каде.' },
       lost: { stamp: 'Одбиено', text: 'Кратенките се забележаа. Можноста е изгубена.' },
@@ -97,12 +101,14 @@ export const story: Localized<StoryCopy> = {
   en: {
     title: 'Four counters. One deadline.',
     hint: 'Tick one box on each form.',
+    unansweredMark: '—',
     honestMark: 'honest',
     shortcutMark: 'shortcut',
     sign: 'Signature',
     deadline: 'Deadline',
     decision: 'Scholarship decision',
     verdicts: {
+      unknown: { stamp: 'Unknown', text: 'Answer all four forms to see the decision.' },
       clean: { stamp: 'Approved', text: 'The scholarship is yours, earned honestly. It took longer, but no one can take it away.' },
       scarred: { stamp: 'Approved', text: 'You made it. But every shortcut left a mark, and you know where.' },
       lost: { stamp: 'Rejected', text: 'The shortcuts were noticed. The opportunity is gone.' },
