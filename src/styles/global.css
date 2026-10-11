@@ -230,7 +230,9 @@ html[data-zone-transition]::view-transition-new(root) {
 
 .grain {
   position: fixed;
-  inset: -100%;
+  /* Just enough bleed for grain-shift's ±2% jitter. Every composited frame blends this layer
+     over the page, so it stays near viewport size rather than 3×3 viewports. */
+  inset: -5%;
   z-index: var(--z-grain);
   pointer-events: none;
   opacity: 0.09;

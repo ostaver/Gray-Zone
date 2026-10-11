@@ -24,6 +24,11 @@ const Tag = as as any;
   </span>
 </Tag>
 
+<script>
+  import { initCoolButtons } from './coolButton';
+  initCoolButtons();
+</script>
+
 <style>
   .cool-btn {
     position: relative;
@@ -62,6 +67,8 @@ const Tag = as as any;
     transition: inset 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
     z-index: 1;
+    /* The sweep below sizes itself to this box (cq units). */
+    container-type: size;
     /* Always-red base: the sweep only adds a highlight, so no edge can go empty. */
     background: var(--red);
   }
@@ -77,8 +84,12 @@ const Tag = as as any;
     position: absolute;
     top: 50%;
     left: 50%;
+    /* Just covers the box at any angle. A conic sweep depends only on angle, so this draws
+       the same as a larger square while rasterising and compositing far fewer pixels. */
     width: 600px;
     height: 600px;
+    width: calc(hypot(100cqw, 100cqh) + 2px);
+    height: calc(hypot(100cqw, 100cqh) + 2px);
     animation: cool-spin 2.4s linear infinite;
     background: conic-gradient(
       from 0deg,
@@ -98,7 +109,6 @@ const Tag = as as any;
       var(--red-deep) 95%,
       var(--red-deep) 100%
     );
-    filter: blur(1px);
     will-change: transform;
   }
 
@@ -113,6 +123,7 @@ const Tag = as as any;
     transition: inset 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
     z-index: 2;
+    container-type: size;
   }
 
   .cool-btn:hover .cool-btn__glow,
@@ -124,8 +135,12 @@ const Tag = as as any;
     position: absolute;
     top: 50%;
     left: 50%;
+    /* Just covers the box at any angle. A conic sweep depends only on angle, so this draws
+       the same as a larger square while rasterising and compositing far fewer pixels. */
     width: 600px;
     height: 600px;
+    width: calc(hypot(100cqw, 100cqh) + 2px);
+    height: calc(hypot(100cqw, 100cqh) + 2px);
     animation: cool-spin-slow 3.6s linear infinite;
     background: conic-gradient(
       from 180deg,
@@ -137,7 +152,6 @@ const Tag = as as any;
       var(--ember) 80%,
       var(--red-deep) 100%
     );
-    filter: blur(1px);
     will-change: transform;
   }
 
@@ -205,6 +219,13 @@ const Tag = as as any;
     to {
       transform: translate(-50%, -50%) rotate(-360deg);
     }
+  }
+
+  /* Off screen (cool-btn.ts) the sweeps hold still, so they stop asking the compositor for
+     frames. */
+  .cool-btn[data-offscreen] .cool-btn__spin,
+  .cool-btn[data-offscreen] .cool-btn__spin-slow {
+    animation-play-state: paused;
   }
 
   @media (prefers-reduced-motion: reduce) {

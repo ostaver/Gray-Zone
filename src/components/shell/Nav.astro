@@ -525,6 +525,10 @@ const languages = locales.map((code) => ({ code, lang: htmlLang[code], href: loc
       translate 0.5s var(--ease-out),
       visibility 0s;
   }
+  /* Hidden in place, so still "on screen" to coolButton.ts: hold its sweeps still. */
+  .nav[data-enhanced]:not([data-cta]) .nav__cta :global(:is(.cool-btn__spin, .cool-btn__spin-slow)) {
+    animation-play-state: paused;
+  }
   .nav__cta :global(.cool-btn__content) {
     padding: 0.6rem 1.05rem;
     font-size: 0.6875rem;

@@ -25,24 +25,34 @@ function initOrb(orb: HTMLElement, still: boolean): void {
   const stage = getStage();
   if (!stage) return;
   const state: LogoOrbState = { angle: 0, mouse: { x: -1e4, y: -1e4 }, reveal: still ? 1 : 0, still };
+  // Left alone, the disc only sways and its print drifts, slowly enough that 30fps reads the
+  // same; the pointer, scrolling and the reveal get the full rate (as the hero does).
+  const fullFps = coarsePointer.matches ? 30 : 60;
+  let liveUntil = Infinity;
+  let lively = true;
   stage.add(
     createLogoOrb(stage, {
       el: orb.querySelector<HTMLElement>('[data-orb-gl]')!,
       cell: coarsePointer.matches ? 8 : 9,
       radius: 0.8,
-      fps: coarsePointer.matches ? 30 : 60,
+      fps: () => (lively ? fullFps : 30),
       lines: JSON.parse(orb.dataset.lines ?? '[]') as string[],
       state,
     }),
   );
   if (still) return;
 
+  let poked = true;
   orb.addEventListener('pointermove', (e) => {
     const r = orb.getBoundingClientRect();
     state.mouse.x = e.clientX - r.left;
     state.mouse.y = e.clientY - r.top;
+    poked = true;
   });
-  orb.addEventListener('pointerleave', () => (state.mouse.x = state.mouse.y = -1e4));
+  orb.addEventListener('pointerleave', () => {
+    state.mouse.x = state.mouse.y = -1e4;
+    poked = true;
+  });
 
   ScrollTrigger.create({
     trigger: orb,
@@ -62,8 +72,13 @@ function initOrb(orb: HTMLElement, still: boolean): void {
   });
   let inView = false;
   new IntersectionObserver(([entry]) => (inView = entry.isIntersecting)).observe(orb);
+  let lastScroll = NaN;
   gsap.ticker.add((time) => {
     if (!inView) return;
     state.angle += (turn + Math.sin(time * 0.5) * 0.05 - state.angle) * 0.08;
+    if (poked || state.reveal < 1 || scrollY !== lastScroll) liveUntil = time + 1;
+    poked = false;
+    lastScroll = scrollY;
+    lively = time < liveUntil;
   });
 }

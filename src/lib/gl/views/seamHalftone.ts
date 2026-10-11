@@ -21,7 +21,8 @@ export interface SeamHalftoneOptions {
   el: HTMLElement;
   /** Dot cell, CSS px. */
   cell: number;
-  fps: number;
+  /** Frame-rate cap, read each frame. */
+  fps: () => number;
   state: SeamHalftoneState;
 }
 
@@ -75,7 +76,9 @@ export function createSeamHalftone(stage: Stage, opts: SeamHalftoneOptions): GLV
 
   const view: GLView = {
     el: opts.el,
-    fps: opts.fps,
+    get fps() {
+      return opts.fps();
+    },
     render(frame: Frame) {
       const { state } = opts;
       if (!state.still) frozenTime = frame.time;

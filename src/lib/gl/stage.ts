@@ -70,6 +70,21 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
   gl.clearColor(0, 0, 0, 0);
 
   const views = new Set<GLView>();
+  // Views whose element is on or near the screen; only these are measured each frame. The
+  // margin admits a view well before it scrolls in, so it never misses its first frame.
+  const near = new Set<GLView>();
+  const viewsOf = new Map<Element, Set<GLView>>();
+  const proximity = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        for (const view of viewsOf.get(entry.target) ?? []) {
+          if (entry.isIntersecting) near.add(view);
+          else near.delete(view);
+        }
+      }
+    },
+    { rootMargin: '50% 0px' },
+  );
   const lastRects = new WeakMap<GLView, string>();
   const lastDraw = new WeakMap<GLView, number>();
   let visibleLastFrame = false;
@@ -96,6 +111,7 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
     stage = null;
     gsap.ticker.remove(renderTick);
     observer.disconnect();
+    proximity.disconnect();
     document.documentElement.classList.add('no-webgl');
     canvas.style.visibility = 'hidden';
     for (const view of views) {
@@ -103,6 +119,7 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
       catch (error) { console.warn('[stage] disposal after context loss', error); }
     }
     views.clear();
+    near.clear();
     // No restoration: views/resources belonged to the lost context. Keep DOM fallbacks.
   });
 
@@ -120,7 +137,7 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
     // Views share one canvas: when any visible view moved or is due, repaint all visible views.
     const visible: { view: GLView; rect: DOMRect }[] = [];
     let needsDraw = force;
-    for (const view of views) {
+    for (const view of near) {
       const rect = view.el.getBoundingClientRect();
       if (rect.bottom <= 0 || rect.top >= vh || rect.right <= 0 || rect.left >= vw || rect.width === 0) continue;
       const key = `${rect.left}|${rect.top}|${rect.width}|${rect.height}`;
@@ -174,8 +191,10 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
   onCleanup(() => {
     gsap.ticker.remove(renderTick);
     observer.disconnect();
+    proximity.disconnect();
     for (const view of views) view.dispose?.();
     views.clear();
+    near.clear();
   });
 
   return {
@@ -191,8 +210,22 @@ function createStage(canvas: HTMLCanvasElement): Stage | null {
         return () => {};
       }
       views.add(view);
+      // Measured from the start; the observer drops it once it reports the view far away.
+      near.add(view);
+      let shared = viewsOf.get(view.el);
+      if (!shared) {
+        viewsOf.set(view.el, (shared = new Set()));
+        proximity.observe(view.el);
+      }
+      shared.add(view);
       return () => {
         if (!views.delete(view)) return;
+        near.delete(view);
+        shared.delete(view);
+        if (!shared.size) {
+          viewsOf.delete(view.el);
+          proximity.unobserve(view.el);
+        }
         view.dispose?.();
         if (!lost) clear();
       };

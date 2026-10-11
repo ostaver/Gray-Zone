@@ -105,6 +105,8 @@ export function createArcGallery(stage: Stage, opts: ArcGalleryOptions): ArcGall
 
   let loading = false;
   let disposed = false;
+  /** Decoded screens waiting for the GPU; `render` uploads one per frame. */
+  const arrived: { screen: (typeof screens)[number]; img: HTMLImageElement }[] = [];
   const load = () => {
     if (loading || disposed) return;
     loading = true;
@@ -116,10 +118,7 @@ export function createArcGallery(stage: Stage, opts: ArcGalleryOptions): ArcGall
         .decode()
         .then(() => {
           if (disposed) return;
-          gl.deleteTexture(screen.map.texture);
-          // Drawn below their size on 1x displays: trilinear mipmaps keep them clean.
-          screen.map = new Texture(gl, { image: img, generateMipmaps: true, minFilter: gl.LINEAR_MIPMAP_LINEAR });
-          screen.loadedAt = -2;
+          arrived.push({ screen, img });
           dirty = true;
         })
         .catch(() => {});
@@ -177,7 +176,18 @@ export function createArcGallery(stage: Stage, opts: ArcGalleryOptions): ArcGall
       return null;
     },
     render(frame: Frame) {
-      dirty = false;
+      // Uploading a 1600px screen and building its mipmaps is a big synchronous GPU job; the
+      // screens tend to finish decoding together, so take them one frame at a time.
+      const next = arrived.shift();
+      if (next) {
+        gl.deleteTexture(next.screen.map.texture);
+        // Drawn below their size on 1x displays: trilinear mipmaps keep them clean.
+        next.screen.map = new Texture(gl, { image: next.img, generateMipmaps: true, minFilter: gl.LINEAR_MIPMAP_LINEAR });
+        // Upload now, even if this screen is off the arc, so a turn never uploads several at once.
+        next.screen.map.update();
+        next.screen.loadedAt = -2;
+      }
+      dirty = arrived.length > 0;
       fading = false;
       drawnAt = state.position;
       const w = frame.width / frame.dpr;
