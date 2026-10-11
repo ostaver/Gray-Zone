@@ -140,6 +140,7 @@ function initRing(root: HTMLElement): () => void {
     gsap.killTweensOf([names[was], ...bodies[was].children]);
     names[was].textContent = nameText[was];
     gsap.set(fills[was], { scaleX: 0 });
+    shownFill = NaN;
     steps[i].setAttribute('data-on', '');
     dots[i].setAttribute('aria-current', 'step');
     held = 0;
@@ -160,6 +161,7 @@ function initRing(root: HTMLElement): () => void {
   visibility.observe(stage);
   let lastY = window.scrollY;
   let drawn = NaN;
+  let shownFill = NaN;
   const tick = (time: number, deltaMs: number) => {
     const y = window.scrollY;
     const dt = Math.min(deltaMs, 100) / 1000;
@@ -176,7 +178,11 @@ function initRing(root: HTMLElement): () => void {
         target = Math.round(target) + 1;
       }
     }
-    gsap.set(fills[active], { scaleX: Math.min(1, held / HOLD) });
+    const fill = Math.min(1, held / HOLD);
+    if (fill !== shownFill) {
+      shownFill = fill;
+      gsap.set(fills[active], { scaleX: fill });
+    }
 
     if (!dragging) {
       pos += (target - pos) * (1 - Math.exp(-dt / TURN));

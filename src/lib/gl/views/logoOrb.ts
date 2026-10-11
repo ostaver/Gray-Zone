@@ -21,7 +21,8 @@ export interface LogoOrbOptions {
   cell: number;
   /** Disc radius as a fraction of half the view's shorter side. */
   radius: number;
-  fps: number;
+  /** Frame-rate cap, read each frame. */
+  fps: () => number;
   /** Wordmark lines, split across the tear between their halves (СИ|ВА, ЗО|НА). */
   lines: string[];
   state: LogoOrbState;
@@ -116,7 +117,9 @@ export function createLogoOrb(stage: Stage, opts: LogoOrbOptions): GLView {
 
   return {
     el: opts.el,
-    fps: opts.fps,
+    get fps() {
+      return opts.fps();
+    },
     render(frame: Frame) {
       const { state } = opts;
       if (!state.still) frozenTime = frame.time;

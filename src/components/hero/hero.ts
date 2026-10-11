@@ -60,6 +60,7 @@ export function initHero(root: HTMLElement): void {
   // The nav has a zone control too; both follow the shared state rather than their own clicks.
   const unsubscribeZone = onZoneChange((zone) => {
     state.whiteZone = zone === 'white' ? 1 : 0;
+    poked = true;
     zoneButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.zone === zone)));
     // View Transitions pause rAF during capture; flush the shader synchronously.
     stage?.draw();
@@ -73,6 +74,16 @@ export function initHero(root: HTMLElement): void {
   let pointer: { x: number; y: number } | null = null;
   let introDone = still;
 
+  // While nothing is being done to it (no pointer, scroll or intro in flight) the hero only
+  // drifts, a few px a second: the field and the DOM tear both step down to 30fps together.
+  const fullFps = coarsePointer.matches ? 30 : 60;
+  const IDLE_FPS = 30;
+  /** A second of full rate after the last input, so springs and pointer force settle smoothly. */
+  const LIVE_FOR = 1;
+  let liveUntil = 0;
+  let poked = true;
+  let lively = true;
+
   // ── WebGL field (or DOM fallback when the stage is unavailable) ──
   const stage = getStage();
   let removeView: (() => void) | undefined;
@@ -81,7 +92,7 @@ export function initHero(root: HTMLElement): void {
       createSeamHalftone(stage, {
         el: glEl,
         cell: coarsePointer.matches ? 13 : 16,
-        fps: coarsePointer.matches ? 30 : 60,
+        fps: () => (lively ? fullFps : IDLE_FPS),
         state,
       }),
     );
@@ -104,6 +115,7 @@ export function initHero(root: HTMLElement): void {
     labelCeiling = description.offsetTop;
   }, { signal: events.signal });
   const boxes = clipped.map(() => ({ shown: false, left: 0, top: 0, width: 1, height: 1, sx: 1, sy: 1 }));
+  const shownClips = clipped.map(() => '');
   const measure = () => {
     const pr = pin.getBoundingClientRect();
     heroW = pr.width;
@@ -143,8 +155,10 @@ export function initHero(root: HTMLElement): void {
     state.mouse.x = x;
     state.mouse.y = y;
     pointer = { x: x / r.width, y: y / r.height };
+    poked = true;
   }, { signal: events.signal });
   pin.addEventListener('pointerleave', () => {
+    poked = true;
     pointer = null;
     state.mouse.x = state.mouse.y = -1e4;
   }, { signal: events.signal });
@@ -154,6 +168,11 @@ export function initHero(root: HTMLElement): void {
   const observer = new IntersectionObserver(([entry]) => (inView = entry.isIntersecting));
   observer.observe(root);
   let prev = 0;
+  let lastScroll = NaN;
+  let lastProgress = NaN;
+  let domAt = -1;
+  let shownHonest = '';
+  let shownGray = '';
   const tick = (time: number) => {
     const dt = prev ? time - prev : 1 / 60;
     prev = time;
@@ -168,6 +187,16 @@ export function initHero(root: HTMLElement): void {
     state.mouseForce += (Math.min(1, speed / 2.2) - state.mouseForce) * 0.12;
     seam.update({ time, dt, target, pointer: still ? null : pointer, progress: state.progress, still });
 
+    if (poked || !introDone || state.reveal < 1 || scrollY !== lastScroll || state.progress !== lastProgress) liveUntil = time + LIVE_FOR;
+    poked = false;
+    lastScroll = scrollY;
+    lastProgress = state.progress;
+    lively = time < liveUntil;
+    // Same cadence test as the stage's, so an idle tear and field step together.
+    const rate = lively ? fullFps : IDLE_FPS;
+    if (time - domAt < 1 / rate - 0.002) return;
+    domAt = time;
+
     // Reads first, then writes: one layout per frame.
     measure();
     const landscape = shortLandscape.matches;
@@ -177,7 +206,9 @@ export function initHero(root: HTMLElement): void {
     for (let i = 0; i < clipped.length; i++) {
       if (!boxes[i].shown) continue;
       const side = clipped[i].dataset.seamClip === 'left' ? 'left' : 'right';
-      clipped[i].style.clipPath = seam.clipPolygon(side, boxes[i], heroW, heroH);
+      const clip = seam.clipPolygon(side, boxes[i], heroW, heroH);
+      // A changed clip-path repaints the whole headline layer; skip it when nothing moved.
+      if (clip !== shownClips[i]) clipped[i].style.clipPath = shownClips[i] = clip;
     }
 
     // Short landscapes flank the title; elsewhere the pair follows the seam within the gutters,
@@ -195,8 +226,10 @@ export function initHero(root: HTMLElement): void {
       honestX = sx - honestLabelW - gap;
       grayX = sx + gap;
     }
-    sideHonest.style.transform = `translate3d(${honestX}px, ${labelY}px, 0) translateY(-50%)`;
-    sideGray.style.transform = `translate3d(${grayX}px, ${labelY}px, 0) translateY(-50%)`;
+    const honest = `translate3d(${honestX.toFixed(2)}px, ${labelY.toFixed(2)}px, 0) translateY(-50%)`;
+    const gray = `translate3d(${grayX.toFixed(2)}px, ${labelY.toFixed(2)}px, 0) translateY(-50%)`;
+    if (honest !== shownHonest) sideHonest.style.transform = shownHonest = honest;
+    if (gray !== shownGray) sideGray.style.transform = shownGray = gray;
   };
   gsap.ticker.add(tick);
 
