@@ -1,0 +1,19 @@
+.laser-flow-container {
+  --laser-feather: calc(var(--gutter) + 1rem);
+  position: absolute;
+  /* Give the corner spill room, then fade only the light—not the photo. */
+  inset: calc(-1 * var(--gutter));
+  mask-image:
+    linear-gradient(to right, transparent, #000 var(--laser-feather), #000 calc(100% - var(--laser-feather)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--laser-feather), #000 calc(100% - var(--laser-feather)), transparent);
+  mask-composite: intersect;
+  pointer-events: none;
+}
+
+.laser-flow-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}

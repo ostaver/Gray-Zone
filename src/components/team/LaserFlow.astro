@@ -1,0 +1,21 @@
+<div class="laser-flow-container" data-laser-flow aria-hidden="true">
+  <canvas class="laser-flow-canvas"></canvas>
+</div>
+
+<script>
+  import { initLaserFlow } from '../../lib/gl/views/laserFlow';
+  import './LaserFlow.css';
+
+  for (const container of document.querySelectorAll<HTMLElement>('[data-laser-flow]')) {
+    const surface = container.parentElement?.querySelector<HTMLElement>('[data-tm-surface]');
+    const image = surface?.querySelector<HTMLImageElement>('img');
+    const canvas = container.querySelector<HTMLCanvasElement>('canvas');
+    if (surface && canvas) {
+      initLaserFlow(container, canvas, {
+        surface,
+        color: getComputedStyle(container).getPropertyValue('--red').trim(),
+        revealImage: image?.currentSrc || image?.src,
+      });
+    }
+  }
+</script>

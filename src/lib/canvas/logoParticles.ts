@@ -25,6 +25,8 @@ interface Dot {
 
 const PAPER = '#efece6';
 const RED = '#e3261f';
+const PAPER_GLOW = `${PAPER}2e`;
+const RED_GLOW = `${RED}2e`;
 const SHADE = '#3a3a3a';
 /** The disc's dark half on the white zone's light paper: solid ink, as the nav's logo has it. */
 const INK = '#141414';
@@ -175,6 +177,8 @@ export class LogoParticles {
         y += dy * off;
       }
       ctx.fillStyle = d.color;
+      ctx.shadowColor = d.color === RED ? RED_GLOW : PAPER_GLOW;
+      ctx.shadowBlur = d.color === RED || d.color === PAPER ? Math.min(1.5 * this.dpr, d.r * e * grow * k * 0.65) : 0;
       ctx.beginPath();
       ctx.arc(x, y, d.r * e * grow, 0, Math.PI * 2);
       ctx.fill();

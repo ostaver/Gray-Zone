@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import type { Locale } from '../../i18n/config';
 import { team, teamCopy, teamPhoto } from '../../data/team';
+import LaserFlow from './LaserFlow.astro';
 
 interface Props {
   locale: Locale;
@@ -19,10 +20,12 @@ const t = teamCopy[locale];
 
   <div class="tm__body">
     <figure class="tm__photo">
-      <!-- The torn edge is on the frame, the print sweep on the inner layer: both are masks. -->
-      <div class="tm__photo-print" data-tm-print>
-        <Image class="tm__img" src={teamPhoto} alt={t.photoAlt} widths={[640, 960, 1440, 1920]} sizes="(min-width: 1024px) 42vw, 100vw" data-tm-img />
+      <div class="tm__photo-frame" data-tm-surface>
+        <div class="tm__photo-print" data-tm-print>
+          <Image class="tm__img" src={teamPhoto} alt={t.photoAlt} widths={[640, 960, 1440, 1920]} sizes="(min-width: 1024px) 42vw, 100vw" data-tm-img />
+        </div>
       </div>
+      <LaserFlow />
     </figure>
 
     <!-- Native <details>: every file opens without JS; team.ts only animates it. -->
@@ -115,7 +118,12 @@ const t = teamCopy[locale];
 
   /* ── The photo ─────────────────────────────────────── */
   .tm__photo {
+    position: relative;
+    isolation: isolate;
+    padding: clamp(5rem, 10vw, 8rem) 1rem 3rem;
     margin: 0;
+  }
+  .tm__photo-frame {
     /* Torn off along its foot. */
     mask:
       linear-gradient(#000, #000) top left / 100% calc(100% - var(--tear)) no-repeat,

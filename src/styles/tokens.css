@@ -57,10 +57,10 @@
   --z-content: 10;
   --z-nav: 80;
   --z-modal: 110;
-  --z-preloader: 120;
-  /* Film grain sits over everything, preloader included, so the whole page shares one texture. */
   --z-grain: 130;
-  /* Dev-only FPS meter: above the grain so it reads the same on every section. */
+  /* The opaque preloader covers page grain; only its logo and dots emit light. */
+  --z-preloader: 135;
+  /* Dev-only FPS meter: above page overlays. */
   --z-debug: 140;
 }
 
