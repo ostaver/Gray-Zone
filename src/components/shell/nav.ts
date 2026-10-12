@@ -29,18 +29,14 @@ export function initNav(nav: HTMLElement): void {
   const menu = nav.querySelector<HTMLElement>('[data-nav-menu]')!;
   const panel = menu.querySelector<HTMLElement>('[data-nav-panel]')!;
   const tear = menu.querySelector<SVGPathElement>('[data-menu-tear]')!;
-  const [dotsHonest, dotsGray] = [...menu.querySelectorAll<HTMLElement>('[data-menu-dots]')];
+  const dots = [...menu.querySelectorAll<HTMLElement>('[data-menu-dots]')];
   const words = [...menu.querySelectorAll<HTMLElement>('[data-menu-word]')];
   const footEl = menu.querySelector<HTMLElement>('[data-menu-foot]')!;
   const labels = [...footEl.querySelectorAll<HTMLElement>('dt')];
-  const [langs, platforms, contact] = [...footEl.querySelectorAll<HTMLElement>('dd')];
-  const contactLinks = [...contact.children] as HTMLElement[];
-  const menuCta = footEl.querySelector<HTMLElement>('[data-menu-cta]')!;
+  const values = [...footEl.querySelectorAll<HTMLElement>('dd')];
   const labelText = labels.map((el) => el.textContent ?? '');
   const scrambleChars = labelText.join('').replace(/\s/g, '');
-  const details = [...labels, langs, platforms, ...contactLinks, menuCta];
-  const parts = [dotsHonest, dotsGray, ...words, ...details];
-  const rnd = gsap.utils.random;
+  const parts = [...dots, ...words, ...labels, ...values];
   let menuOpen = false;
   let menuTl: gsap.core.Timeline | null = null;
   menu.inert = true;
@@ -51,20 +47,6 @@ export function initNav(nav: HTMLElement): void {
     gsap.set(parts, { clearProps: 'transform,opacity' });
     labels.forEach((el, i) => (el.textContent = labelText[i]));
   };
-
-  // Every link comes in its own way, so the list lands as a jumble before it lines up.
-  const wordIn: (() => [from: gsap.TweenVars, to: gsap.TweenVars])[] = [
-    // Slung in from beyond the right edge, sheared by the speed, overshooting.
-    () => [{ xPercent: 170, skewX: -38, opacity: 0 }, { xPercent: 0, skewX: 0, opacity: 1, duration: 1.1, ease: 'back.out(2.4)' }],
-    // Dropped from above on a hinge at its left foot, swinging until it hangs straight.
-    () => [{ yPercent: -280, rotation: rnd(-34, -18), transformOrigin: '0% 100%' }, { yPercent: 0, rotation: 0, duration: 1.7, ease: 'elastic.out(1, 0.35)' }],
-    // Slammed down out of the reader's face: huge and faint, then hard onto the page.
-    () => [{ scale: 3.2, rotation: rnd(-14, 14), opacity: 0, transformOrigin: '30% 50%' }, { scale: 1, rotation: 0, opacity: 1, duration: 0.65, ease: 'power4.in' }],
-    // Turned over on its baseline like a card flipped face up.
-    () => [{ rotationX: -110, transformPerspective: 500, transformOrigin: '50% 100%', opacity: 0 }, { rotationX: 0, opacity: 1, duration: 1.4, ease: 'elastic.out(1, 0.45)' }],
-    // Squashed flat under the line, then sprung up to height.
-    () => [{ yPercent: 120, scaleX: 1.7, scaleY: 0.15, transformOrigin: '0% 100%' }, { yPercent: 0, scaleX: 1, scaleY: 1, duration: 1.3, ease: 'elastic.out(1.1, 0.32)' }],
-  ];
 
   const openMenu = () => {
     if (menuOpen) return;
@@ -84,26 +66,18 @@ export function initNav(nav: HTMLElement): void {
     resetMenu();
     const tl = gsap.timeline().set(menu, { visibility: 'visible' });
     menuTl = tl;
-    // The sheet: thrown in from the side, leaning back against its own speed, and it shudders
-    // as it hits the far edge.
-    tl.to(panel, { xPercent: 0, duration: 0.85, ease: 'tear' }, 0)
-      .fromTo(panel, { skewX: -9, transformOrigin: '0% 50%' }, { skewX: 0, duration: 1.2, ease: 'elastic.out(1, 0.4)' }, 0)
-      .to(panel, { keyframes: { x: [0, -16, 11, -6, 3, 0] }, duration: 0.45, ease: 'none' }, 0.55);
-    // The fields: the honest dots flicker on like a tube light, the gray ones drift in, and the
-    // tear rips outward from its middle.
-    tl.fromTo(dotsHonest, { opacity: 0 }, { keyframes: { opacity: [0, 0.7, 0.05, 0.55, 0, 0.7] }, duration: 0.7, ease: 'none' }, 0.45)
-      .fromTo(dotsGray, { opacity: 0, xPercent: 18 }, { opacity: 0.7, xPercent: 0, duration: 1.6, ease: 'expo.out' }, 0.35)
-      .fromTo(tear, { drawSVG: '50% 50%' }, { drawSVG: '0% 100%', duration: 1.1, ease: 'expo.inOut' }, 0.3);
-    // The links, each its own way, in a shuffled order.
-    const order = gsap.utils.shuffle(words.map((_, i) => i));
-    words.forEach((el, i) => tl.fromTo(el, ...wordIn[i % wordIn.length](), 0.3 + order.indexOf(i) * 0.08));
-    // The details: labels decode, the languages pop, the platforms shear in, the contacts drop
-    // and bounce, and the button is pulled out like tape.
-    labels.forEach((el, i) => tl.to(el, { duration: 1, scrambleText: { text: labelText[i], chars: scrambleChars, speed: 0.5 }, ease: 'none' }, 0.6 + i * 0.1));
-    tl.fromTo(langs, { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.9, ease: 'back.out(3)' }, 0.75)
-      .fromTo(platforms, { x: -60, skewX: 30, opacity: 0 }, { x: 0, skewX: 0, opacity: 1, duration: 1.1, ease: 'expo.out' }, 0.8)
-      .fromTo(contactLinks, { y: -50, rotation: (i: number) => (i % 2 ? 9 : -9), opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 1.1, stagger: 0.12, ease: 'bounce.out' }, 0.85)
-      .fromTo(menuCta, { scaleX: 0, transformOrigin: '100% 50%' }, { scaleX: 1, duration: 1.2, ease: 'elastic.out(1, 0.5)' }, 0.95);
+    // The sheet glides in from the side (from wherever an interrupted close left it), moving at
+    // once and settling slowly; the field fades in behind it and the tear runs down its length.
+    tl.to(panel, { xPercent: 0, duration: 1, ease: 'expo.out' }, 0)
+      .fromTo(dots, { opacity: 0 }, { opacity: 0.7, duration: 1.2, ease: 'power2.out' }, 0.25)
+      .fromTo(tear, { drawSVG: '0% 0%' }, { drawSVG: '0% 100%', duration: 1.3, ease: 'expo.inOut' }, 0.15);
+    // The links rise through their slots in order as the sheet lands, then the details follow:
+    // labels decode, values lift in.
+    tl.fromTo(words, { yPercent: 110 }, { yPercent: 0, duration: 1.1, ease: 'expo.out', stagger: 0.06 }, 0.2)
+      .fromTo(values, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, ease: 'expo.out', stagger: 0.06 }, 0.5);
+    labels.forEach((el, i) => {
+      tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.8, scrambleText: { text: labelText[i], chars: scrambleChars, speed: 0.4 }, ease: 'none' }, 0.45 + i * 0.06);
+    });
     if (still) tl.progress(1);
   };
 
@@ -130,13 +104,12 @@ export function initNav(nav: HTMLElement): void {
       },
     });
     menuTl = tl;
-    // Everything is flung apart before the sheet is torn away: links scatter, details fall.
-    tl.to(words, { x: () => rnd(-320, 320), y: () => rnd(-220, 220), rotation: () => rnd(-70, 70), opacity: 0, duration: 0.55, ease: 'power3.in', stagger: { each: 0.03, from: 'random' } }, 0)
-      .to(details, { y: () => innerHeight * rnd(0.3, 0.6), rotation: () => rnd(-45, 45), opacity: 0, duration: 0.6, ease: 'power2.in', stagger: { each: 0.02, from: 'random' } }, 0)
-      .to([dotsHonest, dotsGray], { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0)
-      .to(tear, { drawSVG: '50% 50%', duration: 0.45, ease: 'power3.in' }, 0)
-      .to(panel, { xPercent: 100, skewX: 10, duration: 0.7, ease: 'expo.in' }, 0.2)
-      .set(panel, { skewX: 0 });
+    // The open in brief, reversed: the links lift out of their slots, the details and field
+    // fade, and the sheet glides back out.
+    tl.to(words, { yPercent: -110, duration: 0.45, ease: 'expo.in', stagger: 0.03 }, 0)
+      .to([...labels, ...values, ...dots], { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0)
+      .to(tear, { drawSVG: '100% 100%', duration: 0.5, ease: 'expo.in' }, 0)
+      .to(panel, { xPercent: 100, duration: 0.65, ease: 'power3.inOut' }, 0.15);
     if (still) tl.progress(1);
   };
 

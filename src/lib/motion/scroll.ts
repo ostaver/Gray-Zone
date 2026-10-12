@@ -59,21 +59,39 @@ function initSectionLinks(): void {
   });
 }
 
-/** Lenis driven by gsap.ticker so ScrollTrigger, WebGL and smooth scroll share one clock. */
+/**
+ * Lenis driven by gsap.ticker so ScrollTrigger, WebGL and smooth scroll share one clock.
+ *
+ * Touch scrolling goes through Lenis too (`syncTouch`). Left native, a phone scrolls the page on
+ * its compositor while the fixed WebGL stage is redrawn a frame or more later on the main thread,
+ * so every shader trails its section and wobbles as a fling speeds up and slows down.
+ */
 export function initScroll(): Lenis | null {
   initSectionLinks();
   if (lenis || reducedMotion.matches) return lenis;
+  // Native touch scrolling locks a gesture to the axis it starts on. Sideways gestures (the
+  // gallery and tutorial drags, the tutorial's step row) stay with the browser, so they never
+  // nudge the page up and down; so do pinches, which must still zoom.
+  let sideways = false;
   lenis = new Lenis({
     duration: 1.15,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
-    touchMultiplier: 1.4,
+    syncTouch: true,
+    virtualScroll: ({ deltaX, deltaY, event }) => {
+      if (!('touches' in event)) return true;
+      if (event.type === 'touchstart') sideways = false;
+      else if (event.touches.length > 1) return false;
+      else if (event.type === 'touchmove' && !sideways && (deltaX || deltaY)) sideways = Math.abs(deltaX) > Math.abs(deltaY);
+      return !sideways;
+    },
   });
   // A lock taken before Lenis existed (the preloader runs first) must hold it too.
   if (locks > 0) lenis.stop();
   lenis.on('scroll', ScrollTrigger.update);
   const tick = (time: number) => lenis?.raf(time * 1000);
-  gsap.ticker.add(tick);
+  // First on the ticker: everything after it (the WebGL stage above all) reads this frame's scroll.
+  gsap.ticker.add(tick, false, true);
   onCleanup(() => {
     gsap.ticker.remove(tick);
     lenis?.destroy();
