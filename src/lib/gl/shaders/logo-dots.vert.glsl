@@ -15,6 +15,7 @@ uniform float uScatter;  // 0..1, outward burst: every dot leaves along its own 
 
 varying vec3 vColor;
 varying float vRadius;   // device px
+varying float vGlow;     // tightly bounded halo around bright dots, device px
 
 void main() {
   float t = clamp((uAssemble - aDelay) / 0.6, 0.0, 1.0);
@@ -30,7 +31,8 @@ void main() {
   // Dots grow only with √zoom while the gaps grow with zoom: a zoomed logo thins out.
   float r = aRadius * e * sqrt(uZoom) * uDpr;
   vRadius = r;
+  vGlow = min(1.5 * uDpr, r * 0.65) * smoothstep(0.3, 0.8, max(aColor.r, max(aColor.g, aColor.b)));
   vColor = aColor;
   gl_Position = vec4(p / (uRes * 0.5) * vec2(1.0, -1.0), 0.0, 1.0);
-  gl_PointSize = r > 0.0 ? 2.0 * r + 2.0 : 0.0;
+  gl_PointSize = r > 0.0 ? 2.0 * (r + vGlow) + 2.0 : 0.0;
 }
