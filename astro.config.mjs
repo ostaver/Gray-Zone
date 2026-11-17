@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   // Canonicals, language alternates, share images and crawler files use the launch domain.
-  site: 'https://sivazona.mk',
+  site: 'https://siva-zona.ostaver.com',
   trailingSlash: 'ignore',
   i18n: {
     locales: ['mk', 'en'],

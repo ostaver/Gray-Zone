@@ -6,7 +6,7 @@ import '../styles/global.css';
 
 import { htmlLang, locales, localePath, ogLocale, type Locale } from '../i18n/config';
 import { ui } from '../i18n/ui';
-import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImagePath, ogImageVariants, type OgExt } from '../lib/og';
+import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImage, ogImagePath, type OgExt } from '../lib/og';
 import { latestRelease, releaseVersion, repo } from '../data/links';
 import FpsStats from '../components/debug/FpsStats.astro';
 import ScrollRail from '../components/shell/ScrollRail.astro';
@@ -77,17 +77,17 @@ const structuredData = {
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={ogLocale[locale]} />
     {locales.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={ogLocale[l]} />)}
-    {ogImageVariants.map(({ ext, type }) => (
-      <>
-        <meta property="og:image" content={ogImageUrl(ext)} />
-        <meta property="og:image:type" content={type} />
-        <meta property="og:image:width" content={String(OG_IMAGE_WIDTH)} />
-        <meta property="og:image:height" content={String(OG_IMAGE_HEIGHT)} />
-        <meta property="og:image:alt" content={t.meta.imageAlt} />
-      </>
-    ))}
+    {/* One og:image only: LinkedIn and others pick unpredictably among several. */}
+    <meta property="og:image" content={ogImageUrl(ogImage.ext)} />
+    <meta property="og:image:secure_url" content={ogImageUrl(ogImage.ext)} />
+    <meta property="og:image:type" content={ogImage.type} />
+    <meta property="og:image:width" content={String(OG_IMAGE_WIDTH)} />
+    <meta property="og:image:height" content={String(OG_IMAGE_HEIGHT)} />
+    <meta property="og:image:alt" content={t.meta.imageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content={ogImageUrl('jpg')} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={t.meta.description} />
+    <meta name="twitter:image" content={ogImageUrl(ogImage.ext)} />
     <meta name="twitter:image:alt" content={t.meta.imageAlt} />
 
     <script is:inline>

@@ -2,7 +2,7 @@
 
 ![Sivazona MK](public/og-image.png)
 
-Marketing site for **Сива Зона** aka **Gray Zone**, with production URL <https://sivazona.mk>. Bilingual (Macedonian default, English under `/en`), single-page, with a WebGL hero and a preloader that transitions into it.
+Marketing site for **Сива Зона** aka **Gray Zone**, with production URL <https://siva-zona.ostaver.com>. Bilingual (Macedonian default, English under `/en`), single-page, with a WebGL hero and a preloader that transitions into it.
 
 ## Stack
 
@@ -25,13 +25,13 @@ Static site deployed directly from the `dist/` directory; there is no server run
 
 Upload or serve the contents of `dist/` to any static web host.
 
-`astro.config.mjs` uses `https://sivazona.mk`. Canonical, language alternate, sharing image, sitemap and robots URLs all follow this setting. A staging deployment of this build also points search engines to the production domain.
+`astro.config.mjs` uses `https://siva-zona.ostaver.com`. Canonical, language alternate, sharing image, sitemap and robots URLs all follow this setting, so change it there if the site moves to another domain.
 
 Before uploading a release, run `npm ci`, `npm run check`, `npm audit` and `npm run build`. Preview `dist/` with `npm run preview` and check both `/` and `/en/`. Upload the complete build together so HTML and hashed assets belong to the same release; retain a copy of the previous deployment for rollback.
 
 Configure the static host at launch:
 
-- Serve HTTPS on `sivazona.mk`; redirect HTTP and `www` to the canonical HTTPS host, preserving paths and queries. Redirect the old staging domain after the production deployment is verified.
+- Serve HTTPS on `siva-zona.ostaver.com`; redirect HTTP to HTTPS, preserving paths and queries.
 - Serve `/en/` from `en/index.html`, normalize `/en` to `/en/`, and serve `404.html` with an actual HTTP 404 status for unknown paths. Do not use a single-page-app catch-all to `index.html`.
 - Enable Brotli/gzip. Cache hashed `/_astro/` files for one year with `immutable`; revalidate HTML, robots, sitemap and unversioned files such as share images so new releases appear promptly.
 - Set `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` and `X-Frame-Options: SAMEORIGIN`. Configure HSTS only after HTTPS works for the intended hosts. A Content Security Policy needs separate testing: the page uses inline startup scripts, GSAP inline styles, data-URI masks and WebGL.
